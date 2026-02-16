@@ -1,0 +1,88 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="jugador-detail-container">
+    <header class="detail-header">
+      <button class="btn-back" (click)="goBack()">
+        ← Volver a Jugadores
+      </button>
+      <h2>Detalles del Jugador</h2>
+    </header>
+
+    <div *ngIf="loading" class="loading">
+      Cargando detalles...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && jugador" class="jugador-detail-card">
+      <div class="jugador-header">
+        <div class="header-content">
+          <div class="jugador-image" *ngIf="jugador.imagen">
+            <img [src]="jugador.imagen" [alt]="jugador.nombre">
+          </div>
+          <div class="header-text">
+            <h1>{{ jugador.nombre }}</h1>
+            <span class="status-badge" [class.active]="jugador.activo">
+              {{ jugador.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="jugador-info-section">
+        <div class="info-row">
+          <label>Cédula:</label>
+          <p>{{ jugador.cedula }}</p>
+        </div>
+
+        <div class="info-row">
+          <label>Fecha de Nacimiento:</label>
+          <p>{{ jugador.fechaNacimiento | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="jugador.equipo">
+          <label>Equipo:</label>
+          <p>{{ jugador.equipo.nombre }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="!jugador.equipo">
+          <label>Equipo:</label>
+          <p class="sin-equipo">Sin equipo asignado</p>
+        </div>
+
+        <div class="info-row" *ngIf="jugador.numeroCancha">
+          <label>Número de Camiseta:</label>
+          <p>{{ jugador.numeroCancha }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="jugador.posicion">
+          <label>Posición:</label>
+          <p>{{ jugador.posicion }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="jugador.descripcion">
+          <label>Descripción:</label>
+          <p>{{ jugador.descripcion }}</p>
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="permissions.canEditJugador()">
+        <button class="btn-primary" (click)="editJugador()">
+          ✏️ Editar Jugador
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="usuarios-container">
+    <div class="header">
+      <h2>Gestión de Usuarios</h2>
+      <button *ngIf="canEdit()" class="btn-primary" (click)="createUsuario()">
+        <span class="icon">+</span> Nuevo Usuario
+      </button>
+    </div>
+
+    <div class="filters-section">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Buscar por nombre, email o rol..."
+          class="search-input"
+        />
+      </div>
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filterActive" (change)="onFilterChange()" class="filter-select">
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando usuarios...
+    </div>
+
+    <div *ngIf="!loading && filteredUsuarios.length === 0" class="empty-state">
+      <p>No se encontraron usuarios con los filtros aplicados.</p>
+    </div>
+
+    <div *ngIf="!loading && filteredUsuarios.length > 0" class="usuarios-grid">
+      <div *ngFor="let usuario of filteredUsuarios" class="usuario-card" [class.inactive]="!usuario.activo">
+        <div class="usuario-header">
+          <h3>{{ usuario.nombre }}</h3>
+          <span class="status-badge" [class.active]="usuario.activo">
+            {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+        
+        <div class="usuario-info">
+          <p><strong>Email:</strong> {{ usuario.email }}</p>
+          <p><strong>Rol:</strong> 
+            <span class="badge" [ngClass]="getRolBadgeClass(usuario.rol.nombre)">
+              {{ usuario.rol.nombre }}
+            </span>
+          </p>
+          <p><strong>Fecha registro:</strong> {{ usuario.creadoEn | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="usuario-actions" *ngIf="canEdit()">
+          <button class="btn-icon" (click)="editUsuario(usuario.id)" title="Editar">
+            ✏️
+          </button>
+          <button class="btn-icon" (click)="changePassword(usuario.id)" title="Cambiar contraseña">
+            🔑
+          </button>
+          <button 
+            class="btn-icon" 
+            [class.success]="!usuario.activo"
+            [class.warning]="usuario.activo"
+            (click)="toggleActive(usuario)" 
+            [title]="usuario.activo ? 'Desactivar' : 'Activar'">
+            {{ usuario.activo ? '⏸️' : '▶️' }}
+          </button>
+          <button 
+            *ngIf="usuario.id !== 1"
+            class="btn-icon danger" 
+            (click)="deleteUsuario(usuario)" 
+            title="Eliminar">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

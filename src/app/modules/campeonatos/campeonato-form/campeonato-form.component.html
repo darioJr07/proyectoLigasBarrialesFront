@@ -1,0 +1,124 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2>{{ isEditMode ? 'Editar Campeonato' : 'Nuevo Campeonato' }}</h2>
+    </div>
+
+    <form [formGroup]="campeonatoForm" (ngSubmit)="onSubmit()" class="campeonato-form">
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label for="nombre">Nombre del Campeonato *</label>
+        <input
+          type="text"
+          id="nombre"
+          formControlName="nombre"
+          placeholder="Ej: Campeonato Inter-Ligas 2024"
+          [class.error]="hasError('nombre', 'required') || hasError('nombre', 'maxlength')"
+        />
+        <span *ngIf="getErrorMessage('nombre')" class="field-error">
+          {{ getErrorMessage('nombre') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea
+          id="descripcion"
+          formControlName="descripcion"
+          rows="4"
+          placeholder="Descripción del campeonato..."
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaInicio">Fecha de Inicio *</label>
+          <input
+            type="date"
+            id="fechaInicio"
+            formControlName="fechaInicio"
+            [class.error]="hasError('fechaInicio', 'required')"
+          />
+          <span *ngIf="getErrorMessage('fechaInicio')" class="field-error">
+            {{ getErrorMessage('fechaInicio') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="fechaFin">Fecha de Fin *</label>
+          <input
+            type="date"
+            id="fechaFin"
+            formControlName="fechaFin"
+            [class.error]="hasError('fechaFin', 'required')"
+          />
+          <span *ngIf="getErrorMessage('fechaFin')" class="field-error">
+            {{ getErrorMessage('fechaFin') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="fechaLimiteInscripcion">Fecha Límite de Inscripción *</label>
+        <input
+          type="date"
+          id="fechaLimiteInscripcion"
+          formControlName="fechaLimiteInscripcion"
+          [class.error]="hasError('fechaLimiteInscripcion', 'required')"
+        />
+        <span *ngIf="getErrorMessage('fechaLimiteInscripcion')" class="field-error">
+          {{ getErrorMessage('fechaLimiteInscripcion') }}
+        </span>
+        <small class="help-text">Fecha límite para que los equipos se inscriban al campeonato</small>
+      </div>
+
+      <div class="form-group">
+        <label for="ligaId">Liga Organizadora *</label>
+        <select
+          id="ligaId"
+          formControlName="ligaId"
+          [class.error]="hasError('ligaId', 'required')"
+        >
+          <option value="">Seleccione una liga</option>
+          <option *ngFor="let liga of ligas" [value]="liga.id">
+            {{ liga.nombre }}
+          </option>
+        </select>
+        <span *ngIf="getErrorMessage('ligaId')" class="field-error">
+          {{ getErrorMessage('ligaId') }}
+        </span>
+      </div>
+
+      <div class="form-group" *ngIf="isEditMode">
+        <label>
+          <input type="checkbox" formControlName="activo" />
+          Campeonato Activo
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="campeonatoForm.invalid || loading">
+          <span *ngIf="loading">Guardando...</span>
+          <span *ngIf="!loading">{{ isEditMode ? 'Actualizar' : 'Crear' }} Campeonato</span>
+        </button>
+        <button type="button" class="btn-secondary" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

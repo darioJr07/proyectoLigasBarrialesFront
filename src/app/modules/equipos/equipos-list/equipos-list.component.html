@@ -1,0 +1,83 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="equipos-container">
+    <div class="header">
+      <h2>Gestión de Equipos</h2>
+      <button 
+        *ngIf="permissions.canCreateEquipo() && canCreateEquipo()" 
+        class="btn-primary" 
+        (click)="createEquipo()">
+        <span class="icon">+</span> Nuevo Equipo
+      </button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando equipos...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && equipos.length === 0" class="empty-state">
+      <p>No hay equipos registrados</p>
+      <button *ngIf="isMaster" class="btn-secondary" (click)="createEquipo()">
+        Crear primer equipo
+      </button>
+    </div>
+
+    <div *ngIf="!loading && equipos.length > 0" class="equipos-grid">
+      <div *ngFor="let equipo of equipos" class="equipo-card" [class.inactive]="!equipo.activo">
+        <div class="equipo-card-image" *ngIf="equipo.imagen">
+          <img [src]="equipo.imagen" [alt]="equipo.nombre">
+        </div>
+        <div class="equipo-header">
+          <h3>{{ equipo.nombre }}</h3>
+          <span class="status-badge" [class.active]="equipo.activo">
+            {{ equipo.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+        
+        <div class="equipo-info">
+          <p><strong>Liga:</strong> {{ equipo.liga.nombre }}</p>
+          <p><strong>Dirigente:</strong> {{ equipo.dirigente.nombre }}</p>
+          <p *ngIf="equipo.representante"><strong>Representante:</strong> {{ equipo.representante }}</p>
+          <p *ngIf="equipo.fundacion"><strong>Fundación:</strong> {{ equipo.fundacion | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="equipo-actions">
+          <button class="btn-icon" (click)="viewEquipo(equipo.id)" title="Ver detalles">
+            👁️
+          </button>
+          <button *ngIf="permissions.canEditEquipo()" class="btn-icon" (click)="editEquipo(equipo.id)" title="Editar">
+            ✏️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteEquipo() && equipo.activo" 
+            class="btn-icon danger" 
+            (click)="disableEquipo(equipo)" 
+            title="Desactivar">
+            🗑️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteEquipo() && !equipo.activo" 
+            class="btn-icon danger" 
+            (click)="deleteEquipoPermanently(equipo)" 
+            title="Eliminar permanentemente">
+            ❌
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

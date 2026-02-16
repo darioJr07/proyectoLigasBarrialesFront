@@ -1,0 +1,138 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-title">
+    <h2>⏳ Habilitaciones Pendientes</h2>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        routerLink="/jugador-campeonatos"
+      >
+        ← Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <p>Cargando...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && habilitaciones.length === 0">
+    <p>✅ No hay habilitaciones pendientes</p>
+  </div>
+
+  <div class="cards-grid" *ngIf="!loading && habilitaciones.length > 0">
+    <div class="card" *ngFor="let habilitacion of habilitaciones">
+      <div class="card-header">
+        <div class="player-info">
+          <h3>{{ habilitacion.jugador?.nombreCompleto }}</h3>
+          <p class="player-detail">#{{ habilitacion.numeroCancha }} - {{ habilitacion.posicion }}</p>
+        </div>
+        <span class="badge badge-pendiente">Pendiente</span>
+      </div>
+
+      <!-- Sección de imágenes -->
+      <div class="images-section">
+        <div class="image-container">
+          <label class="image-label">Foto del Jugador</label>
+          <img
+            *ngIf="habilitacion.jugador?.imagen"
+            [src]="habilitacion.jugador.imagen"
+            alt="Foto de {{ habilitacion.jugador.nombre }}"
+            class="player-image"
+          />
+          <div class="player-photo-placeholder" *ngIf="!habilitacion.jugador?.imagen">
+            👤
+          </div>
+        </div>
+        <div class="image-container">
+          <label class="image-label">Cédula</label>
+          <img
+            *ngIf="habilitacion.jugador?.imagenCedula"
+            [src]="habilitacion.jugador.imagenCedula"
+            alt="Cédula de {{ habilitacion.jugador.nombre }}"
+            class="cedula-image"
+            (click)="openImageModal(habilitacion.jugador.imagenCedula)"
+          />
+          <div class="cedula-placeholder" *ngIf="!habilitacion.jugador?.imagenCedula">
+            📄
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Equipo:</span>
+          <span class="value">{{ habilitacion.equipo?.nombre }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Categoría:</span>
+          <span class="value">{{ habilitacion.categoria?.nombre }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Cédula:</span>
+          <span class="value">{{ habilitacion.jugador?.cedula }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Campeonato:</span>
+          <span class="value">{{ habilitacion.campeonato?.nombre }}</span>
+        </div>
+        <div class="info-row" *ngIf="habilitacion.observaciones">
+          <span class="label">Observaciones:</span>
+          <span class="value">{{ habilitacion.observaciones }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Solicitado:</span>
+          <span class="value">{{ habilitacion.fechaInscripcion | date: 'short' }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          type="button"
+          class="btn-icon btn-success"
+          (click)="aprobar(habilitacion.id)"
+          title="Aprobar"
+          *ngIf="permissions.canAprobarHabilitaciones()"
+        >
+          ✅
+        </button>
+        <button
+          type="button"
+          class="btn-icon btn-danger"
+          (click)="rechazar(habilitacion.id)"
+          title="Rechazar"
+          *ngIf="permissions.canAprobarHabilitaciones()"
+        >
+          ❌
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para ampliar imagen de cédula -->
+  <div class="modal-overlay" *ngIf="showImageModal" (click)="closeImageModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeImageModal()">✕</button>
+      <img [src]="modalImageUrl" alt="Cédula ampliada" class="modal-image">
+    </div>
+  </div>
+</div>

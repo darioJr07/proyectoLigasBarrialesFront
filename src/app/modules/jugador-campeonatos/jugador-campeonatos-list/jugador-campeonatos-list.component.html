@@ -1,0 +1,172 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="jugador-campeonatos-container">
+    <div class="header">
+      <h2>Habilitación de Jugadores</h2>
+      <div class="header-actions">
+        <button *ngIf="canApprove()" class="btn-warning" routerLink="/jugador-campeonatos/pendientes">
+          ⏳ Ver Solo Pendientes
+        </button>
+        <button *ngIf="canCreate()" class="btn-primary" routerLink="/jugador-campeonatos/habilitar" [queryParams]="{campeonatoId: campeonatoId}">
+          <span class="icon">+</span> Habilitar Jugadores
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="campeonatoNombre" class="info-panel">
+      <div class="info-item">
+        <strong>Campeonato:</strong> {{ campeonatoNombre }}
+      </div>
+      <button class="btn-secondary" routerLink="/campeonatos">← Volver a Campeonatos</button>
+    </div>
+
+    <div class="info-panel info-help">
+      <strong>ℹ️ Información importante sobre rechazos:</strong> 
+      <br>• Las habilitaciones rechazadas se muestran con borde rojo y el motivo del rechazo.
+      <br>• Puede crear una nueva solicitud para el mismo jugador usando el botón "Habilitar Jugadores".
+      <br>• Use el botón 📋 para ver el historial completo de habilitaciones de un jugador.
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando habilitaciones...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && jugadorCampeonatos.length === 0" class="empty-state">
+      <p>No hay jugadores habilitados</p>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/jugador-campeonatos/habilitar" [queryParams]="{campeonatoId: campeonatoId}">
+        <span class="icon">+</span> Habilitar Primer Jugador
+      </button>
+    </div>
+
+    <div *ngIf="!loading && jugadorCampeonatos.length > 0" class="jugador-campeonatos-grid">
+      <div *ngFor="let jc of jugadorCampeonatos" class="jugador-campeonato-card" 
+           [class.habilitado]="jc.estado === 'habilitado'"
+           [class.pendiente]="jc.estado === 'pendiente'"
+           [class.rechazado]="jc.estado === 'rechazado'"
+           [class.inactive]="!jc.activo">
+        
+        <div class="card-header">
+          <div class="jugador-info">
+            <div class="jugador-nombre-container">
+              <h3>{{ jc.jugador?.nombre || 'Jugador' }}</h3>
+              <span class="numero-posicion">#{{ jc.numeroCancha }} - {{ jc.posicion }}</span>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="status-badge" 
+                  [class.status-habilitado]="jc.estado === 'habilitado'"
+                  [class.status-pending]="jc.estado === 'pendiente'"
+                  [class.status-rejected]="jc.estado === 'rechazado'">
+              {{ getEstadoText(jc.estado) }}
+            </span>
+            <span *ngIf="!jc.activo" class="status-badge status-inactive">
+              Inactivo
+            </span>
+          </div>
+        </div>
+
+        <!-- Sección de imágenes -->
+        <div class="images-section">
+          <div class="image-container">
+            <label class="image-label">Foto del Jugador</label>
+            <img
+              *ngIf="jc.jugador?.imagen"
+              [src]="jc.jugador.imagen"
+              alt="Foto de {{ jc.jugador.nombre }}"
+              class="player-image"
+            />
+            <div class="player-photo-placeholder" *ngIf="!jc.jugador?.imagen">
+              👤
+            </div>
+          </div>
+          <div class="image-container">
+            <label class="image-label">Cédula</label>
+            <img
+              *ngIf="jc.jugador?.imagenCedula"
+              [src]="jc.jugador.imagenCedula"
+              alt="Cédula de {{ jc.jugador.nombre }}"
+              class="cedula-image"
+              (click)="openImageModal(jc.jugador.imagenCedula)"
+            />
+            <div class="cedula-placeholder" *ngIf="!jc.jugador?.imagenCedula">
+              📄
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <p><strong>Equipo:</strong> {{ jc.equipo?.nombre || 'N/A' }}</p>
+          <p><strong>Categoría:</strong> {{ jc.categoria?.nombre || 'N/A' }}</p>
+          <p><strong>Cédula:</strong> {{ jc.jugador?.cedula || 'N/A' }}</p>
+          <p><strong>Fecha Solicitud:</strong> {{ jc.fechaInscripcion | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p *ngIf="jc.fechaAprobacion"><strong>Fecha Aprobación:</strong> {{ jc.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</p>
+          
+          <!-- Mensaje especial para habilitaciones rechazadas -->
+          <div *ngIf="jc.estado === 'rechazado' && !jc.activo" class="rechazo-info">
+            <p class="rechazo-title"><strong>⚠️ SOLICITUD RECHAZADA</strong></p>
+            <p *ngIf="jc.observaciones" class="observaciones-rechazo">
+              <strong>Motivo del rechazo:</strong><br>
+              {{ jc.observaciones }}
+            </p>
+            <p class="rechazo-accion">
+              💡 Puede crear una nueva solicitud corrigiendo los detalles mencionados usando el botón "Habilitar Jugadores" en la parte superior.
+            </p>
+          </div>
+          
+          <!-- Observaciones normales para otros estados -->
+          <p *ngIf="jc.observaciones && (jc.estado !== 'rechazado' || jc.activo)" class="observaciones">
+            <strong>Observaciones:</strong> {{ jc.observaciones }}
+          </p>
+        </div>
+
+        <div class="card-actions">
+          <button *ngIf="canApprove() && jc.estado === 'pendiente'" 
+                  class="btn-icon success" 
+                  (click)="aprobar(jc.id)" 
+                  title="Aprobar Habilitación">
+            ✅
+          </button>
+          <button *ngIf="canApprove() && jc.estado === 'pendiente'" 
+                  class="btn-icon danger" 
+                  (click)="rechazar(jc.id)" 
+                  title="Rechazar Habilitación">
+            ❌
+          </button>
+          <button class="btn-icon" 
+                  (click)="verHistorial(jc.jugadorId)" 
+                  title="Ver Historial">
+            📋
+          </button>
+          <button *ngIf="canEdit() && jc.estado === 'pendiente'" 
+                  class="btn-icon" 
+                  (click)="editar(jc.id)" 
+                  title="Editar">
+            ✏️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para ampliar imagen de cédula -->
+    <div class="modal-overlay" *ngIf="showImageModal" (click)="closeImageModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <button class="modal-close" (click)="closeImageModal()">✕</button>
+        <img [src]="modalImageUrl" alt="Cédula ampliada" class="modal-image">
+      </div>
+    </div>
+  </div>
+</div>

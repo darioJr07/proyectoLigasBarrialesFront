@@ -1,0 +1,129 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>⚽ Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">{{ user.rol.nombre }}</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-title">
+    <h2>⏳ Transferencias Pendientes - Equipo Origen</h2>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        routerLink="/transferencias"
+      >
+        ← Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <p>
+      <strong>ℹ️ Información:</strong> Estas son las solicitudes de transferencia
+      de jugadores de su equipo. Si aprueba, el jugador podrá ser transferido al
+      nuevo equipo una vez que el directivo de la liga también apruebe la
+      transferencia.
+    </p>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <p>Cargando...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && transferencias.length === 0">
+    <p>✅ No hay transferencias pendientes de su aprobación</p>
+  </div>
+
+  <div class="cards-grid" *ngIf="!loading && transferencias.length > 0">
+    <div class="card" *ngFor="let transferencia of transferencias">
+      <div class="card-header">
+        <div class="player-info">
+          <img
+            *ngIf="transferencia.jugador?.fotoPerfil"
+            [src]="transferencia.jugador.fotoPerfil"
+            alt="{{ transferencia.jugador.nombreCompleto }}"
+            class="player-photo"
+          />
+          <div
+            class="player-photo-placeholder"
+            *ngIf="!transferencia.jugador?.fotoPerfil"
+          >
+            👤
+          </div>
+          <div>
+            <h3>{{ transferencia.jugador?.nombreCompleto }}</h3>
+            <p class="player-detail">{{ transferencia.jugador?.cedula }}</p>
+          </div>
+        </div>
+        <span class="badge badge-pendiente">Pendiente</span>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Campeonato:</span>
+          <span class="value">{{ transferencia.campeonato?.nombre }}</span>
+        </div>
+
+        <div class="transfer-flow">
+          <div class="team-box origin">
+            <span class="team-label">Equipo Actual</span>
+            <span class="team-name">{{
+              transferencia.equipoOrigen?.nombre
+            }}</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="team-box destination">
+            <span class="team-label">Equipo Destino</span>
+            <span class="team-name">{{
+              transferencia.equipoDestino?.nombre
+            }}</span>
+          </div>
+        </div>
+
+        <div class="info-row" *ngIf="transferencia.observaciones">
+          <span class="label">Observaciones:</span>
+          <span class="value">{{ transferencia.observaciones }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Fecha Solicitud:</span>
+          <span class="value">{{
+            transferencia.fechaSolicitud | date: 'short'
+          }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          type="button"
+          class="btn-icon btn-success"
+          (click)="aprobar(transferencia.id)"
+          title="Aprobar"
+        >
+          ✅
+        </button>
+        <button
+          type="button"
+          class="btn-icon btn-danger"
+          (click)="rechazar(transferencia.id)"
+          title="Rechazar"
+        >
+          ❌
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

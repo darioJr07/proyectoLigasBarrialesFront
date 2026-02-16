@@ -1,0 +1,561 @@
+.page-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.page-header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .user-role {
+      color: #95a5a6;
+      font-size: 0.9rem;
+    }
+
+    .btn-logout {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+
+      &:hover {
+        background-color: #c0392b;
+      }
+    }
+  }
+}
+
+.main-nav {
+  background-color: #34495e;
+  padding: 0 2rem;
+  display: flex;
+  gap: 1rem;
+
+  a {
+    color: #ecf0f1;
+    text-decoration: none;
+    padding: 1rem 1.5rem;
+    display: inline-block;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #2c3e50;
+    }
+
+    &.active {
+      background-color: #3498db;
+      font-weight: bold;
+    }
+  }
+}
+
+.jugador-campeonatos-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+
+  h2 {
+    margin: 0;
+    color: #333;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+}
+
+.info-panel {
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .info-item {
+    strong {
+      color: #333;
+      margin-right: 8px;
+    }
+    color: #666;
+  }
+
+  &.info-help {
+    background: #e8f4fd;
+    border-left-color: #3498db;
+    display: block;
+    
+    strong {
+      color: #2c3e50;
+      display: inline;
+    }
+  }
+}
+
+.btn-primary, .btn-secondary, .btn-warning {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+
+  .icon {
+    font-size: 1.2rem;
+  }
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+
+  &:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.btn-warning {
+  background: #f39c12;
+  color: white;
+  font-weight: 600;
+
+  &:hover {
+    background: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+  }
+}
+
+.loading, .error-message, .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+.error-message {
+  color: #e53e3e;
+  background: #fff5f5;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.empty-state {
+  background: white;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  p {
+    color: #666;
+    margin-bottom: 20px;
+  }
+}
+
+.jugador-campeonatos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.jugador-campeonato-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid #667eea;
+
+  &.habilitado {
+    border-left-color: #27ae60;
+  }
+
+  &.pendiente {
+    border-left-color: #f39c12;
+  }
+
+  &.rechazado {
+    border-left-color: #e74c3c;
+  }
+
+  &.inactive {
+    opacity: 0.6;
+    background: #f5f5f5;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.jugador-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.jugador-foto {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #667eea;
+}
+
+.jugador-nombre-container {
+  h3 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+  }
+
+  .numero-posicion {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+.badges {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-habilitado {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-inactive {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.card-body {
+  margin-bottom: 15px;
+
+  p {
+    margin: 8px 0;
+    color: #555;
+    font-size: 0.95rem;
+
+    strong {
+      color: #333;
+      margin-right: 5px;
+    }
+  }
+
+  .observaciones {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #f39c12;
+    margin-top: 10px;
+  }
+
+  .rechazo-info {
+    background: #ffebee;
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+
+    .rechazo-title {
+      color: #c0392b;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .observaciones-rechazo {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid #e74c3c;
+      margin: 10px 0;
+      line-height: 1.6;
+      
+      strong {
+        color: #c0392b;
+        display: block;
+        margin-bottom: 5px;
+      }
+    }
+
+    .rechazo-accion {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #f39c12;
+      color: #856404;
+      font-size: 0.95rem;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+  }
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-icon {
+  background: #f0f0f0;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+ 
+ &:hover {
+    background: #e0e0e0;
+    transform: scale(1.1);
+  }
+
+  &.success {
+    background: #d4edda;
+    color: #155724;
+
+    &:hover {
+      background: #c3e6cb;
+    }
+  }
+
+  &.danger {
+    background: #f8d7da;
+    color: #721c24;
+
+    &:hover {
+      background: #f5c6cb;
+    }
+  }
+}
+
+// Sección de imágenes (foto + cédula)
+.images-section {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 15px;
+
+  .image-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .image-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .player-image,
+    .cedula-image {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: white;
+      border: 2px solid #dee2e6;
+      padding: 0.5rem;
+    }
+
+    .cedula-image {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+
+      &:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .player-photo-placeholder,
+    .cedula-placeholder {
+      width: 100%;
+      height: 180px;
+      border-radius: 8px;
+      background: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #adb5bd;
+      border: 2px dashed #dee2e6;
+    }
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Modal para ampliar imagen de cédula
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in-out;
+  cursor: pointer;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.2s ease-in-out;
+  cursor: default;
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  z-index: 1;
+
+  &:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+  }
+}
+
+.modal-image {
+  display: block;
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}

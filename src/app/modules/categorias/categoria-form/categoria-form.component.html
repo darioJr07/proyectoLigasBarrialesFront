@@ -1,0 +1,106 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2>{{ isEditMode ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+    </div>
+
+    <form [formGroup]="categoriaForm" (ngSubmit)="onSubmit()" class="categoria-form">
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label for="nombre">Nombre de la Categoría *</label>
+        <input
+          type="text"
+          id="nombre"
+          formControlName="nombre"
+          placeholder="Ej: Sub-20, Primera División, etc."
+          [class.error]="hasError('nombre', 'required') || hasError('nombre', 'maxlength')"
+        />
+        <span *ngIf="getErrorMessage('nombre')" class="field-error">
+          {{ getErrorMessage('nombre') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea
+          id="descripcion"
+          formControlName="descripcion"
+          rows="3"
+          placeholder="Descripción de la categoría..."
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="orden">Orden *</label>
+          <input
+            type="number"
+            id="orden"
+            formControlName="orden"
+            placeholder="1, 2, 3..."
+            min="1"
+            [class.error]="hasError('orden', 'required') || hasError('orden', 'min')"
+          />
+          <span *ngIf="getErrorMessage('orden')" class="field-error">
+            {{ getErrorMessage('orden') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="equiposAscienden">Equipos que Ascienden</label>
+          <input
+            type="number"
+            id="equiposAscienden"
+            formControlName="equiposAscienden"
+            placeholder="0"
+            min="0"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="equiposDescienden">Equipos que Descienden</label>
+          <input
+            type="number"
+            id="equiposDescienden"
+            formControlName="equiposDescienden"
+            placeholder="0"
+            min="0"
+          />
+        </div>
+
+        <div class="form-group" *ngIf="isEditMode">
+          <label>
+            <input type="checkbox" formControlName="activo" />
+            Categoría Activa
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="categoriaForm.invalid || loading">
+          <span *ngIf="loading">Guardando...</span>
+          <span *ngIf="!loading">{{ isEditMode ? 'Actualizar' : 'Crear' }} Categoría</span>
+        </button>
+        <button type="button" class="btn-secondary" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

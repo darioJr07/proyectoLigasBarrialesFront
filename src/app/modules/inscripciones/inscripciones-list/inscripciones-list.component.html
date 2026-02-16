@@ -1,0 +1,111 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="inscripciones-container">
+    <div class="header">
+      <h2>Inscripciones</h2>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/inscripciones/nuevo" [queryParams]="{campeonatoId: campeonatoId}">
+        <span class="icon">+</span> Nueva Inscripción
+      </button>
+    </div>
+
+    <div *ngIf="campeonatoNombre" class="info-panel">
+      <div class="info-item">
+        <strong>Campeonato:</strong> {{ campeonatoNombre }}
+      </div>
+      <button class="btn-secondary" routerLink="/campeonatos">← Volver a Campeonatos</button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando inscripciones...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && inscripciones.length === 0" class="empty-state">
+      <p>No hay inscripciones registradas</p>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/inscripciones/nuevo" [queryParams]="{campeonatoId: campeonatoId}">
+        <span class="icon">+</span> Crear Primera Inscripción
+      </button>
+    </div>
+
+    <div *ngIf="!loading && inscripciones.length > 0" class="inscripciones-grid">
+      <div *ngFor="let inscripcion of inscripciones" class="inscripcion-card" 
+           [class.confirmada]="inscripcion.estado === 'confirmada'"
+           [class.pendiente]="inscripcion.estado === 'pendiente'"
+           [class.rechazada]="inscripcion.estado === 'rechazada'"
+           [class.inactive]="!inscripcion.activo">
+        <div class="inscripcion-header">
+          <h3>{{ inscripcion.equipo?.nombre || 'Equipo' }}</h3>
+          <div class="badges">
+            <span class="status-badge" 
+                  [class.status-confirmed]="inscripcion.estado === 'confirmada'"
+                  [class.status-pending]="inscripcion.estado === 'pendiente'"
+                  [class.status-rejected]="inscripcion.estado === 'rechazada'">
+              {{ getEstadoText(inscripcion.estado) }}
+            </span>
+            <span *ngIf="!inscripcion.activo" class="status-badge status-inactive">
+              Inactiva
+            </span>
+          </div>
+        </div>
+        
+        <div class="inscripcion-body">
+          <p><strong>Liga:</strong> {{ inscripcion.equipo?.liga?.nombre || 'N/A' }}</p>
+          <p><strong>Categoría:</strong> {{ inscripcion.categoria?.nombre || 'N/A' }}</p>
+          <p><strong>Fecha de Inscripción:</strong> {{ inscripcion.fechaInscripcion | date:'dd/MM/yyyy' }}</p>
+          <p *ngIf="inscripcion.observaciones" class="observaciones">
+            <strong>Observaciones:</strong> {{ inscripcion.observaciones }}
+          </p>
+          <div *ngIf="inscripcion.estado === 'rechazada'" class="reintentar-info">
+            💡 Esta inscripción fue rechazada. Puedes intentar inscribirte nuevamente.
+          </div>
+        </div>
+
+        <div class="inscripcion-actions">
+          <button *ngIf="inscripcion.estado === 'rechazada' && (currentUser?.rol?.nombre === 'dirigente_equipo' || canConfirm())" 
+                  class="btn-icon reintentar" 
+                  (click)="reintentarInscripcion(inscripcion)"
+                  title="Reintentar Inscripción">
+            🔄
+          </button>
+          <button *ngIf="canConfirm() && inscripcion.estado === 'pendiente'" 
+                  class="btn-icon success" 
+                  (click)="confirmarInscripcion(inscripcion.id)"
+                  title="Confirmar">
+            ✅
+          </button>
+          <button *ngIf="canConfirm() && inscripcion.estado === 'pendiente'" 
+                  class="btn-icon danger" 
+                  (click)="rechazarInscripcion(inscripcion.id)"
+                  title="Rechazar">
+            ❌
+          </button>
+          <button *ngIf="canEdit()" 
+                  class="btn-icon" 
+                  (click)="editarInscripcion(inscripcion.id)"
+                  title="Editar">
+            ✏️
+          </button>
+          <button *ngIf="canEdit()" 
+                  class="btn-icon danger" 
+                  (click)="eliminarInscripcion(inscripcion.id)"
+                  title="Eliminar">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

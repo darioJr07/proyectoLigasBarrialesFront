@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+dist/
+tmp/
+out-tsc/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+
+# Angular cache
+.angular/

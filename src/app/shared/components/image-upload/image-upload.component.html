@@ -1,0 +1,42 @@
+<div class="image-upload-container">
+  <div class="upload-label">{{ label }}</div>
+  
+  <!-- Preview de imagen -->
+  <div class="image-preview" *ngIf="displayImageUrl">
+    <img [src]="displayImageUrl" [alt]="label">
+    <button type="button" class="btn-remove" (click)="clearImage()" *ngIf="!uploading" title="Eliminar">
+      ✕
+    </button>
+  </div>
+
+  <!-- Input de archivo (oculto) -->
+  <input 
+    type="file" 
+    #fileInput 
+    (change)="onFileSelected($event)"
+    accept="image/*"
+    style="display: none">
+
+  <!-- Botón para seleccionar archivo -->
+  <button 
+    type="button" 
+    class="btn-upload" 
+    (click)="fileInput.click()"
+    [disabled]="uploading">
+    <span *ngIf="!uploading">📁 Examinar...</span>
+    <span *ngIf="uploading">⏳ Subiendo...</span>
+  </button>
+
+  <!-- Barra de progreso -->
+  <div class="progress-bar" *ngIf="uploading">
+    <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+    <span class="progress-text">{{ uploadProgress }}%</span>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <small class="help-text">Máximo 2MB. Formatos: JPG, PNG, WEBP</small>
+</div>

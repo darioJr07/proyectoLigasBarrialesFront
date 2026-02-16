@@ -1,0 +1,152 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2>{{ isEditMode ? 'Editar Jugador' : 'Nuevo Jugador' }}</h2>
+      <button class="btn-back" (click)="cancel()">← Volver</button>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="jugadorForm" (ngSubmit)="onSubmit()" class="jugador-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombre">Nombre Completo *</label>
+          <input 
+            type="text" 
+            id="nombre" 
+            formControlName="nombre" 
+            placeholder="Ej: Carlos Rodríguez"
+            [class.error]="jugadorForm.get('nombre')?.invalid && jugadorForm.get('nombre')?.touched">
+          <small class="error-text" *ngIf="jugadorForm.get('nombre')?.hasError('required') && jugadorForm.get('nombre')?.touched">
+            El nombre es requerido
+          </small>
+          <small class="error-text" *ngIf="jugadorForm.get('nombre')?.hasError('minlength') && jugadorForm.get('nombre')?.touched">
+            El nombre debe tener al menos 3 caracteres
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="cedula">Cédula *</label>
+          <input 
+            type="text" 
+            id="cedula" 
+            formControlName="cedula" 
+            placeholder="Ej: 1234567890"
+            maxlength="10"
+            [class.error]="jugadorForm.get('cedula')?.invalid && jugadorForm.get('cedula')?.touched">
+          <small class="error-text" *ngIf="jugadorForm.get('cedula')?.hasError('required') && jugadorForm.get('cedula')?.touched">
+            La cédula es requerida
+          </small>
+          <small class="error-text" *ngIf="jugadorForm.get('cedula')?.hasError('pattern') && jugadorForm.get('cedula')?.touched">
+            La cédula debe tener 10 dígitos
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+          <input 
+            type="date" 
+            id="fechaNacimiento" 
+            formControlName="fechaNacimiento"
+            [class.error]="jugadorForm.get('fechaNacimiento')?.invalid && jugadorForm.get('fechaNacimiento')?.touched">
+          <small class="error-text" *ngIf="jugadorForm.get('fechaNacimiento')?.invalid && jugadorForm.get('fechaNacimiento')?.touched">
+            La fecha de nacimiento es requerida
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="equipoId">Equipo</label>
+          <select 
+            id="equipoId" 
+            formControlName="equipoId">
+            <option value="">Sin equipo</option>
+            <option *ngFor="let equipo of equipos" [value]="equipo.id">
+              {{ equipo.nombre }} ({{ equipo.liga.nombre }})
+            </option>
+          </select>
+          <small class="help-text">Opcional: Asignar jugador a un equipo</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción / Notas</label>
+        <textarea 
+          id="descripcion" 
+          formControlName="descripcion" 
+          rows="4"
+          placeholder="Observaciones adicionales..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="numeroCancha">Número de Camiseta</label>
+          <input 
+            type="number" 
+            id="numeroCancha" 
+            formControlName="numeroCancha"
+            min="1"
+            max="99"
+            placeholder="Ej: 10">
+          <small class="help-text">Opcional: Número entre 1 y 99</small>
+        </div>
+
+        <div class="form-group">
+          <label for="posicion">Posición</label>
+          <select id="posicion" formControlName="posicion">
+            <option value="">Seleccionar posición</option>
+            <option value="Portero">Portero</option>
+            <option value="Defensa">Defensa</option>
+            <option value="Mediocampista">Mediocampista</option>
+            <option value="Delantero">Delantero</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <app-image-upload 
+          [tipo]="'jugador'"
+          [ligaId]="selectedLigaId"
+          [currentImageUrl]="jugadorForm.get('imagen')?.value"
+          [label]="'Foto del Jugador'"
+          (imageUploaded)="onImageUploaded($event)"
+          (uploadError)="onImageUploadError($event)"
+        ></app-image-upload>
+      </div>
+
+      <div class="form-group">
+        <app-image-upload 
+          [tipo]="'cedula'"
+          [ligaId]="selectedLigaId"
+          [currentImageUrl]="jugadorForm.get('imagenCedula')?.value"
+          [label]="'Imagen de Cédula (Frontal)'"
+          (imageUploaded)="onImageCedulaUploaded($event)"
+          (uploadError)="onImageUploadError($event)"
+        ></app-image-upload>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading || jugadorForm.invalid">
+          {{ loading ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Crear') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

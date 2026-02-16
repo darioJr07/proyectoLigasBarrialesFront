@@ -1,0 +1,10 @@
+<nav class="main-nav">
+  <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">🏠 Inicio</a>
+  <a *ngIf="permissions.canAccessLigas()" routerLink="/ligas" routerLinkActive="active">🏆 Ligas</a>
+  <a *ngIf="permissions.canAccessEquipos()" routerLink="/equipos" routerLinkActive="active">⚽ Equipos</a>
+  <a *ngIf="permissions.canAccessJugadores()" routerLink="/jugadores" routerLinkActive="active">👥 Jugadores</a>
+  <a *ngIf="permissions.canAccessCampeonatos()" routerLink="/campeonatos" routerLinkActive="active">🏅 Campeonatos</a>
+  <a *ngIf="permissions.canAccessJugadorCampeonatos()" routerLink="/jugador-campeonatos" routerLinkActive="active">✅ Habilitaciones</a>
+  <a *ngIf="permissions.canAccessTransferencias()" routerLink="/transferencias" routerLinkActive="active">🔄 Transferencias</a>
+  <a *ngIf="permissions.canAccessUsuarios()" routerLink="/usuarios" routerLinkActive="active">👤 Usuarios</a>
+</nav>

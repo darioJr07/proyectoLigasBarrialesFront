@@ -1,0 +1,83 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="equipo-detail-container">
+    <header class="detail-header">
+      <button class="btn-back" (click)="goBack()">
+        ← Volver a Equipos
+      </button>
+      <h2>Detalles del Equipo</h2>
+    </header>
+
+    <div *ngIf="loading" class="loading">
+      Cargando detalles...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && equipo" class="equipo-detail-card">
+      <div class="equipo-header">
+        <div class="header-content">
+          <div class="equipo-image" *ngIf="equipo.imagen">
+            <img [src]="equipo.imagen" [alt]="equipo.nombre">
+          </div>
+          <div class="header-text">
+            <h1>{{ equipo.nombre }}</h1>
+            <span class="status-badge" [class.active]="equipo.activo">
+              {{ equipo.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="equipo-info-section">
+        <div class="info-row">
+          <label>Liga:</label>
+          <p>{{ equipo.liga.nombre }}</p>
+        </div>
+
+        <div class="info-row">
+          <label>Dirigente:</label>
+          <p>{{ equipo.dirigente.nombre }}</p>
+        </div>
+
+        <div class="info-row">
+          <label>Email del Dirigente:</label>
+          <p>{{ equipo.dirigente.email }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="equipo.representante">
+          <label>Representante:</label>
+          <p>{{ equipo.representante }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="equipo.fundacion">
+          <label>Fecha de Fundación:</label>
+          <p>{{ equipo.fundacion | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <div class="info-row" *ngIf="equipo.descripcion">
+          <label>Descripción:</label>
+          <p>{{ equipo.descripcion }}</p>
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="permissions.canEditEquipo()">
+        <button class="btn-primary" (click)="editEquipo()">
+          ✏️ Editar Equipo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

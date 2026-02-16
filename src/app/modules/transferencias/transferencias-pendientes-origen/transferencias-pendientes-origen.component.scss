@@ -1,0 +1,372 @@
+.page-container {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .user-role {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .btn-logout {
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+.main-nav {
+  background: #2c3e50;
+  padding: 0 2rem;
+  display: flex;
+  gap: 0.5rem;
+
+  a {
+    padding: 1rem 1.5rem;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom-color: #3498db;
+    }
+  }
+}
+
+.page-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  background: white;
+  border-bottom: 1px solid #eee;
+
+  h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+  }
+}
+
+.info-box,
+.alert,
+.loading-spinner,
+.empty-state,
+.cards-grid,
+.alert,
+.loading-spinner,
+.empty-state,
+.cards-grid {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.info-box {
+  padding: 1rem;
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+
+  p {
+    margin: 0;
+    color: #1565c0;
+    line-height: 1.6;
+  }
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+
+  &.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  &.alert-error {
+    background-color: #fee;
+    color: #c33;
+    border: 1px solid #fcc;
+  }
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 3rem;
+  color: #7f8c8d;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #7f8c8d;
+  font-size: 1.2rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .player-photo {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+      }
+
+      .player-photo-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        border: 2px solid white;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .player-detail {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 1.5rem;
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .label {
+        color: #7f8c8d;
+        font-weight: 500;
+      }
+
+      .value {
+        color: #2c3e50;
+        text-align: right;
+        flex: 1;
+        margin-left: 1rem;
+      }
+    }
+
+    .transfer-flow {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+
+      .team-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        &.origin {
+          .team-name {
+            color: #e74c3c;
+          }
+        }
+
+        &.destination {
+          .team-name {
+            color: #27ae60;
+          }
+        }
+
+        .team-label {
+          font-size: 0.75rem;
+          color: #7f8c8d;
+          text-transform: uppercase;
+        }
+
+        .team-name {
+          font-weight: 600;
+        }
+      }
+
+      .arrow {
+        font-size: 1.5rem;
+        color: #3498db;
+      }
+    }
+  }
+
+  .card-actions {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    border-top: 1px solid #e9ecef;
+  }
+}
+
+.badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.badge-pendiente {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+}
+
+.btn,
+.btn-icon {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: #7f8c8d;
+  }
+}
+
+.btn-icon {
+  padding: 0.5rem 0.75rem;
+  font-size: 1.2rem;
+  min-width: 42px;
+
+  &.btn-success {
+    background-color: #27ae60;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #229954;
+    }
+  }
+
+  &.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #c0392b;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

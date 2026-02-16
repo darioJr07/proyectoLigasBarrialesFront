@@ -1,0 +1,115 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2>{{ isEditMode ? 'Editar Inscripción' : 'Nueva Inscripción' }}</h2>
+    </div>
+
+    <div *ngIf="isReintentar" class="info-message reintentar">
+      🔄 <strong>Reintento de Inscripción:</strong> La inscripción anterior fue rechazada. 
+      Puedes corregir la información y volver a enviar tu solicitud.
+    </div>
+
+    <form [formGroup]="inscripcionForm" (ngSubmit)="onSubmit()" class="inscripcion-form">
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label for="campeonatoId">Campeonato *</label>
+        <select
+          id="campeonatoId"
+          formControlName="campeonatoId"
+          [class.error]="hasError('campeonatoId', 'required')"
+        >
+          <option value="">Seleccione un campeonato</option>
+          <option *ngFor="let campeonato of campeonatos" [value]="campeonato.id">
+            {{ campeonato.nombre }}
+          </option>
+        </select>
+        <span *ngIf="getErrorMessage('campeonatoId')" class="field-error">
+          {{ getErrorMessage('campeonatoId') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="categoriaId">Categoría *</label>
+        <select
+          id="categoriaId"
+          formControlName="categoriaId"
+          [class.error]="hasError('categoriaId', 'required')"
+          [disabled]="categorias.length === 0"
+        >
+          <option value="">Seleccione una categoría</option>
+          <option *ngFor="let categoria of categorias" [value]="categoria.id">
+            {{ categoria.nombre }}
+          </option>
+        </select>
+        <span *ngIf="getErrorMessage('categoriaId')" class="field-error">
+          {{ getErrorMessage('categoriaId') }}
+        </span>
+        <small *ngIf="categorias.length === 0 && inscripcionForm.get('campeonatoId')?.value" class="help-text">
+          No hay categorías disponibles para este campeonato
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="equipoId">Equipo *</label>
+        <select
+          id="equipoId"
+          formControlName="equipoId"
+          [class.error]="hasError('equipoId', 'required')"
+          [class.disabled]="inscripcionForm.get('equipoId')?.disabled"
+        >
+          <option value="">Seleccione un equipo</option>
+          <option *ngFor="let equipo of equipos" [value]="equipo.id">
+            {{ equipo.nombre }}
+          </option>
+        </select>
+        <span *ngIf="getErrorMessage('equipoId')" class="field-error">
+          {{ getErrorMessage('equipoId') }}
+        </span>
+        <small *ngIf="inscripcionForm.get('equipoId')?.disabled" class="help-text help-info">
+          ℹ️ Tu equipo está pre-seleccionado automáticamente
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="observaciones">Observaciones</label>
+        <textarea
+          id="observaciones"
+          formControlName="observaciones"
+          rows="4"
+          placeholder="Observaciones adicionales..."
+        ></textarea>
+      </div>
+
+      <div class="form-group" *ngIf="isEditMode">
+        <label>
+          <input type="checkbox" formControlName="activo" />
+          Inscripción Activa
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="inscripcionForm.invalid || loading">
+          <span *ngIf="loading">Guardando...</span>
+          <span *ngIf="!loading">{{ isEditMode ? 'Actualizar' : 'Crear' }} Inscripción</span>
+        </button>
+        <button type="button" class="btn-secondary" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

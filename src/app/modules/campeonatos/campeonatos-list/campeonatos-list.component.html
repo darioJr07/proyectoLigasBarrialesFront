@@ -1,0 +1,68 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="campeonatos-container">
+    <div class="header">
+      <h2>Gestión de Campeonatos</h2>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/campeonatos/nuevo">
+        <span class="icon">+</span> Nuevo Campeonato
+      </button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando campeonatos...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && campeonatos.length === 0" class="empty-state">
+      <p>No hay campeonatos registrados</p>
+      <button *ngIf="canCreate()" class="btn-secondary" routerLink="/campeonatos/nuevo">
+        Crear primer campeonato
+      </button>
+    </div>
+
+    <div *ngIf="!loading && campeonatos.length > 0" class="campeonatos-grid">
+      <div *ngFor="let campeonato of campeonatos" class="campeonato-card" [class.inactive]="!campeonato.activo">
+        <div class="campeonato-header">
+          <h3>{{ campeonato.nombre }}</h3>
+          <span class="status-badge" [ngClass]="getEstadoClass(campeonato.estado)">
+            {{ getEstadoTexto(campeonato.estado) }}
+          </span>
+        </div>
+        <div class="campeonato-info">
+          <p><strong>Liga:</strong> {{ campeonato.liga?.nombre }}</p>
+          <p *ngIf="campeonato.descripcion" class="descripcion">{{ campeonato.descripcion }}</p>
+          <p><strong>Inicio:</strong> {{ campeonato.fechaInicio | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Fin:</strong> {{ campeonato.fechaFin | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Límite inscripción:</strong> {{ campeonato.fechaLimiteInscripcion | date:'dd/MM/yyyy' }}</p>
+        </div>
+        <div class="campeonato-actions">
+          <button class="btn-icon" (click)="verCategorias(campeonato.id)" title="Ver Categorías">
+            📋
+          </button>
+          <button class="btn-icon" (click)="verInscripciones(campeonato.id)" title="Ver Inscripciones">
+            📝
+          </button>
+          <button *ngIf="canEdit()" class="btn-icon" (click)="editarCampeonato(campeonato.id)" title="Editar">
+            ✏️
+          </button>
+          <button *ngIf="canEdit()" class="btn-icon danger" (click)="eliminarCampeonato(campeonato.id)" title="Deshabilitar">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

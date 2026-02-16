@@ -1,0 +1,119 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="jugadores-container">
+    <div class="header">
+      <h2>Gestión de Jugadores</h2>
+      <button 
+        *ngIf="permissions.canCreateJugador() && canCreateJugador()" 
+        class="btn-primary" 
+        (click)="createJugador()">
+        <span class="icon">+</span> Nuevo Jugador
+      </button>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container" *ngIf="!loading && jugadores.length > 0">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar por nombre o cédula..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+        <button 
+          *ngIf="searchTerm" 
+          class="clear-btn" 
+          (click)="clearSearch()"
+          title="Limpiar búsqueda">
+          ✕
+        </button>
+      </div>
+      <div class="search-results" *ngIf="searchTerm">
+        <span>{{ filteredJugadores.length }} de {{ jugadores.length }} jugadores</span>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando jugadores...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && jugadores.length === 0" class="empty-state">
+      <p>No hay jugadores registrados</p>
+      <button class="btn-secondary" (click)="createJugador()">
+        Crear primer jugador
+      </button>
+    </div>
+
+    <div *ngIf="!loading && jugadores.length > 0 && filteredJugadores.length === 0" class="empty-state">
+      <p>No se encontraron jugadores con "{{ searchTerm }}"</p>
+      <button class="btn-secondary" (click)="clearSearch()">
+        Limpiar búsqueda
+      </button>
+    </div>
+
+    <div *ngIf="!loading && filteredJugadores.length > 0" class="jugadores-grid">
+      <div *ngFor="let jugador of filteredJugadores" class="jugador-card" [class.inactive]="!jugador.activo">
+        <div class="jugador-card-image" *ngIf="jugador.imagen">
+          <img [src]="jugador.imagen" [alt]="jugador.nombre">
+        </div>
+        <div class="jugador-header">
+          <h3>{{ jugador.nombre }}</h3>
+          <span class="status-badge" [class.active]="jugador.activo">
+            {{ jugador.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+        
+        <div class="jugador-info">
+          <p><strong>Cédula:</strong> {{ jugador.cedula }}</p>
+          <p><strong>Fecha Nac.:</strong> {{ jugador.fechaNacimiento | date: 'dd/MM/yyyy' }}</p>
+          <p *ngIf="jugador.equipo">
+            <strong>Equipo:</strong> {{ jugador.equipo.nombre }}
+          </p>
+          <p *ngIf="!jugador.equipo" class="sin-equipo">
+            <strong>Estado:</strong> Sin equipo
+          </p>
+          <p *ngIf="jugador.descripcion" class="descripcion">{{ jugador.descripcion }}</p>
+        </div>
+
+        <div class="jugador-actions">
+          <button class="btn-icon" (click)="viewJugador(jugador.id)" title="Ver detalles">
+            👁️
+          </button>
+          <button *ngIf="permissions.canEditJugador()" class="btn-icon" (click)="editJugador(jugador.id)" title="Editar">
+            ✏️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteJugador() && jugador.activo" 
+            class="btn-icon danger" 
+            (click)="disableJugador(jugador)" 
+            title="Desactivar">
+            🗑️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteJugador() && !jugador.activo" 
+            class="btn-icon danger" 
+            (click)="deleteJugadorPermanently(jugador)" 
+            title="Eliminar permanentemente">
+            ❌
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,126 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h2>{{ isEditMode ? 'Editar Equipo' : 'Nuevo Equipo' }}</h2>
+      <button class="btn-back" (click)="cancel()">← Volver</button>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="equipoForm" (ngSubmit)="onSubmit()" class="equipo-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombre">Nombre del Equipo *</label>
+          <input 
+            type="text" 
+            id="nombre" 
+            formControlName="nombre" 
+            placeholder="Ej: Deportivo Municipal"
+            [class.error]="equipoForm.get('nombre')?.invalid && equipoForm.get('nombre')?.touched">
+          <small class="error-text" *ngIf="equipoForm.get('nombre')?.hasError('required') && equipoForm.get('nombre')?.touched">
+            El nombre es requerido
+          </small>
+          <small class="error-text" *ngIf="equipoForm.get('nombre')?.hasError('minlength') && equipoForm.get('nombre')?.touched">
+            El nombre debe tener al menos 3 caracteres
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="representante">Representante</label>
+          <input 
+            type="text" 
+            id="representante" 
+            formControlName="representante" 
+            placeholder="Ej: Juan Pérez">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ligaId">Liga *</label>
+          <select 
+            id="ligaId" 
+            formControlName="ligaId"
+            [class.error]="equipoForm.get('ligaId')?.invalid && equipoForm.get('ligaId')?.touched">
+            <option value="">Seleccione una liga</option>
+            <option *ngFor="let liga of ligas" [value]="liga.id">
+              {{ liga.nombre }}
+            </option>
+          </select>
+          <small class="error-text" *ngIf="equipoForm.get('ligaId')?.invalid && equipoForm.get('ligaId')?.touched">
+            Debe seleccionar una liga
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="dirigenteId">Dirigente *</label>
+          <select 
+            id="dirigenteId" 
+            formControlName="dirigenteId"
+            [class.error]="equipoForm.get('dirigenteId')?.invalid && equipoForm.get('dirigenteId')?.touched">
+            <option value="">Seleccione un dirigente</option>
+            <option *ngFor="let dirigente of dirigentes" [value]="dirigente.id">
+              {{ dirigente.nombre }}
+            </option>
+          </select>
+          <small class="error-text" *ngIf="equipoForm.get('dirigenteId')?.invalid && equipoForm.get('dirigenteId')?.touched">
+            Debe seleccionar un dirigente
+          </small>
+          <small class="help-text">Nota: Se cargará endpoint para traer dirigentes disponibles</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fundacion">Fecha de Fundación</label>
+          <input 
+            type="date" 
+            id="fundacion" 
+            formControlName="fundacion">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea 
+          id="descripcion" 
+          formControlName="descripcion" 
+          rows="4"
+          placeholder="Descripción del equipo..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <app-image-upload 
+          [tipo]="'equipo'"
+          [ligaId]="equipoForm.get('ligaId')?.value"
+          [currentImageUrl]="equipoForm.get('imagen')?.value"
+          [label]="'Escudo del Equipo'"
+          (imageUploaded)="onImageUploaded($event)"
+          (uploadError)="onImageUploadError($event)"
+        ></app-image-upload>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading || equipoForm.invalid">
+          {{ loading ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Crear') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

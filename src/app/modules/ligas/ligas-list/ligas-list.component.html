@@ -1,0 +1,79 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="ligas-container">
+    <div class="header">
+      <h2>Gestión de Ligas</h2>
+      <button *ngIf="permissions.canCreateLiga()" class="btn-primary" (click)="createLiga()">
+        <span class="icon">+</span> Nueva Liga
+      </button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando ligas...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && ligas.length === 0" class="empty-state">
+      <p>No hay ligas registradas</p>
+      <button *ngIf="permissions.canCreateLiga()" class="btn-secondary" (click)="createLiga()">
+        Crear primera liga
+      </button>
+    </div>
+
+    <div *ngIf="!loading && ligas.length > 0" class="ligas-grid">
+      <div *ngFor="let liga of ligas" class="liga-card" [class.inactive]="!liga.activo">
+        <div class="liga-card-image" *ngIf="liga.imagen">
+          <img [src]="liga.imagen" [alt]="liga.nombre">
+        </div>
+        <div class="liga-header">
+          <h3>{{ liga.nombre }}</h3>
+          <span class="status-badge" [class.active]="liga.activo">
+            {{ liga.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+        
+        <div class="liga-info">
+          <p><strong>Ubicación:</strong> {{ liga.ubicacion }}</p>
+          <p><strong>Fecha de fundación:</strong> {{ liga.fechaFundacion | date: 'dd/MM/yyyy' }}</p>
+          <p><strong>Directivo:</strong> {{ liga.directivo.nombre }}</p>
+        </div>
+
+        <div class="liga-actions">
+          <button class="btn-icon" (click)="viewLiga(liga.id)" title="Ver detalles">
+            👁️
+          </button>
+          <button *ngIf="permissions.canEditLiga()" class="btn-icon" (click)="editLiga(liga.id)" title="Editar">
+            ✏️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteLiga() && liga.activo" 
+            class="btn-icon danger" 
+            (click)="disableLiga(liga)" 
+            title="Desactivar">
+            🗑️
+          </button>
+          <button 
+            *ngIf="permissions.canDeleteLiga() && !liga.activo" 
+            class="btn-icon danger" 
+            (click)="deleteLigaPermanently(liga)" 
+            title="Eliminar permanentemente">
+            ❌
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

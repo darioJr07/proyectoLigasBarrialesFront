@@ -1,0 +1,148 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-title">
+    <h2>🔄 Transferencias</h2>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        routerLink="/transferencias/pendientes-origen"
+        *ngIf="permissions.canAprobarTransferenciaEquipoOrigen()"
+      >
+        ⏳ Pendientes de Mi Equipo
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        routerLink="/transferencias/pendientes-directivo"
+        *ngIf="permissions.canAprobarTransferenciaDirectivo()"
+      >
+        ⏳ Pendientes de Aprobación
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        routerLink="/transferencias/solicitar"
+        *ngIf="permissions.canSolicitarTransferencia()"
+      >
+        + Nueva Solicitud
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <p>Cargando...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && transferencias.length === 0">
+    <p>No hay transferencias registradas</p>
+  </div>
+
+  <div class="cards-grid" *ngIf="!loading && transferencias.length > 0">
+    <div class="card" *ngFor="let transferencia of transferencias">
+      <div class="card-header">
+        <div class="player-info">
+          <img
+            *ngIf="transferencia.jugador?.fotoPerfil"
+            [src]="transferencia.jugador.fotoPerfil"
+            alt="{{ transferencia.jugador.nombreCompleto }}"
+            class="player-photo"
+          />
+          <div class="player-photo-placeholder" *ngIf="!transferencia.jugador?.fotoPerfil">
+            👤
+          </div>
+          <div>
+            <h3>{{ transferencia.jugador?.nombreCompleto }}</h3>
+            <p class="player-detail">{{ transferencia.jugador?.cedula }}</p>
+          </div>
+        </div>
+        <span
+          class="badge"
+          [ngClass]="getEstadoCompletoClass(transferencia)"
+        >
+          {{ getEstadoCompletoText(transferencia) }}
+        </span>
+      </div>
+
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Campeonato:</span>
+          <span class="value">{{ transferencia.campeonato?.nombre }}</span>
+        </div>
+        <div class="transfer-flow">
+          <div class="team-box">
+            <span class="team-label">De:</span>
+            <span class="team-name">{{ transferencia.equipoOrigen?.nombre }}</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="team-box">
+            <span class="team-label">A:</span>
+            <span class="team-name">{{ transferencia.equipoDestino?.nombre }}</span>
+          </div>
+        </div>
+
+        <div class="estados-container">
+          <div class="estado-item">
+            <span class="estado-label">Equipo Origen:</span>
+            <span
+              class="badge badge-sm"
+              [ngClass]="getEstadoClass(transferencia.estadoEquipoOrigen)"
+            >
+              {{ transferencia.estadoEquipoOrigen }}
+            </span>
+          </div>
+          <div class="estado-item">
+            <span class="estado-label">Directivo:</span>
+            <span
+              class="badge badge-sm"
+              [ngClass]="getEstadoClass(transferencia.estadoDirectivo)"
+            >
+              {{ transferencia.estadoDirectivo }}
+            </span>
+          </div>
+        </div>
+
+        <div class="info-row" *ngIf="transferencia.observaciones">
+          <span class="label">Observaciones:</span>
+          <span class="value">{{ transferencia.observaciones }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Fecha Solicitud:</span>
+          <span class="value">{{
+            transferencia.fechaSolicitud | date: 'short'
+          }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          type="button"
+          class="btn-icon btn-danger"
+          (click)="cancelar(transferencia.id)"
+          title="Cancelar"
+          *ngIf="canCancelar(transferencia)"
+        >
+          ❌
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

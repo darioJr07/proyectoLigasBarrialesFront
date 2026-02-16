@@ -1,0 +1,68 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="categorias-container">
+    <div class="header">
+      <h2>Categorías del Campeonato</h2>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/categorias/nuevo" [queryParams]="{campeonatoId: campeonatoId}">
+        <span class="icon">+</span> Nueva Categoría
+      </button>
+    </div>
+
+    <div *ngIf="campeonatoNombre" class="campeonato-info">
+      <strong>Campeonato:</strong> {{ campeonatoNombre }}
+      <button class="btn-secondary" routerLink="/campeonatos">← Volver a Campeonatos</button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      Cargando categorías...
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!loading && categorias.length === 0" class="empty-state">
+      <p>No hay categorías registradas para este campeonato</p>
+      <button *ngIf="canCreate()" class="btn-primary" routerLink="/categorias/nuevo" [queryParams]="{campeonatoId: campeonatoId}">
+        <span class="icon">+</span> Crear Primera Categoría
+      </button>
+    </div>
+
+    <div *ngIf="!loading && categorias.length > 0" class="categorias-grid">
+      <div *ngFor="let categoria of categorias" class="categoria-card" [class.inactive]="!categoria.activo">
+        <div class="categoria-header">
+          <h3>{{ categoria.nombre }}</h3>
+          <span class="status-badge" [class.status-active]="categoria.activo" [class.status-inactive]="!categoria.activo">
+            {{ categoria.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+        
+        <div class="categoria-body">
+          <p><strong>Orden:</strong> {{ categoria.orden }}</p>
+          <p><strong>Equipos Ascienden:</strong> {{ categoria.equiposAscienden }}</p>
+          <p><strong>Equipos Descienden:</strong> {{ categoria.equiposDescienden }}</p>
+          <p *ngIf="categoria.descripcion" class="descripcion">{{ categoria.descripcion }}</p>
+        </div>
+
+        <div class="categoria-actions" *ngIf="canEdit()">
+          <button class="btn-icon" (click)="editarCategoria(categoria.id)" title="Editar">
+            ✏️
+          </button>
+          <button class="btn-icon danger" (click)="eliminarCategoria(categoria.id)" title="Eliminar">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

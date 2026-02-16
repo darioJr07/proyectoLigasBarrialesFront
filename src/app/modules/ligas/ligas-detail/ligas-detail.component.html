@@ -1,0 +1,73 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="liga-detail-container">
+  <header class="detail-header">
+    <button class="btn-back" (click)="goBack()">
+      ← Volver a Ligas
+    </button>
+    <h2>Detalles de la Liga</h2>
+  </header>
+
+  <div *ngIf="loading" class="loading">
+    Cargando detalles...
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!loading && liga" class="liga-detail-card">
+    <div class="liga-header">
+      <div class="header-content">
+        <div class="liga-image" *ngIf="liga.imagen">
+          <img [src]="liga.imagen" [alt]="liga.nombre">
+        </div>
+        <div class="header-text">
+          <h1>{{ liga.nombre }}</h1>
+          <span class="status-badge" [class.active]="liga.activo">
+            {{ liga.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="liga-info-section">
+      <div class="info-row">
+        <label>Ubicación:</label>
+        <p>{{ liga.ubicacion }}</p>
+      </div>
+
+      <div class="info-row">
+        <label>Fecha de Fundación:</label>
+        <p>{{ liga.fechaFundacion | date: 'dd/MM/yyyy' }}</p>
+      </div>
+
+      <div class="info-row">
+        <label>Directivo:</label>
+        <p>{{ liga.directivo.nombre }}</p>
+      </div>
+
+      <div class="info-row">
+        <label>Email del Directivo:</label>
+        <p>{{ liga.directivo.email }}</p>
+      </div>
+    </div>
+
+    <div class="actions" *ngIf="isMaster || liga.directivo.id === (authService.getCurrentUser()?.id)">
+      <button class="btn-primary" (click)="editLiga()">
+        ✏️ Editar Liga
+      </button>
+    </div>
+  </div>
+</div>
+</div>

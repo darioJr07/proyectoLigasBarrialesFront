@@ -1,0 +1,195 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-title">
+    <h2>{{ isEditMode ? 'Editar' : 'Nueva' }} Habilitación de Jugador</h2>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        ← Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="campeonatoId">Campeonato *</label>
+          <select
+            id="campeonatoId"
+            formControlName="campeonatoId"
+            class="form-control"
+            [class.is-invalid]="
+              form.get('campeonatoId')?.invalid &&
+              form.get('campeonatoId')?.touched
+            "
+          >
+            <option value="">Seleccione un campeonato</option>
+            <option *ngFor="let campeonato of campeonatos" [value]="campeonato.id">
+              {{ campeonato.nombre }} - {{ campeonato.liga?.nombre }}
+            </option>
+          </select>
+          <div
+            class="error-message"
+            *ngIf="
+              form.get('campeonatoId')?.invalid &&
+              form.get('campeonatoId')?.touched
+            "
+          >
+            El campeonato es requerido
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="equipoId">Equipo *</label>
+          <select
+            id="equipoId"
+            formControlName="equipoId"
+            class="form-control"
+            [class.is-invalid]="
+              form.get('equipoId')?.invalid && form.get('equipoId')?.touched
+            "
+          >
+            <option value="">Seleccione un equipo</option>
+            <option *ngFor="let equipo of equipos" [value]="equipo.id">
+              {{ equipo.nombre }}
+            </option>
+          </select>
+          <div
+            class="error-message"
+            *ngIf="
+              form.get('equipoId')?.invalid && form.get('equipoId')?.touched
+            "
+          >
+            El equipo es requerido
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="jugadorId">Jugador *</label>
+          <select
+            id="jugadorId"
+            formControlName="jugadorId"
+            class="form-control"
+            [class.is-invalid]="
+              form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched
+            "
+          >
+            <option value="">Seleccione un jugador</option>
+            <option *ngFor="let jugador of jugadores" [value]="jugador.id">
+              {{ jugador.nombre }} - {{ jugador.cedula }}
+            </option>
+          </select>
+          <div
+            class="error-message"
+            *ngIf="
+              form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched
+            "
+          >
+            El jugador es requerido
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="categoriaId">Categoría *</label>
+          <select
+            id="categoriaId"
+            formControlName="categoriaId"
+            class="form-control"
+            [class.is-invalid]="
+              form.get('categoriaId')?.invalid &&
+              form.get('categoriaId')?.touched
+            "
+          >
+            <option value="" *ngIf="categorias.length === 0">
+              {{ (!form.get('campeonatoId')?.value || !form.get('equipoId')?.value)
+                ? 'Primero seleccione campeonato y equipo' 
+                : 'El equipo no tiene inscripción confirmada' }}
+            </option>
+            <option *ngFor="let categoria of categorias" [value]="categoria.id">
+              {{ categoria.nombre }}
+            </option>
+          </select>
+          <div
+            class="error-message"
+            *ngIf="
+              form.get('categoriaId')?.invalid &&
+              form.get('categoriaId')?.touched
+            "
+          >
+            La categoría es requerida
+          </div>
+          <small class="help-text" *ngIf="!form.get('campeonatoId')?.value || !form.get('equipoId')?.value">
+            💡 Selecciona campeonato y equipo para ver la categoría inscrita
+          </small>
+          <small class="help-text" *ngIf="form.get('campeonatoId')?.value && form.get('equipoId')?.value && form.get('categoriaId')?.value">
+            ✅ Esta es la categoría en la que el equipo está inscrito
+          </small>
+          <small class="error-message" *ngIf="form.get('campeonatoId')?.value && form.get('equipoId')?.value && !form.get('categoriaId')?.value && categorias.length === 0">
+            ⚠️ El equipo no tiene inscripción confirmada en este campeonato
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="numeroCancha">Número de Cancha</label>
+          <input
+            type="text"
+            id="numeroCancha"
+            formControlName="numeroCancha"
+            class="form-control"
+            placeholder="Ej: 10"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="posicion">Posición</label>
+          <input
+            type="text"
+            id="posicion"
+            formControlName="posicion"
+            class="form-control"
+            placeholder="Ej: Delantero"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="observaciones">Observaciones</label>
+        <textarea
+          id="observaciones"
+          formControlName="observaciones"
+          class="form-control"
+          rows="3"
+          placeholder="Observaciones adicionales..."
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onCancel()"
+          [disabled]="loading"
+        >
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          {{ loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
