@@ -1,5 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://proyectoligasbarrialesback.onrender.com/api',
-  //apiUrl: 'http://localhost:3000/api',
+  apiUrl: 'https://api.ligasbarrialesec.of1solutions.com/api',
 };
