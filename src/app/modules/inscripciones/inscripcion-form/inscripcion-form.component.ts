@@ -51,6 +51,7 @@ export class InscripcionFormComponent implements OnInit {
       campeonatoId: ['', Validators.required],
       categoriaId: ['', Validators.required],
       equipoId: ['', Validators.required],
+      fechaInscripcion: [''],
       observaciones: ['', Validators.maxLength(500)],
       activo: [true]
     });
@@ -257,13 +258,15 @@ export class InscripcionFormComponent implements OnInit {
 
     // Obtener valores del formulario (incluyendo campos deshabilitados)
     const formValues = this.inscripcionForm.getRawValue();
-    const { activo, ...inscripcionData } = formValues;
+    const { activo, fechaInscripcion, ...inscripcionData } = formValues;
 
     const formData = {
       ...inscripcionData,
       campeonatoId: Number(formValues.campeonatoId),
       categoriaId: Number(formValues.categoriaId),
       equipoId: Number(formValues.equipoId),
+      // Solo incluir fechaInscripcion si tiene valor
+      ...(fechaInscripcion && { fechaInscripcion }),
       // Solo incluir activo en modo edición
       ...(this.isEditMode && { activo })
     };

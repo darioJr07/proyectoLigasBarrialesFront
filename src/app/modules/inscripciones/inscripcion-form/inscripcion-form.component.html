@@ -85,6 +85,19 @@
       </div>
 
       <div class="form-group">
+        <label for="fechaInscripcion">Fecha de Inscripción</label>
+        <input
+          type="date"
+          id="fechaInscripcion"
+          formControlName="fechaInscripcion"
+          placeholder="Dejar vacío para usar fecha actual"
+        />
+        <small class="help-text">
+          ℹ️ Si no seleccionas una fecha, se usará la fecha actual. Útil para registrar inscripciones con fechas pasadas.
+        </small>
+      </div>
+
+      <div class="form-group">
         <label for="observaciones">Observaciones</label>
         <textarea
           id="observaciones"
