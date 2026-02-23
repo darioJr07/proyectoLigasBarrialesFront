@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <div class="actions" *ngIf="isMaster || liga.directivo.id === (authService.getCurrentUser()?.id)">
+    <div class="actions" *ngIf="isMaster || liga.directivo?.id === (authService.getCurrentUser()?.id)">
       <button class="btn-primary" (click)="editLiga()">
         ✏️ Editar Liga
       </button>
