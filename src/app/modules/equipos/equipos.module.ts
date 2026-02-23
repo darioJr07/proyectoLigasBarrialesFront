@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { EquiposRoutingModule } from './equipos-routing.module';
 import { EquiposListComponent } from './equipos-list/equipos-list.component';
 import { EquipoFormComponent } from './equipo-form/equipo-form.component';
@@ -17,6 +17,7 @@ import { MainNavComponent } from '../../shared/components/main-nav/main-nav.comp
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     EquiposRoutingModule,
     ImageUploadComponent,
     MainNavComponent

@@ -18,6 +18,54 @@
       </button>
     </div>
 
+    <!-- Filtros y búsqueda (solo para master) -->
+    <div *ngIf="canShowFilters() && !loading && ligas.length > 0" class="filters-container">
+      <div class="filters-row">
+        <!-- Filtro de Estado -->
+        <div class="filter-group">
+          <label for="statusFilter">Estado:</label>
+          <select 
+            id="statusFilter"
+            [(ngModel)]="selectedStatus"
+            (change)="onStatusChange()"
+            class="filter-select">
+            <option value="">Todas</option>
+            <option value="activa">Activas</option>
+            <option value="inactiva">Inactivas</option>
+          </select>
+        </div>
+
+        <!-- Botón para limpiar filtros -->
+        <button 
+          *ngIf="selectedStatus || searchTerm"
+          class="btn-clear-filters"
+          (click)="clearFilters()"
+          title="Limpiar todos los filtros">
+          🗑️ Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container" *ngIf="canShowFilters() && !loading && ligas.length > 0">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Buscar por nombre, ubicación o directivo..."
+          class="search-input"
+        />
+        <button *ngIf="searchTerm" (click)="clearFilters()" class="clear-btn" title="Limpiar búsqueda">
+          ✕
+        </button>
+      </div>
+      <div *ngIf="searchTerm || selectedStatus" class="search-info">
+        {{ filteredLigas.length }} de {{ ligas.length }} liga(s)
+      </div>
+    </div>
+
     <div *ngIf="loading" class="loading">
       Cargando ligas...
     </div>
@@ -26,15 +74,22 @@
       {{ errorMessage }}
     </div>
 
-    <div *ngIf="!loading && ligas.length === 0" class="empty-state">
+    <div *ngIf="!loading && filteredLigas.length === 0 && !searchTerm && !selectedStatus" class="empty-state">
       <p>No hay ligas registradas</p>
       <button *ngIf="permissions.canCreateLiga()" class="btn-secondary" (click)="createLiga()">
         Crear primera liga
       </button>
     </div>
 
-    <div *ngIf="!loading && ligas.length > 0" class="ligas-grid">
-      <div *ngFor="let liga of ligas" class="liga-card" [class.inactive]="!liga.activo">
+    <div *ngIf="!loading && filteredLigas.length === 0 && (searchTerm || selectedStatus)" class="empty-state">
+      <p>No se encontraron ligas con los criterios seleccionados</p>
+      <button class="btn-secondary" (click)="clearFilters()">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <div *ngIf="!loading && filteredLigas.length > 0" class="ligas-grid">
+      <div *ngFor="let liga of filteredLigas" class="liga-card" [class.inactive]="!liga.activo">
         <div class="liga-card-image" *ngIf="liga.imagen">
           <img [src]="liga.imagen" [alt]="liga.nombre">
         </div>

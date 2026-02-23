@@ -21,6 +21,57 @@
       </button>
     </div>
 
+    <!-- Filtros (solo para master) -->
+    <div *ngIf="isMaster && equipos.length > 0" class="filters-container">
+      <div class="filters-row">
+        <!-- Filtro de Liga -->
+        <div class="filter-group">
+          <label for="ligaFilter">Liga:</label>
+          <select 
+            id="ligaFilter"
+            [(ngModel)]="selectedLigaId"
+            (change)="onLigaChange()"
+            class="filter-select">
+            <option value="">Todas las ligas</option>
+            <option *ngFor="let liga of ligas" [value]="liga.id">
+              {{ liga.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Botón para limpiar filtros -->
+        <button 
+          *ngIf="selectedLigaId || searchTerm"
+          class="btn-clear-filters"
+          (click)="clearSearch()"
+          title="Limpiar todos los filtros">
+          🗑️ Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de búsqueda (solo para master y directivo_liga) -->
+    <div *ngIf="canShowSearchBar() && equipos.length > 0" class="search-container">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Buscar por nombre, liga, dirigente o representante..."
+          class="search-input"
+        />
+        <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn" title="Limpiar búsqueda">
+          ✕
+        </button>
+      </div>
+      <div *ngIf="searchTerm && filteredEquipos.length === 0" class="search-info">
+        No se encontraron equipos que coincidan con "{{ searchTerm }}"
+      </div>
+      <div *ngIf="(searchTerm || selectedLigaId) && filteredEquipos.length > 0" class="search-info">
+        {{ filteredEquipos.length }} resultado(s) encontrado(s)
+      </div>
+    </div>
+
     <div *ngIf="loading" class="loading">
       Cargando equipos...
     </div>
@@ -29,15 +80,15 @@
       {{ errorMessage }}
     </div>
 
-    <div *ngIf="!loading && equipos.length === 0" class="empty-state">
+    <div *ngIf="!loading && filteredEquipos.length === 0" class="empty-state">
       <p>No hay equipos registrados</p>
       <button *ngIf="isMaster" class="btn-secondary" (click)="createEquipo()">
         Crear primer equipo
       </button>
     </div>
 
-    <div *ngIf="!loading && equipos.length > 0" class="equipos-grid">
-      <div *ngFor="let equipo of equipos" class="equipo-card" [class.inactive]="!equipo.activo">
+    <div *ngIf="!loading && filteredEquipos.length > 0" class="equipos-grid">
+      <div *ngFor="let equipo of filteredEquipos" class="equipo-card" [class.inactive]="!equipo.activo">
         <div class="equipo-card-image" *ngIf="equipo.imagen">
           <img [src]="equipo.imagen" [alt]="equipo.nombre">
         </div>

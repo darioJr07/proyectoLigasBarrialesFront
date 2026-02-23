@@ -105,6 +105,75 @@
     }
   }
 
+  .filters-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+
+    .filters-row {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: 200px;
+        flex: 1;
+
+        label {
+          font-weight: 600;
+          color: #2c3e50;
+          font-size: 0.9rem;
+        }
+
+        .filter-select {
+          padding: 0.75rem;
+          border: 2px solid #e9ecef;
+          border-radius: 6px;
+          font-size: 1rem;
+          background: white;
+          color: #2c3e50;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: #bdc3c7;
+          }
+
+          &:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+          }
+        }
+      }
+
+      .btn-clear-filters {
+        padding: 0.75rem 1.5rem;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background-color 0.3s ease;
+        white-space: nowrap;
+
+        &:hover {
+          background: #c0392b;
+        }
+      }
+    }
+  }
+
   .search-container {
     background: white;
     padding: 1.5rem;

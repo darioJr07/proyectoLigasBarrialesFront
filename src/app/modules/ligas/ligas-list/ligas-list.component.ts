@@ -10,9 +10,12 @@ import { AuthService } from '../../../core/services/auth.service';import { Permi
 })
 export class LigasListComponent implements OnInit {
   ligas: Liga[] = [];
+  filteredLigas: Liga[] = [];
   loading = false;
   errorMessage = '';
   isMaster = false;
+  searchTerm: string = '';
+  selectedStatus: string = '';
   user$ = this.authService.currentUser$;
 
   constructor(
@@ -50,6 +53,7 @@ export class LigasListComponent implements OnInit {
     this.ligasService.getAll().subscribe({
       next: (ligas) => {
         this.ligas = ligas;
+        this.filteredLigas = ligas;
         this.loading = false;
       },
       error: (error) => {
@@ -96,6 +100,47 @@ export class LigasListComponent implements OnInit {
 
   createLiga(): void {
     this.router.navigate(['/ligas/nueva']);
+  }
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  onStatusChange(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = this.ligas;
+
+    // Filtrar por estado (activa/inactiva)
+    if (this.selectedStatus === 'activa') {
+      filtered = filtered.filter(liga => liga.activo);
+    } else if (this.selectedStatus === 'inactiva') {
+      filtered = filtered.filter(liga => !liga.activo);
+    }
+
+    // Filtrar por término de búsqueda
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(liga =>
+        liga.nombre.toLowerCase().includes(term) ||
+        liga.ubicacion?.toLowerCase().includes(term) ||
+        liga.directivo?.nombre?.toLowerCase().includes(term)
+      );
+    }
+
+    this.filteredLigas = filtered;
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedStatus = '';
+    this.filteredLigas = this.ligas;
+  }
+
+  canShowFilters(): boolean {
+    return this.isMaster;
   }
 
   logout(): void {

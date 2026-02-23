@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LigasRoutingModule } from './ligas-routing.module';
 import { LigasListComponent } from './ligas-list/ligas-list.component';
@@ -18,6 +18,7 @@ import { MainNavComponent } from '../../shared/components/main-nav/main-nav.comp
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule,
     LigasRoutingModule,
     ImageUploadComponent,

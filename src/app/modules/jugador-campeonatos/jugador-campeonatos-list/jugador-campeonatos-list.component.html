@@ -37,6 +37,60 @@
       <br>• Use el botón 📋 para ver el historial completo de habilitaciones de un jugador.
     </div>
 
+    <!-- Filtros -->
+    <div class="filters-container" *ngIf="canShowFilters() && !loading && jugadorCampeonatos.length > 0">
+      <div class="filters-header">
+        <h3>🔍 Filtros</h3>
+        <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="filterLigaId || filterCampeonatoId || filterEquipoId || filterEstado || searchTerm">
+          Limpiar filtros
+        </button>
+      </div>
+      
+      <div class="filters-grid">
+        <!-- Filtro por Liga (solo master) -->
+        <div class="filter-group" *ngIf="canShowLigaFilter()">
+          <label for="filterLiga">Liga</label>
+          <select id="filterLiga" [(ngModel)]="filterLigaId" (change)="onLigaChange()">
+            <option value="">Todas las ligas</option>
+            <option *ngFor="let liga of ligas" [value]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Filtro por Campeonato -->
+        <div class="filter-group" *ngIf="canShowCampeonatoFilter()">
+          <label for="filterCampeonato">Campeonato</label>
+          <select id="filterCampeonato" [(ngModel)]="filterCampeonatoId" (change)="applyFilters()">
+            <option value="">Todos los campeonatos</option>
+            <option *ngFor="let campeonato of filteredCampeonatos" [value]="campeonato.id">{{ campeonato.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Filtro por Equipo -->
+        <div class="filter-group" *ngIf="canShowEquipoFilter()">
+          <label for="filterEquipo">Equipo</label>
+          <select id="filterEquipo" [(ngModel)]="filterEquipoId" (change)="applyFilters()">
+            <option value="">Todos los equipos</option>
+            <option *ngFor="let equipo of filteredEquipos" [value]="equipo.id">{{ equipo.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Filtro por Estado -->
+        <div class="filter-group">
+          <label for="filterEstado">Estado</label>
+          <select id="filterEstado" [(ngModel)]="filterEstado" (change)="applyFilters()">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="habilitado">Habilitado</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-results" *ngIf="filterLigaId || filterCampeonatoId || filterEquipoId || filterEstado">
+        <span>📊 Mostrando {{ filteredJugadorCampeonatos.length }} de {{ jugadorCampeonatos.length }} habilitaciones</span>
+      </div>
+    </div>
+
     <!-- Barra de búsqueda -->
     <div class="search-container" *ngIf="!loading && jugadorCampeonatos.length > 0">
       <div class="search-box">
@@ -56,7 +110,7 @@
           ✕
         </button>
       </div>
-      <div class="search-results" *ngIf="searchTerm">
+      <div class="search-results" *ngIf="searchTerm || filterLigaId || filterCampeonatoId || filterEquipoId || filterEstado">
         <span>{{ filteredJugadorCampeonatos.length }} de {{ jugadorCampeonatos.length }} habilitaciones</span>
       </div>
     </div>

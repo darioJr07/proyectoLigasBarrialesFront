@@ -18,6 +18,71 @@
       </button>
     </div>
 
+    <!-- Filtros (solo para master y directivo_liga) -->
+    <div *ngIf="canShowFilters() && !loading && campeonatos.length > 0" class="filters-container">
+      <div class="filters-row">
+        <!-- Filtro de Liga (solo para master) -->
+        <div class="filter-group" *ngIf="isMaster">
+          <label for="ligaFilter">Liga:</label>
+          <select 
+            id="ligaFilter"
+            [(ngModel)]="selectedLigaId"
+            (change)="onLigaChange()"
+            class="filter-select">
+            <option value="">Todas las ligas</option>
+            <option *ngFor="let liga of ligas" [value]="liga.id">
+              {{ liga.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtro de Estado -->
+        <div class="filter-group">
+          <label for="estadoFilter">Estado:</label>
+          <select 
+            id="estadoFilter"
+            [(ngModel)]="selectedEstado"
+            (change)="onEstadoChange()"
+            class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="inscripcion_abierta">Inscripción Abierta</option>
+            <option value="en_curso">En Curso</option>
+            <option value="finalizado">Finalizado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Botón para limpiar filtros -->
+        <button 
+          *ngIf="selectedLigaId || selectedEstado || searchTerm"
+          class="btn-clear-filters"
+          (click)="clearFilters()"
+          title="Limpiar todos los filtros">
+          🗑️ Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container" *ngIf="canShowFilters() && !loading && campeonatos.length > 0">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Buscar por nombre, descripción o liga..."
+          class="search-input"
+        />
+        <button *ngIf="searchTerm" (click)="clearFilters()" class="clear-btn" title="Limpiar búsqueda">
+          ✕
+        </button>
+      </div>
+      <div *ngIf="searchTerm || selectedLigaId || selectedEstado" class="search-info">
+        {{ filteredCampeonatos.length }} de {{ campeonatos.length }} campeonato(s)
+      </div>
+    </div>
+
     <div *ngIf="loading" class="loading">
       Cargando campeonatos...
     </div>
@@ -26,15 +91,22 @@
       {{ errorMessage }}
     </div>
 
-    <div *ngIf="!loading && campeonatos.length === 0" class="empty-state">
+    <div *ngIf="!loading && filteredCampeonatos.length === 0 && !searchTerm && !selectedLigaId && !selectedEstado" class="empty-state">
       <p>No hay campeonatos registrados</p>
       <button *ngIf="canCreate()" class="btn-secondary" routerLink="/campeonatos/nuevo">
         Crear primer campeonato
       </button>
     </div>
 
-    <div *ngIf="!loading && campeonatos.length > 0" class="campeonatos-grid">
-      <div *ngFor="let campeonato of campeonatos" class="campeonato-card" [class.inactive]="!campeonato.activo">
+    <div *ngIf="!loading && filteredCampeonatos.length === 0 && (searchTerm || selectedLigaId || selectedEstado)" class="empty-state">
+      <p>No se encontraron campeonatos con los criterios seleccionados</p>
+      <button class="btn-secondary" (click)="clearFilters()">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <div *ngIf="!loading && filteredCampeonatos.length > 0" class="campeonatos-grid">
+      <div *ngFor="let campeonato of filteredCampeonatos" class="campeonato-card" [class.inactive]="!campeonato.activo">
         <div class="campeonato-header">
           <h3>{{ campeonato.nombre }}</h3>
           <span class="status-badge" [ngClass]="getEstadoClass(campeonato.estado)">

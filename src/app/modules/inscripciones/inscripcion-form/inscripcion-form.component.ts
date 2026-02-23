@@ -52,8 +52,7 @@ export class InscripcionFormComponent implements OnInit {
       categoriaId: ['', Validators.required],
       equipoId: ['', Validators.required],
       fechaInscripcion: [''],
-      observaciones: ['', Validators.maxLength(500)],
-      activo: [true]
+      observaciones: ['', Validators.maxLength(500)]
     });
   }
 
@@ -174,8 +173,7 @@ export class InscripcionFormComponent implements OnInit {
           campeonatoId: inscripcion.campeonatoId,
           categoriaId: inscripcion.categoriaId,
           equipoId: inscripcion.equipoId,
-          observaciones: inscripcion.observaciones,
-          activo: inscripcion.activo
+          observaciones: inscripcion.observaciones
         });
       },
       error: (err) => {
@@ -258,7 +256,7 @@ export class InscripcionFormComponent implements OnInit {
 
     // Obtener valores del formulario (incluyendo campos deshabilitados)
     const formValues = this.inscripcionForm.getRawValue();
-    const { activo, fechaInscripcion, ...inscripcionData } = formValues;
+    const { fechaInscripcion, ...inscripcionData } = formValues;
 
     const formData = {
       ...inscripcionData,
@@ -266,9 +264,7 @@ export class InscripcionFormComponent implements OnInit {
       categoriaId: Number(formValues.categoriaId),
       equipoId: Number(formValues.equipoId),
       // Solo incluir fechaInscripcion si tiene valor
-      ...(fechaInscripcion && { fechaInscripcion }),
-      // Solo incluir activo en modo edición
-      ...(this.isEditMode && { activo })
+      ...(fechaInscripcion && { fechaInscripcion })
     };
 
     const request = this.isEditMode

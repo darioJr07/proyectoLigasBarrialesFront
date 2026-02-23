@@ -48,6 +48,141 @@
     {{ errorMessage }}
   </div>
 
+  <!-- Sección de Filtros -->
+  <div class="filters-section" *ngIf="canShowFilters() && !loading">
+    <div class="filters-header">
+      <h3>🔍 Filtros de Búsqueda</h3>
+      <button type="button" class="btn-clear-filters" (click)="clearFilters()">
+        🗑️ Limpiar Filtros
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <!-- Liga (solo para master y directivo_liga) -->
+      <div class="filter-item" *ngIf="permissions.isMaster() || permissions.isDirectivo()">
+        <label for="filter-liga">Liga</label>
+        <select 
+          id="filter-liga" 
+          [(ngModel)]="selectedLigaId" 
+          (change)="onLigaChange()"
+          class="filter-select"
+        >
+          <option [ngValue]="null">Todas las ligas</option>
+          <option *ngFor="let liga of ligas" [ngValue]="liga.id">
+            {{ liga.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Campeonato -->
+      <div class="filter-item">
+        <label for="filter-campeonato">Campeonato</label>
+        <select 
+          id="filter-campeonato" 
+          [(ngModel)]="selectedCampeonatoId"
+          (change)="onCampeonatoChange()"
+          class="filter-select"
+        >
+          <option [ngValue]="null">Todos los campeonatos</option>
+          <option *ngFor="let campeonato of filteredCampeonatos" [ngValue]="campeonato.id">
+            {{ campeonato.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Equipo Origen (solo master y directivo_liga) -->
+      <div class="filter-item" *ngIf="permissions.isMaster() || permissions.isDirectivo()">
+        <label for="filter-equipo-origen">Equipo Origen</label>
+        <select 
+          id="filter-equipo-origen" 
+          [(ngModel)]="selectedEquipoOrigenId"
+          class="filter-select"
+        >
+          <option [ngValue]="null">Todos los equipos</option>
+          <option *ngFor="let equipo of filteredEquiposOrigen" [ngValue]="equipo.id">
+            {{ equipo.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Equipo Destino (solo master y directivo_liga) -->
+      <div class="filter-item" *ngIf="permissions.isMaster() || permissions.isDirectivo()">
+        <label for="filter-equipo-destino">Equipo Destino</label>
+        <select 
+          id="filter-equipo-destino" 
+          [(ngModel)]="selectedEquipoDestinoId"
+          class="filter-select"
+        >
+          <option [ngValue]="null">Todos los equipos</option>
+          <option *ngFor="let equipo of filteredEquiposDestino" [ngValue]="equipo.id">
+            {{ equipo.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Estado -->
+      <div class="filter-item">
+        <label for="filter-estado">Estado</label>
+        <select 
+          id="filter-estado" 
+          [(ngModel)]="selectedEstado"
+          class="filter-select"
+        >
+          <option *ngFor="let estado of estados" [value]="estado.value">
+            {{ estado.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Jugador (Autocomplete) -->
+      <div class="filter-item filter-item-full">
+        <label for="filter-jugador">Jugador</label>
+        <mat-form-field class="filter-autocomplete" appearance="outline">
+          <mat-label>Buscar jugador...</mat-label>
+          <input 
+            type="text"
+            matInput
+            [formControl]="jugadorControl"
+            [matAutocomplete]="autoJugador"
+          />
+          <mat-autocomplete #autoJugador="matAutocomplete" [displayWith]="displayJugador.bind(this)">
+            <mat-option *ngFor="let jugador of filteredJugadores$ | async" [value]="jugador">
+              {{ jugador.nombreCompleto || jugador.nombre }} ({{ jugador.cedula }})
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+
+      <!-- Fecha Desde -->
+      <div class="filter-item">
+        <label for="filter-fecha-desde">Fecha Desde</label>
+        <input 
+          type="date" 
+          id="filter-fecha-desde" 
+          [(ngModel)]="fechaDesde"
+          class="filter-input"
+        />
+      </div>
+
+      <!-- Fecha Hasta -->
+      <div class="filter-item">
+        <label for="filter-fecha-hasta">Fecha Hasta</label>
+        <input 
+          type="date" 
+          id="filter-fecha-hasta" 
+          [(ngModel)]="fechaHasta"
+          class="filter-input"
+        />
+      </div>
+    </div>
+
+    <div class="filters-summary" *ngIf="selectedLigaId || selectedCampeonatoId || selectedEquipoOrigenId || selectedEquipoDestinoId || selectedEstado || jugadorControl.value || fechaDesde || fechaHasta">
+      <span class="summary-text">
+        Mostrando {{ filteredTransferencias.length }} de {{ transferencias.length }} transferencias
+      </span>
+    </div>
+  </div>
+
   <div class="search-container" *ngIf="!loading && transferencias.length > 0">
     <div class="search-box">
       <span class="search-icon">🔍</span>

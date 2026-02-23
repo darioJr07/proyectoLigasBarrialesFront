@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EquiposService } from '../../../core/services/equipos.service';
+import { LigasService } from '../../../core/services/ligas.service';
 import { AuthService } from '../../../core/services/auth.service';import { PermissionsService } from '@core/services/permissions.service';import { Equipo } from '../../../core/models/equipo.model';
+import { Liga } from '../../../core/models/liga.model';
 
 @Component({
   selector: 'app-equipos-list',
@@ -10,6 +12,10 @@ import { AuthService } from '../../../core/services/auth.service';import { Permi
 })
 export class EquiposListComponent implements OnInit {
   equipos: Equipo[] = [];
+  filteredEquipos: Equipo[] = [];
+  ligas: Liga[] = [];
+  searchTerm: string = '';
+  selectedLigaId: string = '';
   loading = false;
   errorMessage = '';
   isMaster = false;
@@ -17,6 +23,7 @@ export class EquiposListComponent implements OnInit {
 
   constructor(
     private equiposService: EquiposService,
+    private ligasService: LigasService,
     private authService: AuthService,
     private router: Router,
     public permissions: PermissionsService
@@ -24,6 +31,7 @@ export class EquiposListComponent implements OnInit {
 
   ngOnInit(): void {
     this.checkUserRole();
+    this.loadLigas();
     this.loadEquipos();
   }
 
@@ -57,6 +65,7 @@ export class EquiposListComponent implements OnInit {
     this.equiposService.getAll().subscribe({
       next: (equipos) => {
         this.equipos = equipos;
+        this.filteredEquipos = equipos;
         this.loading = false;
       },
       error: (error) => {
@@ -120,6 +129,74 @@ export class EquiposListComponent implements OnInit {
     }
     
     return false;
+  }
+
+  canShowSearchBar(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    const rolNombre = currentUser?.rol?.nombre;
+    
+    // Solo master y directivo_liga pueden ver el buscador
+    return rolNombre === 'master' || rolNombre === 'directivo_liga';
+  }
+
+  loadLigas(): void {
+    // Solo cargar ligas para master
+    if (!this.isMaster) {
+      return;
+    }
+
+    this.ligasService.getAll().subscribe({
+      next: (ligas) => {
+        this.ligas = ligas.filter(liga => liga.activo);
+      },
+      error: (error) => {
+        console.error('Error loading ligas:', error);
+      }
+    });
+  }
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  onLigaChange(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = this.equipos;
+
+    // Filtrar por liga (solo para master)
+    if (this.selectedLigaId) {
+      const ligaId = Number(this.selectedLigaId);
+      filtered = filtered.filter(equipo => equipo.ligaId === ligaId);
+    }
+
+    // Filtrar por término de búsqueda
+    if (this.searchTerm.trim()) {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter((equipo) => {
+        const nombre = equipo.nombre?.toLowerCase() || '';
+        const liga = equipo.liga?.nombre?.toLowerCase() || '';
+        const dirigente = equipo.dirigente?.nombre?.toLowerCase() || '';
+        const representante = equipo.representante?.toLowerCase() || '';
+        
+        return (
+          nombre.includes(searchLower) ||
+          liga.includes(searchLower) ||
+          dirigente.includes(searchLower) ||
+          representante.includes(searchLower)
+        );
+      });
+    }
+
+    this.filteredEquipos = filtered;
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.selectedLigaId = '';
+    this.filteredEquipos = this.equipos;
   }
 
   logout(): void {

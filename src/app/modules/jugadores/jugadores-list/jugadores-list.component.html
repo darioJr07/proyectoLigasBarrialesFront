@@ -21,6 +21,49 @@
       </button>
     </div>
 
+    <!-- Filtros (solo para master y directivo_liga) -->
+    <div *ngIf="canShowFilters() && !loading && jugadores.length > 0" class="filters-container">
+      <div class="filters-row">
+        <!-- Filtro de Liga (solo para master) -->
+        <div class="filter-group" *ngIf="isMaster">
+          <label for="ligaFilter">Liga:</label>
+          <select 
+            id="ligaFilter"
+            [(ngModel)]="selectedLigaId"
+            (change)="onLigaChange()"
+            class="filter-select">
+            <option value="">Todas las ligas</option>
+            <option *ngFor="let liga of ligas" [value]="liga.id">
+              {{ liga.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtro de Equipo -->
+        <div class="filter-group">
+          <label for="equipoFilter">Equipo:</label>
+          <select 
+            id="equipoFilter"
+            [(ngModel)]="selectedEquipoId"
+            class="filter-select">
+            <option value="">Todos los equipos</option>
+            <option *ngFor="let equipo of filteredEquipos" [value]="equipo.id">
+              {{ equipo.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Botón para limpiar filtros -->
+        <button 
+          *ngIf="selectedLigaId || selectedEquipoId || searchTerm"
+          class="btn-clear-filters"
+          (click)="clearFilters()"
+          title="Limpiar todos los filtros">
+          🗑️ Limpiar filtros
+        </button>
+      </div>
+    </div>
+
     <!-- Barra de búsqueda -->
     <div class="search-container" *ngIf="!loading && jugadores.length > 0">
       <div class="search-box">

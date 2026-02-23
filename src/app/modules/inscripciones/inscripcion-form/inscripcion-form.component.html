@@ -107,13 +107,6 @@
         ></textarea>
       </div>
 
-      <div class="form-group" *ngIf="isEditMode">
-        <label>
-          <input type="checkbox" formControlName="activo" />
-          Inscripción Activa
-        </label>
-      </div>
-
       <div class="form-actions">
         <button type="submit" class="btn-primary" [disabled]="inscripcionForm.invalid || loading">
           <span *ngIf="loading">Guardando...</span>

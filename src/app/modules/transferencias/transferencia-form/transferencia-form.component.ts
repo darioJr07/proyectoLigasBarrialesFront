@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
@@ -16,11 +17,24 @@ import { CreateTransferenciaDto } from '../transferencia.model';
 import { Campeonato } from '../../campeonatos/campeonato.model';
 import { JugadorCampeonato } from '../../jugador-campeonatos/jugador-campeonato.model';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-transferencia-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MainNavComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MainNavComponent,
+    MatAutocompleteModule,
+    MatInputModule,
+    MatFormFieldModule,
+  ],
   templateUrl: './transferencia-form.component.html',
   styleUrls: ['./transferencia-form.component.scss'],
 })
@@ -28,6 +42,8 @@ export class TransferenciaFormComponent implements OnInit {
   form: FormGroup;
   campeonatos: Campeonato[] = [];
   jugadoresHabilitados: JugadorCampeonato[] = [];
+  jugadorSearchControl = new FormControl('');
+  filteredJugadores$: Observable<JugadorCampeonato[]> | undefined;
   loading = false;
   errorMessage = '';
   currentEquipoId: number | null = null;
@@ -64,6 +80,9 @@ export class TransferenciaFormComponent implements OnInit {
     // Cargar jugadores cuando se seleccione un campeonato
     this.form.get('campeonatoId')?.valueChanges.subscribe((campeonatoId) => {
       if (campeonatoId) {
+        // Resetear el campo de búsqueda y la selección de jugador
+        this.jugadorSearchControl.setValue('');
+        this.form.patchValue({ jugadorCampeonatoId: '' });
         this.loadJugadoresHabilitados(campeonatoId);
       }
     });
@@ -90,6 +109,12 @@ export class TransferenciaFormComponent implements OnInit {
     this.jugadorCampeonatosService.getDisponiblesParaTransferencia(campeonatoId).subscribe({
       next: (habilitaciones) => {
         this.jugadoresHabilitados = habilitaciones;
+        
+        // Inicializar el filtro de búsqueda
+        this.filteredJugadores$ = this.jugadorSearchControl.valueChanges.pipe(
+          startWith(''),
+          map((value) => this._filterJugadores(value || ''))
+        );
         
         console.log('Jugadores disponibles para transferencia:', this.jugadoresHabilitados);
       },
@@ -150,6 +175,40 @@ export class TransferenciaFormComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  private _filterJugadores(value: string): JugadorCampeonato[] {
+    if (!value || typeof value !== 'string') {
+      return this.jugadoresHabilitados;
+    }
+
+    const filterValue = value.toLowerCase();
+    return this.jugadoresHabilitados.filter((habilitacion) => {
+      const jugador = habilitacion.jugador;
+      const equipo = habilitacion.equipo;
+      const nombreCompleto = jugador?.nombre?.toLowerCase() || '';
+      const cedula = jugador?.cedula?.toLowerCase() || '';
+      const nombreEquipo = equipo?.nombre?.toLowerCase() || '';
+
+      return (
+        nombreCompleto.includes(filterValue) ||
+        cedula.includes(filterValue) ||
+        nombreEquipo.includes(filterValue)
+      );
+    });
+  }
+
+  displayJugador(jugadorCampeonato: JugadorCampeonato | null): string {
+    if (!jugadorCampeonato) return '';
+    return this.getJugadorInfo(jugadorCampeonato);
+  }
+
+  onJugadorSelected(jugadorCampeonato: JugadorCampeonato): void {
+    if (jugadorCampeonato?.jugador?.id) {
+      this.form.patchValue({
+        jugadorCampeonatoId: jugadorCampeonato.jugador.id,
+      });
+    }
   }
 
   getJugadorInfo(jugadorCampeonato: JugadorCampeonato): string {

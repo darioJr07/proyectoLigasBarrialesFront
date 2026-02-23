@@ -1,10 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { JugadoresService } from '../../../core/services/jugadores.service';
+import { LigasService } from '../../../core/services/ligas.service';
+import { EquiposService } from '../../../core/services/equipos.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '@core/services/permissions.service';
 import { Jugador } from '../../../core/models/jugador.model';
 import { Usuario } from '../../../core/models/usuario.model';
+import { Liga } from '../../../core/models/liga.model';
+import { Equipo } from '../../../core/models/equipo.model';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -14,14 +18,21 @@ import { Observable } from 'rxjs';
 })
 export class JugadoresListComponent implements OnInit {
   jugadores: Jugador[] = [];
+  ligas: Liga[] = [];
+  equipos: Equipo[] = [];
+  filteredEquipos: Equipo[] = [];
   loading = false;
   errorMessage = '';
   user$: Observable<Usuario | null>;
   isMaster = false;
   searchTerm = '';
+  selectedLigaId: string = '';
+  selectedEquipoId: string = '';
 
   constructor(
     private jugadoresService: JugadoresService,
+    private ligasService: LigasService,
+    private equiposService: EquiposService,
     private authService: AuthService,
     private router: Router,
     public permissions: PermissionsService
@@ -31,6 +42,7 @@ export class JugadoresListComponent implements OnInit {
 
   ngOnInit(): void {
     this.checkUserRole();
+    this.loadFilters();
     this.loadJugadores();
   }
 
@@ -90,15 +102,34 @@ export class JugadoresListComponent implements OnInit {
   }
 
   get filteredJugadores(): Jugador[] {
-    if (!this.searchTerm.trim()) {
-      return this.jugadores;
+    let filtered = this.jugadores;
+
+    // Filtrar por liga (solo para master)
+    if (this.selectedLigaId && this.isMaster) {
+      const ligaId = Number(this.selectedLigaId);
+      filtered = filtered.filter(jugador => 
+        jugador.equipo?.ligaId === ligaId
+      );
     }
 
-    const term = this.searchTerm.toLowerCase().trim();
-    return this.jugadores.filter(jugador => 
-      jugador.nombre.toLowerCase().includes(term) ||
-      jugador.cedula?.toLowerCase().includes(term)
-    );
+    // Filtrar por equipo
+    if (this.selectedEquipoId) {
+      const equipoId = Number(this.selectedEquipoId);
+      filtered = filtered.filter(jugador => 
+        jugador.equipo?.id === equipoId
+      );
+    }
+
+    // Filtrar por término de búsqueda
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(jugador => 
+        jugador.nombre.toLowerCase().includes(term) ||
+        jugador.cedula?.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered;
   }
 
   onSearchChange(term: string): void {
@@ -106,7 +137,64 @@ export class JugadoresListComponent implements OnInit {
   }
 
   clearSearch(): void {
+    // Llamar a clearFilters para limpiar todos los filtros y la búsqueda
+    this.clearFilters();
+  }
+
+  loadFilters(): void {
+    const currentUser = this.authService.getCurrentUser();
+    const rolNombre = currentUser?.rol?.nombre;
+
+    // Cargar ligas solo para master
+    if (rolNombre === 'master') {
+      this.ligasService.getAll().subscribe({
+        next: (ligas) => {
+          this.ligas = ligas.filter(liga => liga.activo);
+        },
+        error: (error) => {
+          console.error('Error loading ligas:', error);
+        }
+      });
+    }
+
+    // Cargar equipos (para master y directivo_liga)
+    if (rolNombre === 'master' || rolNombre === 'directivo_liga') {
+      this.equiposService.getAll().subscribe({
+        next: (equipos) => {
+          this.equipos = equipos.filter(equipo => equipo.activo);
+          this.filteredEquipos = this.equipos;
+        },
+        error: (error) => {
+          console.error('Error loading equipos:', error);
+        }
+      });
+    }
+  }
+
+  onLigaChange(): void {
+    // Resetear el filtro de equipo
+    this.selectedEquipoId = '';
+
+    // Filtrar equipos de la liga seleccionada
+    if (this.selectedLigaId) {
+      const ligaId = Number(this.selectedLigaId);
+      this.filteredEquipos = this.equipos.filter(equipo => equipo.ligaId === ligaId);
+    } else {
+      this.filteredEquipos = this.equipos;
+    }
+  }
+
+  clearFilters(): void {
+    this.selectedLigaId = '';
+    this.selectedEquipoId = '';
     this.searchTerm = '';
+    this.filteredEquipos = this.equipos;
+  }
+
+  canShowFilters(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    const rolNombre = currentUser?.rol?.nombre;
+    return rolNombre === 'master' || rolNombre === 'directivo_liga';
   }
 
   canCreateJugador(): boolean {

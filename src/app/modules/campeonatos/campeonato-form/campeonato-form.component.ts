@@ -42,8 +42,7 @@ export class CampeonatoFormComponent implements OnInit {
       ligaId: ['', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: ['', Validators.required],
-      fechaLimiteInscripcion: ['', Validators.required],
-      activo: [true]
+      fechaLimiteInscripcion: ['', Validators.required]
     });
   }
 
@@ -85,8 +84,7 @@ export class CampeonatoFormComponent implements OnInit {
             ligaId: campeonato.ligaId,
             fechaInicio: campeonato.fechaInicio.split('T')[0],
             fechaFin: campeonato.fechaFin.split('T')[0],
-            fechaLimiteInscripcion: campeonato.fechaLimiteInscripcion.split('T')[0],
-            activo: campeonato.activo
+            fechaLimiteInscripcion: campeonato.fechaLimiteInscripcion.split('T')[0]
           });
         },
         error: (err) => {
@@ -101,11 +99,7 @@ export class CampeonatoFormComponent implements OnInit {
     if (this.campeonatoForm.valid) {
       this.loading = true;
       this.errorMessage = '';
-      const { activo, ...campeonatoData } = this.campeonatoForm.value;
-      const formData = {
-        ...campeonatoData,
-        ...(this.isEditMode && { activo })
-      };
+      const formData = { ...this.campeonatoForm.value };
       
       if (this.campeonatoForm.get('ligaId')?.disabled) {
         formData.ligaId = this.campeonatoForm.get('ligaId')?.value;

@@ -66,24 +66,33 @@
 
       <div class="form-group">
         <label for="jugadorCampeonatoId">Jugador a Transferir *</label>
-        <select
+        <mat-form-field class="full-width" appearance="outline">
+          <input
+            type="text"
+            matInput
+            [formControl]="jugadorSearchControl"
+            [matAutocomplete]="auto"
+            placeholder="Buscar por nombre, cédula o equipo..."
+            [disabled]="!form.get('campeonatoId')?.value"
+          />
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            [displayWith]="displayJugador.bind(this)"
+            (optionSelected)="onJugadorSelected($event.option.value)"
+          >
+            <mat-option
+              *ngFor="let habilitacion of filteredJugadores$ | async"
+              [value]="habilitacion"
+            >
+              {{ getJugadorInfo(habilitacion) }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        <input
+          type="hidden"
           id="jugadorCampeonatoId"
           formControlName="jugadorCampeonatoId"
-          class="form-control"
-          [class.is-invalid]="
-            form.get('jugadorCampeonatoId')?.invalid &&
-            form.get('jugadorCampeonatoId')?.touched
-          "
-          [disabled]="!form.get('campeonatoId')?.value"
-        >
-          <option value="">Seleccione un jugador</option>
-          <option
-            *ngFor="let habilitacion of jugadoresHabilitados"
-            [value]="habilitacion.jugadorId"
-          >
-            {{ getJugadorInfo(habilitacion) }}
-          </option>
-        </select>
+        />
         <div
           class="error-message"
           *ngIf="
