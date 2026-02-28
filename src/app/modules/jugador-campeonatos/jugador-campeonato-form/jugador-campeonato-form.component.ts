@@ -363,6 +363,7 @@ export class JugadorCampeonatoFormComponent implements OnInit {
           categoriaId: Number(formValue.categoriaId),
           numeroCancha: formValue.numeroCancha ? Number(formValue.numeroCancha) : undefined,
           posicion: formValue.posicion || undefined,
+          observaciones: formValue.observaciones || undefined,
         };
         this.jugadorCampeonatosService
           .update(this.jugadorCampeonatoId, updateDto)
