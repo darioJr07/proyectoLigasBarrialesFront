@@ -365,6 +365,8 @@ export class JugadorCampeonatoFormComponent implements OnInit {
           posicion: formValue.posicion || undefined,
           observaciones: formValue.observaciones || undefined,
         };
+        console.log('📤 Enviando updateDto:', updateDto);
+        console.log('📋 Valor del formulario (raw):', formValue);
         this.jugadorCampeonatosService
           .update(this.jugadorCampeonatoId, updateDto)
           .subscribe({
