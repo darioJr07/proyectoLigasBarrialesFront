@@ -46,7 +46,7 @@
       <p>No se encontraron usuarios con los filtros aplicados.</p>
     </div>
 
-    <div class="results-info" *ngIf="!loading && filteredUsuarios.length > 0">
+    <div class="results-info" *ngIf="!loading && totalPages > 1">
       Mostrando {{ Math.min(currentPage * pageSize, filteredUsuarios.length) }} de {{ filteredUsuarios.length }} usuario(s)
     </div>
 

@@ -25,6 +25,34 @@ export class JugadorCampeonatosPendientesComponent implements OnInit {
   modalImageUrl = '';
   searchTerm = '';
 
+  // Paginación
+  Math = Math;
+  currentPage = 1;
+  pageSize = 6;
+  pageSizeOptions = [6, 12, 24];
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredHabilitaciones.length / this.pageSize);
+  }
+
+  get totalPagesArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  get paginatedHabilitaciones(): JugadorCampeonato[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredHabilitaciones.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
   constructor(
     private jugadorCampeonatosService: JugadorCampeonatosService,
     public permissions: PermissionsService,
@@ -41,6 +69,7 @@ export class JugadorCampeonatosPendientesComponent implements OnInit {
     this.jugadorCampeonatosService.getPendientes().subscribe({
       next: (habilitaciones) => {
         this.habilitaciones = habilitaciones;
+        this.currentPage = 1;
         this.loading = false;
       },
       error: (error) => {
@@ -108,10 +137,12 @@ export class JugadorCampeonatosPendientesComponent implements OnInit {
 
   onSearchChange(term: string): void {
     this.searchTerm = term;
+    this.currentPage = 1;
   }
 
   clearSearch(): void {
     this.searchTerm = '';
+    this.currentPage = 1;
   }
 
   logout(): void {

@@ -138,6 +138,59 @@
     min-height: 100px;
   }
 
+  .jugador-autocomplete {
+    position: relative;
+    width: 100%;
+
+    input.form-control {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .jugador-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .jugador-option {
+      padding: 0.65rem 0.85rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #2c3e50;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: #eaf4fd;
+        color: #2980b9;
+      }
+    }
+
+    .jugador-no-result {
+      color: #999;
+      font-style: italic;
+      cursor: default;
+
+      &:hover {
+        background-color: white;
+        color: #999;
+      }
+    }
+  }
+
   .error-message {
     margin-top: 0.5rem;
     color: #e74c3c;

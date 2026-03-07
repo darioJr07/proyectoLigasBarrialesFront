@@ -197,7 +197,7 @@
     <p>No se encontraron transferencias con ese criterio de búsqueda</p>
   </div>
 
-  <div class="results-info" *ngIf="!loading && filteredTransferencias.length > 0">
+  <div class="results-info" *ngIf="!loading && totalPages > 1">
     Mostrando {{ Math.min(currentPage * pageSize, filteredTransferencias.length) }} de {{ filteredTransferencias.length }} transferencias
   </div>
 

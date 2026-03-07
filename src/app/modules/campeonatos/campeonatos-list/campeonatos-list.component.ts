@@ -19,6 +19,7 @@ import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.c
   styleUrl: './campeonatos-list.component.scss'
 })
 export class CampeonatosListComponent implements OnInit {
+  Math = Math;
   campeonatos: Campeonato[] = [];
   filteredCampeonatos: Campeonato[] = [];
   ligas: Liga[] = [];
@@ -29,6 +30,33 @@ export class CampeonatosListComponent implements OnInit {
   selectedEstado: string = '';
   isMaster = false;
   user$: Observable<any>;
+
+  // Paginación
+  currentPage = 1;
+  pageSize = 6;
+  pageSizeOptions = [6, 12, 24];
+
+  get paginatedCampeonatos(): Campeonato[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredCampeonatos.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredCampeonatos.length / this.pageSize);
+  }
+
+  get totalPagesArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
 
   constructor(
     private campeonatosService: CampeonatosService,
@@ -211,6 +239,7 @@ export class CampeonatosListComponent implements OnInit {
     }
 
     this.filteredCampeonatos = filtered;
+    this.currentPage = 1;
   }
 
   clearFilters(): void {
@@ -218,6 +247,7 @@ export class CampeonatosListComponent implements OnInit {
     this.selectedLigaId = '';
     this.selectedEstado = '';
     this.filteredCampeonatos = this.campeonatos;
+    this.currentPage = 1;
   }
 
   canShowFilters(): boolean {

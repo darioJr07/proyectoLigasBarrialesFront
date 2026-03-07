@@ -52,6 +52,31 @@ export class JugadorCampeonatoFormComponent implements OnInit {
   maxHabilitados: number = 20;
   showLimitInfo: boolean = false;
 
+  // Autocomplete de jugadores
+  jugadorSearchText: string = '';
+  showJugadorDropdown: boolean = false;
+
+  get jugadoresFiltrados(): Jugador[] {
+    const query = this.jugadorSearchText.toLowerCase().trim();
+    if (!query) return this.jugadores;
+    return this.jugadores.filter(j =>
+      j.nombre.toLowerCase().includes(query) ||
+      (j.cedula && j.cedula.toLowerCase().includes(query))
+    );
+  }
+
+  selectJugador(jugador: Jugador): void {
+    this.form.get('jugadorId')?.setValue(jugador.id);
+    this.form.get('jugadorId')?.markAsTouched();
+    this.jugadorSearchText = `${jugador.nombre} - ${jugador.cedula}`;
+    this.showJugadorDropdown = false;
+  }
+
+  onJugadorBlur(): void {
+    // Timeout para permitir que el mousedown del option se ejecute primero
+    setTimeout(() => { this.showJugadorDropdown = false; }, 200);
+  }
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -161,6 +186,9 @@ export class JugadorCampeonatoFormComponent implements OnInit {
   }
 
   loadJugadoresByEquipo(equipoId: number): void {
+    this.jugadorSearchText = '';
+    this.showJugadorDropdown = false;
+    this.form.get('jugadorId')?.setValue(null);
     this.jugadoresService.getByEquipo(equipoId).subscribe({
       next: (jugadores) => {
         this.jugadores = jugadores;
@@ -265,8 +293,10 @@ export class JugadorCampeonatoFormComponent implements OnInit {
     // Contar habilitados actuales
     this.jugadorCampeonatosService.getByCampeonatoAndEquipo(Number(campeonatoId), Number(equipoId)).subscribe({
       next: (habilitaciones) => {
-        // Contar solo los que están en estado 'habilitado'
-        this.habilitadosCount = habilitaciones.filter(h => h.estado === 'habilitado' && h.activo).length;
+        // Contar habilitados + pendientes (ambos ocupan un cupo en curso)
+        this.habilitadosCount = habilitaciones.filter(
+          h => (h.estado === 'habilitado' || h.estado === 'pendiente') && h.activo
+        ).length;
         this.showLimitInfo = true;
       },
       error: (error) => {
@@ -298,6 +328,12 @@ export class JugadorCampeonatoFormComponent implements OnInit {
                 posicion: jugadorCampeonato.posicion,
                 observaciones: jugadorCampeonato.observaciones,
               });
+
+              // Mostrar nombre del jugador en el campo de búsqueda (modo edición)
+              const jugadorSeleccionado = jugadores.find(j => j.id === jugadorCampeonato.jugadorId);
+              if (jugadorSeleccionado) {
+                this.jugadorSearchText = `${jugadorSeleccionado.nombre} - ${jugadorSeleccionado.cedula}`;
+              }
 
               // Forzar la actualización de la vista y deshabilitar campos después
               // de que Angular haya renderizado las opciones del select

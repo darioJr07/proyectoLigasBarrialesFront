@@ -327,6 +327,79 @@
   font-size: 20px;
 }
 
+.paginator-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  .paginator-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+
+    .page-size-select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  }
+
+  .paginator-center {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    .page-btn {
+      min-width: 36px;
+      height: 36px;
+      padding: 0 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      color: #2c3e50;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        background-color: #3498db;
+        color: white;
+        border-color: #3498db;
+      }
+
+      &.active {
+        background-color: #2c3e50;
+        color: white;
+        border-color: #2c3e50;
+        font-weight: bold;
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+
+    .page-ellipsis {
+      padding: 0 0.25rem;
+      color: #888;
+    }
+  }
+
+  .paginator-right {
+    font-size: 0.9rem;
+    color: #555;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -341,5 +414,10 @@
 
   .inscripciones-grid {
     grid-template-columns: 1fr;
+  }
+
+  .paginator-container {
+    flex-direction: column;
+    align-items: center;
   }
 }

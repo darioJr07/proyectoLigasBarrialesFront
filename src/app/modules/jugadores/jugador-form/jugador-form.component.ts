@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JugadoresService } from '../../../core/services/jugadores.service';
 import { EquiposService } from '../../../core/services/equipos.service';
@@ -51,6 +51,33 @@ export class JugadorFormComponent implements OnInit {
     }
   }
 
+  /**
+   * Validador personalizado para cédula ecuatoriana
+   * Solo aplica cuando tipoDocumento es 'Cédula'
+   */
+  cedulaEcuatorianaValidator(): ValidatorFn {
+    return (control: AbstractControl) => {
+      const cedula = control.value;
+      if (!cedula || !/^\d{10}$/.test(cedula)) return null; // Deja que el validador pattern lo maneje
+
+      const provincia = parseInt(cedula.substring(0, 2));
+      if (provincia < 1 || provincia > 24) return { cedulaInvalida: true };
+
+      const tercerDigito = parseInt(cedula[2]);
+      if (tercerDigito >= 6) return { cedulaInvalida: true };
+
+      const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+      let suma = 0;
+      for (let i = 0; i < 9; i++) {
+        let valor = parseInt(cedula[i]) * coeficientes[i];
+        if (valor >= 10) valor -= 9;
+        suma += valor;
+      }
+      const digitoVerificador = suma % 10 === 0 ? 0 : 10 - (suma % 10);
+      return digitoVerificador === parseInt(cedula[9]) ? null : { cedulaInvalida: true };
+    };
+  }
+
   checkUserRole(): void {
     this.authService.user$.subscribe((user: Usuario | null) => {
       if (user) {
@@ -63,7 +90,7 @@ export class JugadorFormComponent implements OnInit {
     this.jugadorForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
       tipoDocumento: ['Cédula', Validators.required],
-      cedula: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      cedula: ['', [Validators.required, Validators.pattern(/^\d{10}$/), this.cedulaEcuatorianaValidator()]],
       fechaNacimiento: ['', Validators.required],
       equipoId: [null],
       descripcion: [''],
@@ -77,7 +104,7 @@ export class JugadorFormComponent implements OnInit {
     this.jugadorForm.get('tipoDocumento')?.valueChanges.subscribe(tipo => {
       const cedulaControl = this.jugadorForm.get('cedula');
       if (tipo === 'Cédula') {
-        cedulaControl?.setValidators([Validators.required, Validators.pattern(/^\d{10}$/)]);
+        cedulaControl?.setValidators([Validators.required, Validators.pattern(/^\d{10}$/), this.cedulaEcuatorianaValidator()]);
       } else if (tipo === 'Pasaporte') {
         cedulaControl?.setValidators([Validators.required, Validators.minLength(6)]);
       }
@@ -162,6 +189,9 @@ export class JugadorFormComponent implements OnInit {
           numeroCancha: jugador.numeroCancha || '',
           posicion: jugador.posicion || ''
         });
+        // En modo edición, tipo de documento y cédula no se pueden modificar
+        this.jugadorForm.get('tipoDocumento')?.disable();
+        this.jugadorForm.get('cedula')?.disable();
         this.loading = false;
       },
       error: (error) => {
@@ -186,6 +216,13 @@ export class JugadorFormComponent implements OnInit {
     // Incluir equipoId si está deshabilitado (caso dirigente_equipo)
     if (this.jugadorForm.get('equipoId')?.disabled) {
       formData.equipoId = this.jugadorForm.get('equipoId')?.value;
+    }
+    // Incluir tipoDocumento y cedula si están deshabilitados (modo edición)
+    if (this.jugadorForm.get('tipoDocumento')?.disabled) {
+      formData.tipoDocumento = this.jugadorForm.get('tipoDocumento')?.value;
+    }
+    if (this.jugadorForm.get('cedula')?.disabled) {
+      formData.cedula = this.jugadorForm.get('cedula')?.value;
     }
     
     // Convertir fecha

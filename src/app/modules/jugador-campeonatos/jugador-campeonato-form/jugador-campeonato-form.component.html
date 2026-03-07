@@ -28,11 +28,11 @@
       <!-- Contador de jugadores habilitados -->
       <div class="info-box" *ngIf="showLimitInfo && !isEditMode">
         <div class="limit-counter" [class.limit-warning]="habilitadosCount >= maxHabilitados * 0.9" [class.limit-reached]="habilitadosCount >= maxHabilitados">
-          <strong>📊 Jugadores Habilitados:</strong> 
+          <strong>📊 Cupos en uso:</strong> 
           <span class="counter-text">{{ habilitadosCount }} / {{ maxHabilitados }}</span>
         </div>
         <small class="help-text" *ngIf="habilitadosCount < maxHabilitados">
-          ✅ Aún puedes habilitar {{ maxHabilitados - habilitadosCount }} jugador(es) más
+          ✅ Aún puedes habilitar {{ maxHabilitados - habilitadosCount }} jugador(es) más <em>(incluye habilitados y solicitudes en trámite)</em>
         </small>
         <small class="error-message" *ngIf="habilitadosCount >= maxHabilitados">
           ⚠️ Se alcanzó el límite máximo. Para habilitar otro jugador, solicita al directivo que libere un cupo.
@@ -93,25 +93,39 @@
         </div>
 
         <div class="form-group">
-          <label for="jugadorId">Jugador *</label>
-          <select
-            id="jugadorId"
-            formControlName="jugadorId"
-            class="form-control"
-            [class.is-invalid]="
-              form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched
-            "
-          >
-            <option [ngValue]="null">Seleccione un jugador</option>
-            <option *ngFor="let jugador of jugadores" [ngValue]="jugador.id">
-              {{ jugador.nombre }} - {{ jugador.cedula }}
-            </option>
-          </select>
+          <label for="jugadorSearch">Jugador *</label>
+          <div class="jugador-autocomplete">
+            <input
+              id="jugadorSearch"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched"
+              placeholder="Buscar por nombre o cédula..."
+              [value]="jugadorSearchText"
+              (input)="jugadorSearchText = $any($event.target).value; showJugadorDropdown = true"
+              (focus)="showJugadorDropdown = jugadores.length > 0"
+              (blur)="onJugadorBlur()"
+              [disabled]="isEditMode"
+              autocomplete="off"
+            />
+            <div class="jugador-dropdown" *ngIf="showJugadorDropdown">
+              <div
+                class="jugador-option"
+                *ngFor="let jugador of jugadoresFiltrados"
+                (mousedown)="selectJugador(jugador)"
+              >
+                {{ jugador.nombre }} - {{ jugador.cedula }}
+              </div>
+              <div class="jugador-option jugador-no-result" *ngIf="jugadoresFiltrados.length === 0">
+                No se encontraron jugadores con «{{ jugadorSearchText }}»
+              </div>
+            </div>
+          </div>
+          <!-- Campo oculto que guarda el id seleccionado en el formulario reactivo -->
+          <input type="hidden" formControlName="jugadorId" />
           <div
             class="error-message"
-            *ngIf="
-              form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched
-            "
+            *ngIf="form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched"
           >
             El jugador es requerido
           </div>

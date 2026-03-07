@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { InscripcionesService } from '../inscripciones.service';
@@ -11,11 +12,12 @@ import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.c
 @Component({
   selector: 'app-inscripciones-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
   templateUrl: './inscripciones-list.component.html',
   styleUrl: './inscripciones-list.component.scss'
 })
 export class InscripcionesListComponent implements OnInit {
+  Math = Math;
   inscripciones: Inscripcion[] = [];
   loading = false;
   errorMessage = '';
@@ -24,6 +26,33 @@ export class InscripcionesListComponent implements OnInit {
   campeonatoNombre = '';
   currentUser: any;
   user$: Observable<any>;
+
+  // Paginación
+  currentPage = 1;
+  pageSize = 6;
+  pageSizeOptions = [6, 12, 24];
+
+  get paginatedInscripciones(): Inscripcion[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.inscripciones.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.inscripciones.length / this.pageSize);
+  }
+
+  get totalPagesArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
 
   constructor(
     private inscripcionesService: InscripcionesService,
@@ -59,6 +88,7 @@ export class InscripcionesListComponent implements OnInit {
     request.subscribe({
       next: (data) => {
         this.inscripciones = data;
+        this.currentPage = 1;
         this.loading = false;
       },
       error: (err) => {

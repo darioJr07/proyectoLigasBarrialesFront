@@ -88,7 +88,7 @@
     </div>
 
     <!-- Contador de resultados -->
-    <div *ngIf="!loading && filteredEquipos.length > 0" class="results-info">
+    <div *ngIf="!loading && filteredEquipos.length > pageSize" class="results-info">
       Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, filteredEquipos.length) }} de {{ filteredEquipos.length }} equipo(s)
     </div>
 
@@ -137,7 +137,7 @@
     </div>
 
     <!-- Paginador -->
-    <div *ngIf="!loading && filteredEquipos.length > 0" class="paginator-container">
+    <div *ngIf="!loading && filteredEquipos.length > pageSize" class="paginator-container">
       <div class="paginator-left">
         <label>Equipos por página:</label>
         <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="page-size-select">

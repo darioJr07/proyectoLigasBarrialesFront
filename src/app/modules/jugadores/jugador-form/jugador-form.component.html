@@ -50,6 +50,9 @@
           <small class="error-text" *ngIf="jugadorForm.get('tipoDocumento')?.invalid && jugadorForm.get('tipoDocumento')?.touched">
             El tipo de documento es requerido
           </small>
+          <small class="info-text" *ngIf="isEditMode">
+            No se puede modificar el tipo de documento una vez registrado
+          </small>
         </div>
       </div>
 
@@ -69,8 +72,14 @@
           <small class="error-text" *ngIf="jugadorForm.get('cedula')?.hasError('pattern') && jugadorForm.get('cedula')?.touched">
             La cédula debe tener 10 dígitos
           </small>
+          <small class="error-text" *ngIf="jugadorForm.get('cedula')?.hasError('cedulaInvalida') && jugadorForm.get('cedula')?.touched">
+            La cédula ingresada no es válida según el registro civil ecuatoriano
+          </small>
           <small class="error-text" *ngIf="jugadorForm.get('cedula')?.hasError('minlength') && jugadorForm.get('cedula')?.touched">
             El pasaporte debe tener al menos 6 caracteres
+          </small>
+          <small class="info-text" *ngIf="isEditMode">
+            El número de documento no se puede modificar una vez registrado
           </small>
         </div>
 
