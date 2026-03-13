@@ -330,9 +330,12 @@ export class PdfCarnetService {
     contenido.push(seccionCentral);
 
     // NOMBRE DEL JUGADOR con fondo semitransparente para mejor legibilidad
+    // El stack tiene margin bottom fijo [0,2,0,2] para que el bloque siempre
+    // ocupe el mismo alto, sin importar el fontSize del nombre (evita que el
+    // segundo carnet suba cuando el nombre es largo y la fuente se reduce)
     contenido.push({
       stack: [
-        // Rectángulo de fondo negro semitransparente
+        // Rectángulo de fondo negro semitransparente (alto fijo h:18)
         {
           canvas: [
             {
@@ -348,17 +351,19 @@ export class PdfCarnetService {
           margin: [0, 2, 0, 0]
         },
         // Texto del nombre sobre el fondo (fontSize adaptable según longitud)
-        // margin bottom ajustado según fontSize para mantener el mismo espacio vertical
-        // y evitar desajuste del logo/nombre del equipo debajo
+        // margin bottom FIJO en 2 para que el bloque total no varíe de alto
         {
           text: nombreCompleto.toUpperCase(),
           fontSize: this.getFontSizeAdaptable(nombreCompleto, 12, 10, 8),
           bold: true,
           alignment: 'center',
-          margin: [0, -16, 0, this.getFontSizeAdaptable(nombreCompleto, 2, 4, 6)],
+          margin: [0, -16, 0, 2],
           color: 'white'
         }
-      ]
+      ],
+      // Margen fijo del stack completo: garantiza que este bloque siempre
+      // ocupe el mismo espacio vertical en el carnet
+      margin: [0, 0, 0, 2]
     });
 
     // Línea separadora sutil
