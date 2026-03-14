@@ -157,9 +157,9 @@ export class JugadorCampeonatoFormComponent implements OnInit {
   loadCampeonatos(): void {
     this.campeonatosService.getAll().subscribe({
       next: (campeonatos) => {
-        // Solo campeonatos con inscripcion_abierta
+        // Campeonatos con inscripcion_abierta o en_curso (se puede habilitar hasta la 3ra fecha)
         this.campeonatos = campeonatos.filter(
-          (c) => c.estado === 'inscripcion_abierta'
+          (c) => c.estado === 'inscripcion_abierta' || c.estado === 'en_curso'
         );
       },
       error: (error) => {
