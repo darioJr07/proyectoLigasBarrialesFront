@@ -169,6 +169,28 @@ export class JugadorCampeonatosListComponent implements OnInit {
     });
   }
 
+  darDeBaja(id: number): void {
+    const motivo = prompt('Ingrese el motivo de la baja del jugador (obligatorio):');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      alert('Debe ingresar un motivo para dar de baja al jugador');
+      return;
+    }
+    if (!confirm('¿Está seguro de dar de baja a este jugador? El cupo quedará libre para registrar un nuevo jugador.')) {
+      return;
+    }
+    this.jugadorCampeonatosService.darDeBaja(id, motivo).subscribe({
+      next: () => {
+        alert('Jugador dado de baja exitosamente. El cupo está disponible para un nuevo jugador.');
+        this.loadJugadorCampeonatos();
+      },
+      error: (error: any) => {
+        console.error('Error al dar de baja:', error);
+        alert('Error al dar de baja: ' + (error.error?.message || 'Error desconocido'));
+      }
+    });
+  }
+
   editar(id: number): void {
     this.router.navigate(['/jugador-campeonatos/editar', id]);
   }
@@ -354,7 +376,8 @@ export class JugadorCampeonatosListComponent implements OnInit {
   canGenerarCarnet(jugadorCampeonato: JugadorCampeonato): boolean {
     const role = this.currentUser?.rol?.nombre;
     const isAuthorized = role === 'master' || role === 'directivo_liga';
-    const isHabilitado = jugadorCampeonato.estado === 'habilitado';
+    // activo !== false garantiza que jugadores transferidos (activo=false) no generen carnet
+    const isHabilitado = jugadorCampeonato.estado === 'habilitado' && jugadorCampeonato.activo !== false;
     return isAuthorized && isHabilitado;
   }
 
@@ -420,9 +443,10 @@ export class JugadorCampeonatosListComponent implements OnInit {
       return;
     }
 
-    // Filtrar jugadores habilitados del equipo seleccionado
+    // Filtrar jugadores habilitados y activos del equipo seleccionado
+    // activo !== false excluye a jugadores transferidos que quedaron inactivos en este equipo
     const jugadoresHabilitados = this.filteredJugadorCampeonatos.filter(
-      jc => jc.estado === 'habilitado'
+      jc => jc.estado === 'habilitado' && jc.activo !== false
     );
 
     if (jugadoresHabilitados.length === 0) {
@@ -453,6 +477,6 @@ export class JugadorCampeonatosListComponent implements OnInit {
     return this.canGenerarCarnetsPorEquipo() && 
            !!this.filterCampeonatoId && 
            !!this.filterEquipoId &&
-           this.filteredJugadorCampeonatos.some(jc => jc.estado === 'habilitado');
+           this.filteredJugadorCampeonatos.some(jc => jc.estado === 'habilitado' && jc.activo !== false);
   }
 }

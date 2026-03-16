@@ -46,6 +46,7 @@ export class TransferenciaFormComponent implements OnInit {
   filteredJugadores$: Observable<JugadorCampeonato[]> | undefined;
   loading = false;
   errorMessage = '';
+  advertenciaMessage = '';
   currentEquipoId: number | null = null;
   user$ = this.authService.currentUser$;
 
@@ -147,8 +148,14 @@ export class TransferenciaFormComponent implements OnInit {
       };
 
       this.transferenciasService.create(createDto).subscribe({
-        next: () => {
-          this.router.navigate(['/transferencias']);
+        next: (response: any) => {
+          if (response?.advertencia) {
+            this.advertenciaMessage = response.advertencia;
+            // Navegar después de 4 segundos para que el usuario lea el aviso
+            setTimeout(() => this.router.navigate(['/transferencias']), 4000);
+          } else {
+            this.router.navigate(['/transferencias']);
+          }
         },
         error: (error) => {
           console.error('Error creating transferencia:', error);

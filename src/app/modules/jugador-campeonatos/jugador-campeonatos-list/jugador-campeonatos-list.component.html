@@ -229,6 +229,12 @@
                   title="Rechazar Habilitación">
             ❌
           </button>
+          <button *ngIf="canApprove() && jc.estado === 'habilitado' && jc.activo !== false"
+                  class="btn-icon danger"
+                  (click)="darDeBaja(jc.id)"
+                  title="Dar de baja al jugador">
+            🚫
+          </button>
           <button *ngIf="canGenerarCarnet(jc)" 
                   class="btn-icon carnet" 
                   (click)="descargarCarnet(jc)" 

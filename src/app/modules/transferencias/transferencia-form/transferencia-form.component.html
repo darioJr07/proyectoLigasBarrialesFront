@@ -34,6 +34,11 @@
         {{ errorMessage }}
       </div>
 
+      <div class="alert alert-warning" *ngIf="advertenciaMessage">
+        {{ advertenciaMessage }}
+        <br><small>Serás redirigido automáticamente en unos segundos...</small>
+      </div>
+
       <div class="form-group">
         <label for="campeonatoId">Campeonato *</label>
         <select

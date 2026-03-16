@@ -56,6 +56,10 @@ export class JugadorCampeonatosService {
     return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/rechazar`, { observaciones });
   }
 
+  darDeBaja(id: number, motivo: string): Observable<JugadorCampeonato> {
+    return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/dar-de-baja`, { motivo });
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
