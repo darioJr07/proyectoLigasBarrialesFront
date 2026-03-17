@@ -10,7 +10,7 @@ export interface JugadorCampeonato {
   categoria?: any;
   numeroCancha: number;
   posicion: string;
-  estado: 'pendiente' | 'habilitado' | 'rechazado';
+  estado: 'pendiente' | 'habilitado' | 'rechazado' | 'baja';
   solicitadoPor?: number;
   aprobadoPor?: number;
   fechaAprobacion?: string;

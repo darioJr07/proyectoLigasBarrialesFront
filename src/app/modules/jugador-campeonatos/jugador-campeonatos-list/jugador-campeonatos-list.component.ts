@@ -125,7 +125,8 @@ export class JugadorCampeonatosListComponent implements OnInit {
     const map: any = {
       'pendiente': 'Pendiente',
       'habilitado': 'Habilitado',
-      'rechazado': 'Rechazado'
+      'rechazado': 'Rechazado',
+      'baja': 'Dado de Baja'
     };
     return map[estado] || estado;
   }

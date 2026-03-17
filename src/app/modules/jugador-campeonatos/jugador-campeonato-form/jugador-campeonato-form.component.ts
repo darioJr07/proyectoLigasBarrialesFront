@@ -340,9 +340,9 @@ export class JugadorCampeonatoFormComponent implements OnInit {
               this.cdr.detectChanges();
               
               setTimeout(() => {
-                this.form.get('campeonatoId')?.disable();
-                this.form.get('equipoId')?.disable();
-                this.form.get('jugadorId')?.disable();
+                this.form.get('campeonatoId')?.disable({ emitEvent: false });
+                this.form.get('equipoId')?.disable({ emitEvent: false });
+                this.form.get('jugadorId')?.disable({ emitEvent: false });
               }, 100);
 
               // Cargar la categoría del equipo (solo la inscrita)

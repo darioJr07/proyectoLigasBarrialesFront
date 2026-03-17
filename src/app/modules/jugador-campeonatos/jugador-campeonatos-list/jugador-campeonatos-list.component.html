@@ -75,6 +75,7 @@
             <option value="pendiente">Pendiente</option>
             <option value="habilitado">Habilitado</option>
             <option value="rechazado">Rechazado</option>
+            <option value="baja">Dado de Baja</option>
           </select>
         </div>
       </div>
@@ -140,6 +141,7 @@
            [class.habilitado]="jc.estado === 'habilitado'"
            [class.pendiente]="jc.estado === 'pendiente'"
            [class.rechazado]="jc.estado === 'rechazado'"
+           [class.baja]="jc.estado === 'baja'"
            [class.inactive]="!jc.activo">
         
         <div class="card-header">
@@ -153,7 +155,8 @@
             <span class="status-badge" 
                   [class.status-habilitado]="jc.estado === 'habilitado'"
                   [class.status-pending]="jc.estado === 'pendiente'"
-                  [class.status-rejected]="jc.estado === 'rechazado'">
+                  [class.status-rejected]="jc.estado === 'rechazado'"
+                  [class.status-baja]="jc.estado === 'baja'">
               {{ getEstadoText(jc.estado) }}
             </span>
             <span *ngIf="!jc.activo" class="status-badge status-inactive">
