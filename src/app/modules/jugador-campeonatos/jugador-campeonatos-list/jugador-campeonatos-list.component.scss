@@ -769,6 +769,59 @@
       }
     }
   }
+
+  // Contenedor de botones de descarga de lista
+  .descarga-lista-container {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .descarga-lista-label {
+      color: white;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .descarga-lista-botones {
+      display: flex;
+      gap: 0.5rem;
+
+      button {
+        border: none;
+        padding: 0.55rem 1.2rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+
+        &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+      }
+
+      .btn-descarga-pdf {
+        background: white;
+        color: #c0392b;
+      }
+
+      .btn-descarga-excel {
+        background: white;
+        color: #1a7a4a;
+      }
+    }
+  }
 }
 
 // Contador de resultados

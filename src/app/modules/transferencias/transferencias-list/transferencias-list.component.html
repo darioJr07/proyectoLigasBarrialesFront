@@ -58,8 +58,8 @@
     </div>
 
     <div class="filters-grid">
-      <!-- Liga (solo para master y directivo_liga) -->
-      <div class="filter-item" *ngIf="permissions.isMaster() || permissions.isDirectivo()">
+      <!-- Liga (solo para master) -->
+      <div class="filter-item" *ngIf="permissions.isMaster()">
         <label for="filter-liga">Liga</label>
         <select 
           id="filter-liga" 

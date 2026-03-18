@@ -12,6 +12,7 @@ import { LigasService } from '../../../core/services/ligas.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { PdfCarnetService } from '../../../core/services/pdf-carnet.service';
+import { ListaJugadoresService } from '../../../core/services/lista-jugadores.service';
 import { Liga } from '../../../core/models/liga.model';
 import { Campeonato } from '../../campeonatos/campeonato.model';
 import { Equipo } from '../../../core/models/equipo.model';
@@ -81,7 +82,8 @@ export class JugadorCampeonatosListComponent implements OnInit {
     private ligasService: LigasService,
     private campeonatosService: CampeonatosService,
     private equiposService: EquiposService,
-    private pdfCarnetService: PdfCarnetService
+    private pdfCarnetService: PdfCarnetService,
+    private listaJugadoresService: ListaJugadoresService
   ) {
     this.user$ = this.authService.user$;
   }
@@ -479,5 +481,108 @@ export class JugadorCampeonatosListComponent implements OnInit {
            !!this.filterCampeonatoId && 
            !!this.filterEquipoId &&
            this.filteredJugadorCampeonatos.some(jc => jc.estado === 'habilitado' && jc.activo !== false);
+  }
+
+  /**
+   * Muestra los botones de descarga de lista cuando hay jugadores habilitados visibles.
+   * Disponible para todos los roles.
+   * No requiere filtro de equipo ni campeonato, funciona con cualquier combinación de filtros.
+   */
+  showDescargaListaButton(): boolean {
+    return this.filteredJugadorCampeonatos.some(jc => jc.estado === 'habilitado' && jc.activo !== false);
+  }
+
+  /**
+   * Obtiene el nombre del campeonato. Si hay filtro, usa ese nombre.
+   * Si no hay filtro, intenta derivarlo de los datos: si todos comparten el mismo
+   * campeonato muestra ese nombre; si hay varios, muestra 'Todos'.
+   */
+  private getNombreCampeonato(): string {
+    if (this.filterCampeonatoId) {
+      const c = this.campeonatos.find(x => x.id === Number(this.filterCampeonatoId));
+      return c?.nombre || 'Campeonato';
+    }
+    const habilitados = this.filteredJugadorCampeonatos.filter(jc => jc.estado === 'habilitado' && jc.activo !== false);
+    const nombres = [...new Set(habilitados.map(jc => jc.campeonato?.nombre).filter(n => !!n))];
+    return nombres.length === 1 ? (nombres[0] as string) : 'Todos';
+  }
+
+  /**
+   * Obtiene el nombre del equipo. Si hay filtro, usa ese nombre.
+   * Si no hay filtro, intenta derivarlo de los datos: si todos comparten el mismo
+   * equipo muestra ese nombre; si hay varios, muestra 'Todos'.
+   */
+  private getNombreEquipo(): string {
+    if (this.filterEquipoId) {
+      const e = this.equipos.find(x => x.id === Number(this.filterEquipoId));
+      return e?.nombre || 'Equipo';
+    }
+    const habilitados = this.filteredJugadorCampeonatos.filter(jc => jc.estado === 'habilitado' && jc.activo !== false);
+    const nombres = [...new Set(habilitados.map(jc => jc.equipo?.nombre).filter(n => !!n))];
+    return nombres.length === 1 ? (nombres[0] as string) : 'Todos';
+  }
+
+  /**
+   * Obtiene la categoría. Si todos los habilitados visibles comparten la misma
+   * categoría muestra ese nombre; si hay varias, muestra 'Todas'.
+   * Se basa en jc.categoria?.nombre que viene eager-cargado desde el backend.
+   */
+  private getNombreCategoria(): string {
+    const habilitados = this.filteredJugadorCampeonatos.filter(jc => jc.estado === 'habilitado' && jc.activo !== false);
+    const nombres = [...new Set(habilitados.map(jc => jc.categoria?.nombre).filter(n => !!n))];
+    return nombres.length === 1 ? (nombres[0] as string) : 'Todas';
+  }
+
+  /**
+   * Devuelve la URL del escudo del equipo cuando hay un único equipo en la vista.
+   * Se usa para incluirlo en el PDF.
+   */
+  private getEquipoImagenUrl(): string | undefined {
+    if (this.filterEquipoId) {
+      const e = this.equipos.find(x => x.id === Number(this.filterEquipoId));
+      return e?.imagen || undefined;
+    }
+    const habilitados = this.filteredJugadorCampeonatos.filter(jc => jc.estado === 'habilitado' && jc.activo !== false);
+    const imagenes = [...new Set(habilitados.map(jc => jc.equipo?.imagen).filter(n => !!n))];
+    return imagenes.length === 1 ? (imagenes[0] as string) : undefined;
+  }
+
+  /**
+   * Descarga la lista de jugadores habilitados en formato PDF.
+   * Los jugadores se ordenan por número de camiseta (ascendente) dentro del servicio.
+   */
+  async descargarListaPDF(): Promise<void> {
+    try {
+      this.loading = true;
+      await this.listaJugadoresService.descargarListaPDF(
+        this.filteredJugadorCampeonatos,
+        this.getNombreCampeonato(),
+        this.getNombreEquipo(),
+        this.getEquipoImagenUrl(),
+        this.getNombreCategoria()
+      );
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  /**
+   * Descarga la lista de jugadores habilitados en formato Excel (.xlsx).
+   * Los jugadores se ordenan por número de camiseta (ascendente) dentro del servicio.
+   */
+  descargarListaExcel(): void {
+    try {
+      this.listaJugadoresService.descargarListaExcel(
+        this.filteredJugadorCampeonatos,
+        this.getNombreCampeonato(),
+        this.getNombreEquipo()
+      );
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      alert('Error al generar el Excel');
+    }
   }
 }

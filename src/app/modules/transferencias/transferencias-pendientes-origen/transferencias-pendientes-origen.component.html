@@ -24,11 +24,16 @@
   </div>
 
   <div class="info-box">
-    <p>
+    <p *ngIf="!permissions.isMaster()">
       <strong>ℹ️ Información:</strong> Estas son las solicitudes de transferencia
       de jugadores de su equipo. Si aprueba, el jugador podrá ser transferido al
       nuevo equipo una vez que el directivo de la liga también apruebe la
       transferencia.
+    </p>
+    <p *ngIf="permissions.isMaster()">
+      <strong>ℹ️ Vista Master:</strong> Estas son <strong>todas</strong> las transferencias
+      pendientes de aprobación por parte de los equipos origen. Puede aprobar o rechazar
+      en representación del equipo cuando sea necesario intervenir.
     </p>
   </div>
 

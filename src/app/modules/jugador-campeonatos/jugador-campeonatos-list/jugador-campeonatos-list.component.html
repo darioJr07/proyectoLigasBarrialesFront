@@ -90,6 +90,19 @@
           🪪 Generar Carnets del Equipo
         </button>
       </div>
+
+      <!-- Botones de descarga de lista (disponibles para todos los roles) -->
+      <div class="descarga-lista-container" *ngIf="showDescargaListaButton()">
+        <span class="descarga-lista-label">📋 Descargar Lista de Jugadores Habilitados:</span>
+        <div class="descarga-lista-botones">
+          <button class="btn-descarga-pdf" (click)="descargarListaPDF()" [disabled]="loading" title="Descargar lista en formato PDF">
+            📄 PDF
+          </button>
+          <button class="btn-descarga-excel" (click)="descargarListaExcel()" [disabled]="loading" title="Descargar lista en formato Excel">
+            📊 Excel
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Barra de búsqueda -->
