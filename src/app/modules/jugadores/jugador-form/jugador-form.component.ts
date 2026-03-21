@@ -277,6 +277,17 @@ export class JugadorFormComponent implements OnInit {
     if (!equipoId) return undefined;
     
     const equipo = this.equipos.find(e => e.id === +equipoId);
-    return equipo?.ligaId;
+    return equipo?.ligaId ?? undefined;
+  }
+
+  /**
+   * Controla si se puede subir imágenes.
+   * En modo edición siempre se permite.
+   * En modo creación requiere un equipo seleccionado.
+   * Evita depender del ligaId (que puede ser null) para mostrar el componente.
+   */
+  get canUploadImages(): boolean {
+    if (this.isEditMode) return true;
+    return !!this.jugadorForm.get('equipoId')?.value;
   }
 }

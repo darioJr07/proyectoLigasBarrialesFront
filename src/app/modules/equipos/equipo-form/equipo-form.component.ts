@@ -216,16 +216,20 @@ export class EquipoFormComponent implements OnInit {
     this.loading = true;
     this.equiposService.getById(id).subscribe({
       next: (equipo) => {
+        // FIX: Seteamos todos los campos excepto ligaId y dirigenteId primero
         this.equipoForm.patchValue({
           nombre: equipo.nombre,
           representante: equipo.representante || '',
           fundacion: equipo.fundacion ? new Date(equipo.fundacion).toISOString().split('T')[0] : '',
           descripcion: equipo.descripcion || '',
           imagen: equipo.imagen || '',
-          ligaId: equipo.ligaId,
-          dirigenteId: equipo.dirigenteId
         });
-        
+
+        // FIX: Seteamos ligaId con { emitEvent: false } para NO disparar el valueChanges
+        // Si no hacemos esto, el valueChanges llama a loadDirigentesByLiga() que
+        // inmediatamente hace patchValue({ dirigenteId: '' }) borrando el valor.
+        this.equipoForm.get('ligaId')?.setValue(equipo.ligaId, { emitEvent: false });
+
         // Agregar liga actual al listado si no está presente
         if (equipo.liga && !this.ligas.find(l => l.id === equipo.liga.id)) {
           this.ligas = [equipo.liga, ...this.ligas];
@@ -247,7 +251,11 @@ export class EquipoFormComponent implements OnInit {
               if (equipo.dirigente && !this.dirigentes.find(d => d.id === equipo.dirigente.id)) {
                 this.dirigentes = [equipo.dirigente, ...this.dirigentes];
               }
-              
+
+              // FIX: Seteamos dirigenteId AQUÍ, después de que la lista de dirigentes
+              // ya esté cargada. Así el <select> encuentra la opción y la muestra correctamente.
+              this.equipoForm.patchValue({ dirigenteId: equipo.dirigenteId });
+
               this.loading = false;
             },
             error: (error) => {
@@ -256,6 +264,7 @@ export class EquipoFormComponent implements OnInit {
               if (equipo.dirigente) {
                 this.dirigentes = [equipo.dirigente];
               }
+              this.equipoForm.patchValue({ dirigenteId: equipo.dirigenteId });
               this.loading = false;
             }
           });
