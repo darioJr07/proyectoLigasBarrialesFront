@@ -257,8 +257,13 @@
 
 // ─── Jornadas Table ──────────────────────────────────────────────────────────
 .fixture-scroll-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column; /* apilar título encima de la tabla */
+  align-items: center;
+  overflow-x: hidden; /* evita scroll horizontal sobrante */
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .fixture-title-section {
@@ -272,32 +277,43 @@
   border-top: 2px solid #1e3a5f;
   border-bottom: 1px solid #e2e8f0;
   background: #f8faff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* Wrap sin separación entre columnas (columnas pegadas) */
 .jornadas-table {
-  display: flex;
-  min-width: max-content;
-  padding: 0 1rem 1.5rem;
+  display: inline-flex;
+  flex-wrap: wrap;
   gap: 0;
+  align-items: flex-start;
   background: white;
 }
 
 .jornada-col {
-  flex: 1;
-  min-width: 160px;
-  border-right: 1px solid #e2e8f0;
+  flex: 0 0 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-left: 1px solid rgba(0,0,0,0.06);
+}
 
-  &:last-child { border-right: none; }
+.jornada-col:first-child {
+  border-left: none;
 }
 
 .jornada-header {
-  background: #1e3a5f;
-  color: white;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #173a5a;
+  color: #ffffff;
   text-align: center;
-  padding: 0.6rem 0.5rem;
+  padding: 10px 8px;
+  font-weight: 700;
+  letter-spacing: .5px;
   text-transform: uppercase;
 }
 
@@ -407,4 +423,49 @@
   .jornadas-table { min-width: unset; flex-wrap: wrap; }
 
   .jornada-col { min-width: 120px; page-break-inside: avoid; }
+}
+
+// --- Opción A: wrap de columnas para scroll vertical --- /
+/* Wrap pero sin separación entre columnas (columnas pegadas) */
+.fixture-scroll-wrapper {
+  overflow-x: visible;
+}
+
+.jornadas-table {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: flex-start;
+}
+
+.jornada-col {
+  flex: 0 0 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border-left: 1px solid rgba(0,0,0,0.06);
+}
+
+.jornada-col:first-child {
+  border-left: none;
+}
+
+/* Encabezado de jornada: ocupar todo el ancho de la columna */
+.jornada-col {
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.jornada-header {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #173a5a;
+  color: #ffffff;
+  text-align: center;
+  padding: 10px 8px;
+  font-weight: 700;
+  letter-spacing: .5px;
 }

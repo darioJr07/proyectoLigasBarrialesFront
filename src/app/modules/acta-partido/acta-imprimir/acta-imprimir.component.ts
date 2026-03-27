@@ -33,15 +33,14 @@ export class ActaImprimirComponent implements OnInit {
     { label: '1.-Valor Arbitraje',     valor: 9.00 },
     { label: '2.-Aporte a la Liga',    valor: 2.00 },
     { label: '3.-Valor premios',       valor: 2.00 },
-    { label: '4.-Seguro médico',       valor: 1.00 },
-    { label: '5.-Fondo de accidentes', valor: 1.00 },
-    { label: '6.-TARGETAS TA / TR',    valor: null },
-    { label: '7.-OTROS',               valor: null },
+    { label: '4.-Fondo de accidentes', valor: 2.00 },
+    { label: '5.-TARJETAS TA / TR',    valor: null },
+    { label: '6.-OTROS',               valor: null },
   ];
 
   readonly filasExtrasVocalia = Array.from({ length: 5 });
   readonly totalFijoVocalia = this.valoresVocalia
-    .slice(0, 5)
+    .slice(0, 4)
     .reduce((sum, item) => sum + (item.valor ?? 0), 0);
 
   vocaliaLocal = {
@@ -204,16 +203,16 @@ export class ActaImprimirComponent implements OnInit {
     const vocalia = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
 
     return [
-      ...this.valoresVocalia.slice(0, 5).map((item) => ({
+      ...this.valoresVocalia.slice(0, 4).map((item) => ({
         label: item.label,
         valor: item.valor,
       })),
       {
-        label: this.valoresVocalia[5].label,
+        label: this.valoresVocalia[4].label,
         valor: vocalia.tarjetas,
       },
       {
-        label: this.valoresVocalia[6].label,
+        label: this.valoresVocalia[5].label,
         valor: null,
       },
       ...vocalia.extras.map((extra) => ({

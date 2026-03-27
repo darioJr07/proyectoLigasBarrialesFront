@@ -245,7 +245,14 @@ export class FixtureViewComponent implements OnInit {
     // Agrupar por jornada
     const jornadaNums = [...new Set(partidos.map(p => p.jornada))].sort((a, b) => a - b);
     this.jornadas = jornadaNums.map(jornadaNum => {
-      const jornadaPartidos = partidos.filter(p => p.jornada === jornadaNum);
+      let jornadaPartidos = partidos.filter(p => p.jornada === jornadaNum);
+
+      // Ordenar partidos dentro de la jornada por número del equipo local
+      jornadaPartidos = jornadaPartidos.sort((a, b) => {
+        const na = numMap.get(a.equipoLocalId ?? 0) ?? 0;
+        const nb = numMap.get(b.equipoLocalId ?? 0) ?? 0;
+        return na - nb;
+      });
       const teamsPlaying = new Set<number>();
       jornadaPartidos.forEach(p => {
         if (p.equipoLocalId) teamsPlaying.add(p.equipoLocalId);
@@ -274,13 +281,7 @@ export class FixtureViewComponent implements OnInit {
   }
 
   getNombreJornada(num: number): string {
-    const nombres = [
-      'PRIMERA FECHA', 'SEGUNDA FECHA', 'TERCERA FECHA', 'CUARTA FECHA',
-      'QUINTA FECHA', 'SEXTA FECHA', 'SÉPTIMA FECHA', 'OCTAVA FECHA',
-      'NOVENA FECHA', 'DÉCIMA FECHA', 'UNDÉCIMA FECHA', 'DUODÉCIMA FECHA',
-      'DECIMOTERCERA FECHA', 'DECIMOCUARTA FECHA', 'DECIMOQUINTA FECHA',
-    ];
-    return nombres[num - 1] ?? `FECHA ${num}`;
+    return `FECHA ${num}`.toUpperCase();
   }
 
   imprimir(): void {
