@@ -5,6 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { ActaPartidoService } from '../acta-partido.service';
 import { SancionesService } from '../../sanciones/sanciones.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionsService } from '../../../core/services/permissions.service';
+import { LigasService } from '../../../core/services/ligas.service';
+import { CategoriasService } from '../../categorias/categorias.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 import { Observable } from 'rxjs';
 import {
@@ -38,8 +41,16 @@ import { environment } from '../../../../environments/environment';
 export class TribunalPenasComponent implements OnInit {
 
   // ── Filtros ────────────────────────────────────────────────────────────────
+  ligas: any[] = [];
+  ligaIdSeleccionada: number | null = null;
   campeonatos: any[] = [];
   campeonatoIdSeleccionado: number | null = null;
+  categorias: any[] = [];
+  etapas: string[] = [];
+  jornadas: number[] = [];
+  selectedCategoriaId: number | null = null;
+  selectedEtapa = '';
+  selectedJornada: number | null = null;
 
   // ── Datos ──────────────────────────────────────────────────────────────────
   incidencias: ActaIncidencia[] = [];
@@ -62,9 +73,22 @@ export class TribunalPenasComponent implements OnInit {
     private actaService: ActaPartidoService,
     private sancionesService: SancionesService,
     private authService: AuthService,
+    private permissions: PermissionsService,
+    private ligasService: LigasService,
+    private categoriasService: CategoriasService,
     private http: HttpClient,
   ) {
     this.user$ = this.authService.currentUser$;
+  }
+
+  get isMaster(): boolean {
+    return this.permissions.isMaster();
+  }
+
+  // Liga efectiva: para master es la seleccionada, para el resto es la propia
+  get ligaIdEfectivo(): number | null {
+    if (this.isMaster) return this.ligaIdSeleccionada;
+    return (this.authService.currentUserValue as any)?.ligaId ?? null;
   }
 
   logout(): void {
@@ -72,14 +96,34 @@ export class TribunalPenasComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe((user) => {
-      if (!user) return;
-      const ligaId = user.ligaId;
-      if (ligaId) {
-        this.cargarCampeonatos(ligaId);
-        this.cargarTiposSancion(ligaId);
-      }
-    });
+    if (this.isMaster) {
+      this.ligasService.getAll().subscribe({ next: (l) => (this.ligas = l) });
+    } else {
+      this.authService.currentUser$.subscribe((user) => {
+        if (!user) return;
+        const ligaId = user.ligaId;
+        if (ligaId) {
+          this.cargarCampeonatos(ligaId);
+          this.cargarTiposSancion(ligaId);
+        }
+      });
+    }
+  }
+
+  onLigaChange(): void {
+    this.campeonatoIdSeleccionado = null;
+    this.campeonatos = [];
+    this.tiposSancion = [];
+    this.incidencias = [];
+    this.categorias = [];
+    this.etapas = [];
+    this.jornadas = [];
+    this.selectedCategoriaId = null;
+    this.selectedEtapa = '';
+    this.selectedJornada = null;
+    if (!this.ligaIdSeleccionada) return;
+    this.cargarCampeonatos(this.ligaIdSeleccionada);
+    this.cargarTiposSancion(this.ligaIdSeleccionada);
   }
 
   private cargarCampeonatos(ligaId: number): void {
@@ -98,6 +142,21 @@ export class TribunalPenasComponent implements OnInit {
     });
   }
 
+  onCampeonatoChange(): void {
+    this.incidencias = [];
+    this.categorias = [];
+    this.etapas = [];
+    this.jornadas = [];
+    this.selectedCategoriaId = null;
+    this.selectedEtapa = '';
+    this.selectedJornada = null;
+    if (!this.campeonatoIdSeleccionado) return;
+    this.cargarIncidencias();
+    this.cargarCategorias(this.campeonatoIdSeleccionado);
+  }
+
+  onFiltroChange(): void { /* filtrado client-side mediante getters */ }
+
   cargarIncidencias(): void {
     if (!this.campeonatoIdSeleccionado) return;
     this.loading    = true;
@@ -107,6 +166,7 @@ export class TribunalPenasComponent implements OnInit {
     this.actaService.listarIncidenciasPendientes(this.campeonatoIdSeleccionado).subscribe({
       next: (list) => {
         this.incidencias = list;
+        this.derivarFiltros();
         this.loading = false;
       },
       error: (err) => {
@@ -114,6 +174,42 @@ export class TribunalPenasComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  private cargarCategorias(campeonatoId: number): void {
+    this.categoriasService.getByCampeonato(campeonatoId).subscribe({
+      next: (cats) => (this.categorias = cats),
+      error: () => {},
+    });
+  }
+
+  private derivarFiltros(): void {
+    this.etapas = [...new Set(
+      this.incidencias.map(i => i.partido?.etapa).filter((e): e is string => !!e)
+    )].sort();
+    this.jornadas = [...new Set(
+      this.incidencias.map(i => i.partido?.jornada).filter((j): j is number => j != null)
+    )].sort((a, b) => a - b);
+  }
+
+  get incidenciasFiltradas(): ActaIncidencia[] {
+    return this.incidencias.filter(i => {
+      if (this.selectedCategoriaId && i.categoriaId !== this.selectedCategoriaId) return false;
+      if (this.selectedEtapa && i.partido?.etapa !== this.selectedEtapa) return false;
+      if (this.selectedJornada && i.partido?.jornada !== this.selectedJornada) return false;
+      return true;
+    });
+  }
+
+  get incidenciasAgrupadasPorPartido(): { partido: any; incidencias: ActaIncidencia[] }[] {
+    const mapa = new Map<number, { partido: any; incidencias: ActaIncidencia[] }>();
+    for (const inc of this.incidenciasFiltradas) {
+      if (!mapa.has(inc.partidoId)) {
+        mapa.set(inc.partidoId, { partido: inc.partido, incidencias: [] });
+      }
+      mapa.get(inc.partidoId)!.incidencias.push(inc);
+    }
+    return [...mapa.values()];
   }
 
   // ── Panel de resolución ────────────────────────────────────────────────────

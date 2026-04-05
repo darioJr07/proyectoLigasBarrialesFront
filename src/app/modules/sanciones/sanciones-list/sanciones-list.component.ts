@@ -8,6 +8,7 @@ import { Sancion, FiltrosSanciones, TipoSancion } from '../sancion.model';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
+import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 
 @Component({
@@ -21,24 +22,62 @@ export class SancionesListComponent implements OnInit {
   sanciones: Sancion[] = [];
   tipos: TipoSancion[] = [];
   campeonatos: any[] = [];
+  ligas: any[] = [];
 
   user$: Observable<any>;
   filtros: FiltrosSanciones = {};
   filtroCampeonatoId: number | null = null;
   filtroTipoId: number | null = null;
+  filtroLigaId: number | null = null;
   soloActivas = false;
+
+  // Filtros client-side
+  busqueda = '';
+  filtroEquipoId: number | null = null;
+
+  get equiposDisponibles(): { id: number; nombre: string }[] {
+    const mapa = new Map<number, string>();
+    for (const s of this.sanciones) {
+      if (s.equipo?.id && s.equipo?.nombre) {
+        mapa.set(s.equipo.id, s.equipo.nombre);
+      }
+    }
+    return [...mapa.entries()]
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+
+  get sancionesFiltradas(): Sancion[] {
+    const termino = this.busqueda.trim().toLowerCase();
+    return this.sanciones.filter(s => {
+      if (this.filtroEquipoId && s.equipo?.id !== this.filtroEquipoId) return false;
+      if (termino) {
+        const enJugador = s.jugador?.nombre?.toLowerCase().includes(termino);
+        const enEquipo  = s.equipo?.nombre?.toLowerCase().includes(termino);
+        if (!enJugador && !enEquipo) return false;
+      }
+      return true;
+    });
+  }
 
   cargando = false;
   error = '';
   exito = '';
 
-  get ligaId(): number {
-    return (this.authService.currentUserValue as any)?.ligaId;
+  get isMaster(): boolean {
+    return this.permissions.isMaster();
+  }
+
+  // Los no-master usan su propio ligaId; el master usa el seleccionado en el filtro
+  get ligaIdEfectivo(): number | null {
+    if (this.isMaster) return this.filtroLigaId;
+    return (this.authService.currentUserValue as any)?.ligaId ?? null;
   }
 
   constructor(
     private readonly sancionesService: SancionesService,
     private readonly campeonatosService: CampeonatosService,
+    private readonly ligasService: LigasService,
     private readonly authService: AuthService,
     private readonly router: Router,
     public readonly permissions: PermissionsService,
@@ -52,26 +91,45 @@ export class SancionesListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.isMaster) {
+      this.ligasService.getAll().subscribe({ next: (l) => (this.ligas = l) });
+    } else {
+      this.cargarTipos();
+      this.cargarCampeonatos();
+      this.cargarSanciones();
+    }
+  }
+
+  onLigaChange(): void {
+    this.filtroCampeonatoId = null;
+    this.campeonatos = [];
+    this.tipos = [];
+    this.sanciones = [];
+
+    if (!this.filtroLigaId) return;
     this.cargarTipos();
     this.cargarCampeonatos();
     this.cargarSanciones();
   }
 
   cargarTipos(): void {
-    this.sancionesService.getTiposSancion(this.ligaId).subscribe({
+    if (!this.ligaIdEfectivo) return;
+    this.sancionesService.getTiposSancion(this.ligaIdEfectivo).subscribe({
       next: (t) => (this.tipos = t),
     });
   }
 
   cargarCampeonatos(): void {
-    this.campeonatosService.getByLiga(this.ligaId).subscribe({
+    if (!this.ligaIdEfectivo) return;
+    this.campeonatosService.getByLiga(this.ligaIdEfectivo).subscribe({
       next: (c) => (this.campeonatos = c),
     });
   }
 
   cargarSanciones(): void {
+    if (!this.ligaIdEfectivo) return;
     this.cargando = true;
-    const filtros: FiltrosSanciones = { ligaId: this.ligaId };
+    const filtros: FiltrosSanciones = { ligaId: this.ligaIdEfectivo };
     if (this.filtroCampeonatoId) filtros.campeonatoId = this.filtroCampeonatoId;
     if (this.filtroTipoId) filtros.tipoSancionId = this.filtroTipoId;
     if (this.soloActivas) filtros.soloActivas = true;
@@ -96,6 +154,8 @@ export class SancionesListComponent implements OnInit {
     this.filtroCampeonatoId = null;
     this.filtroTipoId = null;
     this.soloActivas = false;
+    this.busqueda = '';
+    this.filtroEquipoId = null;
     this.cargarSanciones();
   }
 

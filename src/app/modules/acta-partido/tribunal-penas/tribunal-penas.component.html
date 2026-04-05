@@ -18,13 +18,58 @@
       <p class="header-subtitle">Revisión y resolución de incidencias disciplinarias de los partidos</p>
     </div>
 
-    <div class="filtro-bar">
-      <div class="filtro-grupo">
-        <label>Campeonato</label>
-        <select [(ngModel)]="campeonatoIdSeleccionado" (change)="cargarIncidencias()" class="select-campeonato">
-          <option [ngValue]="null">— Seleccionar campeonato —</option>
-          <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
-        </select>
+    <div class="filters-section">
+      <div class="filters-grid">
+
+        <!-- Liga: solo master -->
+        <div class="filter-item" *ngIf="isMaster">
+          <label>Liga</label>
+          <select class="filter-select" [(ngModel)]="ligaIdSeleccionada" (change)="onLigaChange()">
+            <option [ngValue]="null">— Seleccionar liga —</option>
+            <option *ngFor="let l of ligas" [ngValue]="l.id">{{ l.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Campeonato -->
+        <div class="filter-item">
+          <label>Campeonato</label>
+          <select class="filter-select" [(ngModel)]="campeonatoIdSeleccionado" (change)="onCampeonatoChange()"
+            [disabled]="isMaster && !ligaIdSeleccionada">
+            <option [ngValue]="null">— Seleccionar campeonato —</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Categoría -->
+        <div class="filter-item">
+          <label>Categoría</label>
+          <select class="filter-select" [(ngModel)]="selectedCategoriaId" (change)="onFiltroChange()"
+            [disabled]="!campeonatoIdSeleccionado">
+            <option [ngValue]="null">— Todas —</option>
+            <option *ngFor="let cat of categorias" [ngValue]="cat.id">{{ cat.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Etapa -->
+        <div class="filter-item">
+          <label>Etapa / Fase</label>
+          <select class="filter-select" [(ngModel)]="selectedEtapa" (change)="onFiltroChange()"
+            [disabled]="!campeonatoIdSeleccionado">
+            <option value="">— Todas —</option>
+            <option *ngFor="let e of etapas" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+
+        <!-- Jornada -->
+        <div class="filter-item">
+          <label>Jornada</label>
+          <select class="filter-select" [(ngModel)]="selectedJornada" (change)="onFiltroChange()"
+            [disabled]="!campeonatoIdSeleccionado">
+            <option [ngValue]="null">— Todas —</option>
+            <option *ngFor="let j of jornadas" [ngValue]="j">Jornada {{ j }}</option>
+          </select>
+        </div>
+
       </div>
     </div>
 
@@ -42,46 +87,68 @@
       <small>Todas las incidencias registradas por los vocales ya fueron procesadas.</small>
     </div>
 
-    <div class="sin-seleccion" *ngIf="!campeonatoIdSeleccionado && !loading">
-      <p>Seleccioná un campeonato para ver las incidencias pendientes.</p>
+    <div class="sin-datos" *ngIf="!loading && !error && campeonatoIdSeleccionado && incidencias.length > 0 && incidenciasFiltradas.length === 0">
+      <div class="sin-datos-icon">🔍</div>
+      <p>No hay incidencias con los filtros seleccionados.</p>
     </div>
 
-    <div class="tabla-wrapper" *ngIf="!loading && incidencias.length > 0">
+    <div class="sin-seleccion" *ngIf="!campeonatoIdSeleccionado && !loading">
+      <p *ngIf="isMaster && !ligaIdSeleccionada">Seleccioná una liga para ver los campeonatos disponibles.</p>
+      <p *ngIf="!isMaster || ligaIdSeleccionada">Seleccioná un campeonato para ver las incidencias pendientes.</p>
+    </div>
+
+    <div *ngIf="!loading && incidenciasFiltradas.length > 0">
 
       <div class="tabla-header">
-        <span>{{ incidencias.length }} incidencia{{ incidencias.length !== 1 ? 's' : '' }} pendiente{{ incidencias.length !== 1 ? 's' : '' }}</span>
+        <span>{{ incidenciasFiltradas.length }} incidencia{{ incidenciasFiltradas.length !== 1 ? 's' : '' }} pendiente{{ incidenciasFiltradas.length !== 1 ? 's' : '' }}</span>
       </div>
 
-      <div class="incidencias-tabla">
-        <div class="tabla-head">
-          <span>Partido</span>
-          <span>Incidencia</span>
-          <span>Jugador / Equipo</span>
-          <span>Detalle</span>
-          <span>Acciones</span>
+      <div class="partido-grupo" *ngFor="let grupo of incidenciasAgrupadasPorPartido">
+
+        <div class="partido-grupo-header">
+          <div class="partido-header-left">
+            <span class="jornada-pill">J{{ grupo.partido?.jornada }}</span>
+            <span class="partido-equipos">
+              <strong>{{ grupo.partido?.equipoLocal?.nombre ?? 'Local' }}</strong>
+              <span class="vs"> vs </span>
+              <strong>{{ grupo.partido?.equipoVisitante?.nombre ?? 'Visitante' }}</strong>
+            </span>
+            <span class="etapa-pill" *ngIf="grupo.partido?.etapa">{{ grupo.partido.etapa }}</span>
+          </div>
+          <div class="partido-header-right">
+            <span class="fecha-partido" *ngIf="grupo.partido?.fechaPartido">{{ grupo.partido.fechaPartido | date:'dd/MM/yyyy' }}</span>
+            <span class="count-pill">{{ grupo.incidencias.length }} incidencia{{ grupo.incidencias.length !== 1 ? 's' : '' }}</span>
+          </div>
         </div>
 
-        <div class="tabla-fila" *ngFor="let inc of incidencias">
-          <div class="col-partido">
-            <span class="partido-id">Partido #{{ inc.partidoId }}</span>
+        <div class="incidencias-tabla">
+          <div class="tabla-head">
+            <span>Incidencia</span>
+            <span>Jugador / Equipo</span>
+            <span>Detalle</span>
+            <span>Acciones</span>
           </div>
-          <div class="col-incidencia">
-            <span class="tipo-badge">{{ tipoLabels[inc.tipoIncidencia] }}</span>
-            <span class="minuto" *ngIf="inc.minuto"> min.{{ inc.minuto }}</span>
-          </div>
-          <div class="col-jugador">
-            <span class="jugador-nombre" *ngIf="inc.jugador">{{ inc.jugador?.nombre }}</span>
-            <span class="colectivo" *ngIf="!inc.jugador">Equipo colectivo</span>
-            <span class="equipo-nombre">{{ inc.equipo?.nombre }}</span>
-          </div>
-          <div class="col-detalle">
-            <span *ngIf="inc.descripcion" class="descripcion">{{ inc.descripcion }}</span>
-            <span *ngIf="!inc.descripcion" class="sin-desc">—</span>
-          </div>
-          <div class="col-acciones">
-            <button class="btn-resolver" (click)="abrirResolucion(inc)">⚖️ Resolver</button>
+
+          <div class="tabla-fila" *ngFor="let inc of grupo.incidencias">
+            <div class="col-incidencia">
+              <span class="tipo-badge">{{ tipoLabels[inc.tipoIncidencia] }}</span>
+              <span class="minuto" *ngIf="inc.minuto"> min.{{ inc.minuto }}</span>
+            </div>
+            <div class="col-jugador">
+              <span class="jugador-nombre" *ngIf="inc.jugador">{{ inc.jugador?.nombre }}</span>
+              <span class="colectivo" *ngIf="!inc.jugador">Equipo colectivo</span>
+              <span class="equipo-nombre">{{ inc.equipo?.nombre }}</span>
+            </div>
+            <div class="col-detalle">
+              <span *ngIf="inc.descripcion" class="descripcion">{{ inc.descripcion }}</span>
+              <span *ngIf="!inc.descripcion" class="sin-desc">—</span>
+            </div>
+            <div class="col-acciones">
+              <button class="btn-resolver" (click)="abrirResolucion(inc)">⚖️ Resolver</button>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
 

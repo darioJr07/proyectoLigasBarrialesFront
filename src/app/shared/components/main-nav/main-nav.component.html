@@ -1,16 +1,59 @@
 <nav class="main-nav">
+
+  <!-- Inicio: siempre visible -->
   <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">🏠 Inicio</a>
-  <a *ngIf="permissions.canAccessLigas()" routerLink="/ligas" routerLinkActive="active">🏆 Ligas</a>
-  <a *ngIf="permissions.canAccessEquipos()" routerLink="/equipos" routerLinkActive="active">⚽ Equipos</a>
-  <a *ngIf="permissions.canAccessJugadores()" routerLink="/jugadores" routerLinkActive="active">👥 Jugadores</a>
-  <a *ngIf="permissions.canAccessCampeonatos()" routerLink="/campeonatos" routerLinkActive="active">🏅 Campeonatos</a>
-  <a *ngIf="permissions.canAccessJugadorCampeonatos()" routerLink="/jugador-campeonatos" routerLinkActive="active">✅ Habilitaciones</a>
-  <a *ngIf="permissions.canAccessTransferencias()" routerLink="/transferencias" routerLinkActive="active">🔄 Transferencias</a>
-  <a *ngIf="permissions.canAccessPartidos()" routerLink="/partidos" routerLinkActive="active">📅 Partidos</a>
-  <a *ngIf="permissions.canAccessPartidos()" routerLink="/tabla-posiciones" routerLinkActive="active">🏆 Tabla</a>
-  <a *ngIf="permissions.canAccessGoleadores()" routerLink="/goleadores" routerLinkActive="active">⚽ Goleadores</a>
-  <a *ngIf="permissions.canAccessSanciones()" routerLink="/sanciones" routerLinkActive="active">🟨 Sanciones</a>
-  <a *ngIf="permissions.canAccessTribunal()" routerLink="/tribunal-penas" routerLinkActive="active">⚖️ Tribunal</a>
-  <a *ngIf="permissions.canAccessUsuarios()" routerLink="/usuarios" routerLinkActive="active">👤 Usuarios</a>
-  <a *ngIf="permissions.canAccessUsuarios()" routerLink="/configuracion" routerLinkActive="active">⚙️ Configuración</a>
+
+  <!-- Grupo: Organización (Ligas, Equipos, Jugadores) -->
+  <div class="nav-group"
+    *ngIf="permissions.canAccessLigas() || permissions.canAccessEquipos() || permissions.canAccessJugadores()">
+    <span class="nav-group-label">Organización ▾</span>
+    <div class="nav-dropdown">
+      <a *ngIf="permissions.canAccessLigas()" routerLink="/ligas" routerLinkActive="active">🏆 Ligas</a>
+      <a *ngIf="permissions.canAccessEquipos()" routerLink="/equipos" routerLinkActive="active">⚽ Equipos</a>
+      <a *ngIf="permissions.canAccessJugadores()" routerLink="/jugadores" routerLinkActive="active">👥 Jugadores</a>
+    </div>
+  </div>
+
+  <!-- Grupo: Competencia (Campeonatos, Partidos, Tabla, Goleadores) -->
+  <div class="nav-group"
+    *ngIf="permissions.canAccessCampeonatos() || permissions.canAccessPartidos() || permissions.canAccessGoleadores()">
+    <span class="nav-group-label">Competencia ▾</span>
+    <div class="nav-dropdown">
+      <a *ngIf="permissions.canAccessCampeonatos()" routerLink="/campeonatos" routerLinkActive="active">🏅 Campeonatos</a>
+      <a *ngIf="permissions.canAccessPartidos()" routerLink="/partidos" routerLinkActive="active">📅 Partidos</a>
+      <a *ngIf="permissions.canAccessPartidos()" routerLink="/tabla-posiciones" routerLinkActive="active">📊 Tabla</a>
+      <a *ngIf="permissions.canAccessGoleadores()" routerLink="/goleadores" routerLinkActive="active">⚽ Goleadores</a>
+    </div>
+  </div>
+
+  <!-- Grupo: Movimientos (Habilitaciones, Transferencias) -->
+  <div class="nav-group"
+    *ngIf="permissions.canAccessJugadorCampeonatos() || permissions.canAccessTransferencias()">
+    <span class="nav-group-label">Movimientos ▾</span>
+    <div class="nav-dropdown">
+      <a *ngIf="permissions.canAccessJugadorCampeonatos()" routerLink="/jugador-campeonatos" routerLinkActive="active">✅ Habilitaciones</a>
+      <a *ngIf="permissions.canAccessTransferencias()" routerLink="/transferencias" routerLinkActive="active">🔄 Transferencias</a>
+    </div>
+  </div>
+
+  <!-- Grupo: Control (Sanciones, Tribunal) -->
+  <div class="nav-group"
+    *ngIf="permissions.canAccessSanciones() || permissions.canAccessTribunal()">
+    <span class="nav-group-label">Control ▾</span>
+    <div class="nav-dropdown">
+      <a *ngIf="permissions.canAccessSanciones()" routerLink="/sanciones" routerLinkActive="active">🟨 Sanciones</a>
+      <a *ngIf="permissions.canAccessTribunal()" routerLink="/tribunal-penas" routerLinkActive="active">⚖️ Tribunal</a>
+    </div>
+  </div>
+
+  <!-- Grupo: Administración (Usuarios, Configuración) -->
+  <div class="nav-group"
+    *ngIf="permissions.canAccessUsuarios()">
+    <span class="nav-group-label">Administración ▾</span>
+    <div class="nav-dropdown">
+      <a routerLink="/usuarios" routerLinkActive="active">👤 Usuarios</a>
+      <a routerLink="/configuracion" routerLinkActive="active">⚙️ Configuración</a>
+    </div>
+  </div>
+
 </nav>

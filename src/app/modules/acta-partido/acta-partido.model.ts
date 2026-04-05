@@ -94,6 +94,7 @@ export interface ActaIncidencia {
   equipo?: any;
   jugadorId?: number | null;
   jugador?: any | null;
+  partido?: any;
   tipoIncidencia: TipoIncidencia;
   minuto?: number | null;
   descripcion?: string | null;

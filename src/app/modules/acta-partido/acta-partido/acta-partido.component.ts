@@ -110,7 +110,7 @@ export class ActaPartidoComponent implements OnInit {
     this.partidoId = Number(this.route.snapshot.paramMap.get('partidoId'));
     this.cargarAlineacion();
     this.cargarInforme();
-    this.cargarEquiposVocal();
+    // cargarEquiposVocal se llama desde cargarAlineacion una vez que 'partido' está disponible
   }
 
   // ── Planilla ──────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ export class ActaPartidoComponent implements OnInit {
     this.actaService.obtenerAlineacion(this.partidoId).subscribe({
       next: (res) => {
         this.partido = res.partido;
-        this.filtrarEquiposVocal();
+        this.cargarEquiposVocal();
 
         if (res.jugadoresLocal.length > 0 || res.jugadoresVisitante.length > 0) {
           this.filasLocal = res.jugadoresLocal.map((r) => this.filaDesdeRegistro(r));
@@ -139,13 +139,14 @@ export class ActaPartidoComponent implements OnInit {
     });
   }
 
-  // Carga todos los equipos de la liga y espera a que 'partido' esté disponible
-  // para filtrar los dos equipos contendientes, dejando solo los válidos para vocal.
+  // Carga todos los equipos de la liga del partido.
+  // Para usuarios con ligaId propio lo usa directamente;
+  // para el master (sin ligaId) lo obtiene de partido.campeonato.ligaId.
   private cargarEquiposVocal(): void {
-    if (!this.ligaId) return;
-    this.equiposService.getByLiga(this.ligaId).subscribe({
+    const ligaId = this.ligaId ?? this.partido?.campeonato?.ligaId;
+    if (!ligaId) return;
+    this.equiposService.getByLiga(ligaId).subscribe({
       next: (equipos) => {
-        // Se filtran en cuanto llegue 'partido'; si aún no llegó, se filtra después
         this.equiposVocal = equipos;
         this.filtrarEquiposVocal();
       },
@@ -163,7 +164,7 @@ export class ActaPartidoComponent implements OnInit {
     this.actaService.obtenerJugadoresDisponibles(this.partidoId).subscribe({
       next: (res) => {
         this.partido = res.partido;
-        this.filtrarEquiposVocal();
+        this.cargarEquiposVocal();
         this.filasLocal = res.jugadoresLocal.map((j) => this.filaDesdeDisponible(j));
         this.filasVisitante = res.jugadoresVisitante.map((j) => this.filaDesdeDisponible(j));
         this.loading = false;
@@ -285,20 +286,27 @@ export class ActaPartidoComponent implements OnInit {
   }
 
   /** Jugadores de ambos equipos para los selectores de incidencia */
-  get todosLosJugadores(): { jugadorId: number; nombre: string; equipoId: number }[] {
+  get todosLosJugadores(): { jugadorId: number; nombre: string; equipoId: number; suspendido: boolean }[] {
     return [...this.filasLocal, ...this.filasVisitante].map((f) => ({
-      jugadorId: f.jugadorId,
-      nombre:    f.nombreCompleto,
-      equipoId:  f.equipoId,
+      jugadorId:  f.jugadorId,
+      nombre:     f.nombreCompleto,
+      equipoId:   f.equipoId,
+      suspendido: f.estadoSugerido === 'suspendido',
     }));
   }
 
-  /** Devuelve solo los jugadores del equipo seleccionado para el selector de incidencia */
-  jugadoresPorEquipo(equipoId: number | string): { jugadorId: number; nombre: string }[] {
+  /** Devuelve los jugadores del equipo seleccionado para el selector de incidencia.
+   *  Los suspendidos se incluyen (pueden cometer faltas fuera del campo)
+   *  pero se marcan con (SUSPENDIDO) para diferenciarlos visualmente. */
+  jugadoresPorEquipo(equipoId: number | string): { jugadorId: number; nombre: string; suspendido: boolean }[] {
     const numId = Number(equipoId);
     return this.todosLosJugadores
       .filter((j) => Number(j.equipoId) === numId)
-      .map((j) => ({ jugadorId: j.jugadorId, nombre: j.nombre }));
+      .map((j) => ({
+        jugadorId:  j.jugadorId,
+        nombre:     j.suspendido ? `⚠️ ${j.nombre} (SUSPENDIDO)` : j.nombre,
+        suspendido: j.suspendido,
+      }));
   }
 
   /** Al cambiar el equipo de una incidencia, resetea el jugador para evitar datos cruzados */

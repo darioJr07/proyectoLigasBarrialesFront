@@ -57,7 +57,7 @@
       </button>
     </div>
     <div class="filters-grid">
-      <div class="filter-item">
+      <div class="filter-item" *ngIf="permissions.isMaster()">
         <label>Liga</label>
         <select class="filter-select" [(ngModel)]="selectedLigaId" (change)="onLigaChange()">
           <option [ngValue]="null">-- Todas --</option>
@@ -66,7 +66,7 @@
       </div>
       <div class="filter-item">
         <label>Campeonato</label>
-        <select class="filter-select" [(ngModel)]="selectedCampeonatoId" (change)="onCampeonatoChange()" [disabled]="!selectedLigaId">
+        <select class="filter-select" [(ngModel)]="selectedCampeonatoId" (change)="onCampeonatoChange()" [disabled]="permissions.isMaster() && !selectedLigaId">
           <option [ngValue]="null">-- Todos --</option>
           <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
         </select>

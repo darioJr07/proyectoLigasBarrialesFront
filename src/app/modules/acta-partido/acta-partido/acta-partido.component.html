@@ -169,7 +169,7 @@
               <select [(ngModel)]="vocalEquipoId" class="form-control vocal-equipo-select">
                 <option [ngValue]="null">— Equipo del vocal (opcional) —</option>
                 <option *ngFor="let eq of equiposVocal" [ngValue]="eq.id">{{ eq.nombre }}</option>
-                <option [ngValue]="0">Directivos Liga</option>
+                <option [ngValue]="null">Directivos Liga</option>
               </select>
             </div>
           </div>
@@ -203,7 +203,8 @@
                   <label>Jugador <small>(opcional)</small></label>
                   <select [(ngModel)]="fila.jugadorId" class="form-control-sm">
                     <option [ngValue]="null">— colectivo del equipo —</option>
-                    <option *ngFor="let j of jugadoresPorEquipo(fila.equipoId)" [ngValue]="j.jugadorId">
+                    <option *ngFor="let j of jugadoresPorEquipo(fila.equipoId)" [ngValue]="j.jugadorId"
+                      [style.color]="j.suspendido ? '#e74c3c' : ''">
                       {{ j.nombre }}
                     </option>
                   </select>

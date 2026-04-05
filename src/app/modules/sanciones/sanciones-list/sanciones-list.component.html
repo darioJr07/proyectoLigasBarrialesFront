@@ -28,9 +28,18 @@
     <div class="filtros-card">
       <div class="filtros-grid">
 
+        <!-- Selector de liga: solo visible para master -->
+        <div class="filtro-item" *ngIf="isMaster">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="filtroLigaId" (change)="onLigaChange()">
+            <option [ngValue]="null">— Seleccionar liga —</option>
+            <option *ngFor="let l of ligas" [ngValue]="l.id">{{ l.nombre }}</option>
+          </select>
+        </div>
+
         <div class="filtro-item">
           <label>Campeonato</label>
-          <select class="form-select" [(ngModel)]="filtroCampeonatoId">
+          <select class="form-select" [(ngModel)]="filtroCampeonatoId" [disabled]="isMaster && !filtroLigaId">
             <option [ngValue]="null">Todos</option>
             <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
           </select>
@@ -59,13 +68,43 @@
       </div>
     </div>
 
+    <!-- Búsqueda client-side -->
+    <div class="filtros-card filtros-busqueda">
+      <div class="filtros-grid">
+
+        <div class="filtro-item filtro-search">
+          <label>Buscar jugador / equipo</label>
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              class="form-input-search"
+              [(ngModel)]="busqueda"
+              placeholder="Nombre del jugador o equipo..."
+              autocomplete="off"
+            />
+            <button *ngIf="busqueda" class="btn-clear-search" (click)="busqueda = ''">✕</button>
+          </div>
+        </div>
+
+        <div class="filtro-item" *ngIf="!permissions.isDirigente()">
+          <label>Equipo</label>
+          <select class="form-select" [(ngModel)]="filtroEquipoId" [disabled]="sanciones.length === 0">
+            <option [ngValue]="null">— Todos —</option>
+            <option *ngFor="let eq of equiposDisponibles" [ngValue]="eq.id">{{ eq.nombre }}</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Estado cargando -->
     <div class="loading-state" *ngIf="cargando">
       <div class="spinner"></div>
       <p>Cargando sanciones...</p>
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty state: sin datos del backend -->
     <div class="empty-state" *ngIf="!cargando && sanciones.length === 0">
       <p>🟨 No se encontraron sanciones con los filtros seleccionados.</p>
       <a *ngIf="permissions.canGestionarSanciones()" routerLink="/sanciones/nueva" class="btn-primary-action">
@@ -73,9 +112,14 @@
       </a>
     </div>
 
+    <!-- Empty state: hay datos pero el texto/equipo no coincide -->
+    <div class="empty-state" *ngIf="!cargando && sanciones.length > 0 && sancionesFiltradas.length === 0">
+      <p>🔍 No se encontraron sanciones con la búsqueda aplicada.</p>
+    </div>
+
     <!-- Lista -->
-    <div class="sanciones-grid" *ngIf="!cargando && sanciones.length > 0">
-      <div class="sancion-card" *ngFor="let s of sanciones"
+    <div class="sanciones-grid" *ngIf="!cargando && sancionesFiltradas.length > 0">
+      <div class="sancion-card" *ngFor="let s of sancionesFiltradas"
         [class.inactiva]="!s.activo"
         [style.borderLeftColor]="colorTipo(s.tipoSancion?.aplicaA ?? '')">
 
