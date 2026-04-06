@@ -72,7 +72,7 @@
         <div class="inscripcion-body">
           <p><strong>Liga:</strong> {{ inscripcion.equipo?.liga?.nombre || 'N/A' }}</p>
           <p><strong>Categoría:</strong> {{ inscripcion.categoria?.nombre || 'N/A' }}</p>
-          <p><strong>Fecha de Inscripción:</strong> {{ inscripcion.fechaInscripcion | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Fecha de Inscripción:</strong> {{ inscripcion.fechaInscripcion | date:'dd/MM/yyyy':'UTC' }}</p>
           <p *ngIf="inscripcion.observaciones" class="observaciones">
             <strong>Observaciones:</strong> {{ inscripcion.observaciones }}
           </p>

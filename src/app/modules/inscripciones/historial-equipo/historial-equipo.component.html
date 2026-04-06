@@ -115,7 +115,7 @@
 
             <div class="card-bottom">
               <span class="fecha-label">
-                📅 {{ insc.fechaInscripcion | date:'dd/MM/yyyy' }}
+                📅 {{ insc.fechaInscripcion | date:'dd/MM/yyyy':'UTC' }}
               </span>
               <span *ngIf="insc.observaciones" class="observaciones-label">
                 💬 {{ insc.observaciones }}
