@@ -222,7 +222,7 @@ export const routes: Routes = [
   {
     path: 'partidos',
     canActivate: [AuthGuard, RolesGuard],
-    data: { roles: ['master', 'directivo_liga', 'dirigente_equipo'] },
+    data: { roles: ['master', 'directivo_liga', 'dirigente_equipo', 'tribuna_penas', 'tesoreria'] },
     children: [
       {
         path: '',
@@ -268,7 +268,7 @@ export const routes: Routes = [
       {
         path: ':partidoId/acta',
         canActivate: [RolesGuard],
-        data: { roles: ['master', 'directivo_liga'] },
+        data: { roles: ['master', 'directivo_liga', 'tribuna_penas', 'tesoreria'] },
         loadComponent: () =>
           import('./modules/acta-partido/acta-partido/acta-partido.component').then(
             (m) => m.ActaPartidoComponent
@@ -277,7 +277,7 @@ export const routes: Routes = [
       {
         path: ':partidoId/acta/imprimir',
         canActivate: [RolesGuard],
-        data: { roles: ['master', 'directivo_liga'] },
+        data: { roles: ['master', 'directivo_liga', 'tribuna_penas', 'tesoreria'] },
         loadComponent: () =>
           import('./modules/acta-partido/acta-imprimir/acta-imprimir.component').then(
             (m) => m.ActaImprimirComponent
@@ -305,7 +305,7 @@ export const routes: Routes = [
   {
     path: 'sanciones',
     canActivate: [AuthGuard, RolesGuard],
-    data: { roles: ['master', 'directivo_liga', 'dirigente_equipo'] },
+    data: { roles: ['master', 'directivo_liga', 'dirigente_equipo', 'tribuna_penas'] },
     children: [
       {
         path: '',
@@ -317,7 +317,7 @@ export const routes: Routes = [
       {
         path: 'nueva',
         canActivate: [RolesGuard],
-        data: { roles: ['master', 'directivo_liga'] },
+        data: { roles: ['master', 'directivo_liga', 'tribuna_penas'] },
         loadComponent: () =>
           import('./modules/sanciones/sancion-form/sancion-form.component').then(
             (m) => m.SancionFormComponent
@@ -346,7 +346,7 @@ export const routes: Routes = [
   {
     path: 'tribunal-penas',
     canActivate: [AuthGuard, RolesGuard],
-    data: { roles: ['master', 'directivo_liga'] },
+    data: { roles: ['master', 'directivo_liga', 'tribuna_penas'] },
     loadComponent: () =>
       import('./modules/acta-partido/tribunal-penas/tribunal-penas.component').then(
         (m) => m.TribunalPenasComponent

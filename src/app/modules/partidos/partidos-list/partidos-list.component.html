@@ -198,18 +198,18 @@
             </div>
 
             <!-- Acciones -->
-            <div class="partido-acciones" *ngIf="permissions.canEditPartido()">
+            <div class="partido-acciones" *ngIf="permissions.canEditPartido() || permissions.canImprimirActa()">
               <button
-                *ngIf="partido.equipoLocalId && partido.equipoVisitanteId"
+                *ngIf="permissions.canEditPartido() && partido.equipoLocalId && partido.equipoVisitanteId"
                 class="btn-accion btn-resultado"
                 (click)="abrirModalResultado(partido)"
               >
                 ⚽ Resultado
               </button>
-              <a [routerLink]="['/partidos', partido.id, 'acta']" class="btn-accion btn-acta">
+              <a *ngIf="permissions.canImprimirActa()" [routerLink]="['/partidos', partido.id, 'acta']" class="btn-accion btn-acta">
                 📋 Acta
               </a>
-              <a [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
+              <a *ngIf="permissions.canEditPartido()" [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
                 ✏️ Editar
               </a>
             </div>

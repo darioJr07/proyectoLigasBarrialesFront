@@ -22,6 +22,21 @@
 
 ---
 
+## Cambios de impresión y equivalencia física (abril 2026)
+
+- Se completó la equivalencia visual y funcional entre el acta digital impresa y el acta física tradicional.
+- Mejoras aplicadas:
+  - Bordes exteriores de todos los bloques de la segunda página (informes, tribunal, impugnación) ahora son idénticos a los de la planilla de jugadores (página 1).
+  - Colores de encabezados y sub-encabezados unificados (verde claro y gris claro).
+  - Espacios para firmas y campos a llenar a mano ampliados y alineados con el formato físico.
+  - Leyenda de copyright y pie de página ocultos en impresión.
+  - Texto de observaciones y etiquetas relevantes en mayúsculas.
+  - Secciones de impugnación y tribunal ajustadas para máxima similitud visual y funcional.
+- El acta impresa es válida para llenado manual en campo y cumple requisitos de presentación ante la liga.
+- Cambios también documentados en ACTA_DIGITAL_IMPLEMENTACION.md y ACTA_VOCALIA_CAMBIOS_2026.md.
+
+---
+
 ## Próximos pasos sugeridos
 - Ajustar detalles visuales y de datos según feedback real.
 - Validar que todos los jugadores y datos relevantes se exporten correctamente.

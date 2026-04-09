@@ -1,3 +1,20 @@
+.sc-lbl .sc-equipo-nombre {
+  margin-left: 6px !important;
+}
+// Unificación de estilo para nombres de equipo en todas las tablas
+.sc-equipo-nombre {
+  font-weight: 400 !important;
+  color: #1565c0 !important;
+  margin-left: 2px !important;
+  font-size: 7.5pt !important;
+  letter-spacing: 0.1px !important;
+}
+.sc-lbl {
+  font-weight: bold !important;
+  text-align: left !important;
+  font-size: 7.5pt !important;
+  letter-spacing: 0.1px !important;
+}
 .fila-suspendido td {
   background: #e74c3c !important;
   color: #fff !important;
@@ -7,7 +24,7 @@
 }
 // ─── Variables de color (igual que el acta física) ───────────────────────────
 $header-bg:    #c8a000;   // amarillo dorado para encabezado
-$seccion-bg:   #d4e8c2;   // verde claro para títulos de sección
+$seccion-bg:   #e8f4e8;   // verde claro para títulos de sección (igual que thead página 1)
 $border-color: #333;
 $font-main:    'Arial', sans-serif;
 $font-size-base: 8pt;
@@ -480,6 +497,10 @@ $font-size-base: 8pt;
   gap: 3px;
 }
 
+.bloque-p2 {
+  border: 1.5px solid $border-color;
+}
+
 // ─── TABLAS DE SECCIÓN (vocal, árbitro, tribunal, impugnación) ────────────────
 .tabla-seccion {
   width: 100%;
@@ -489,7 +510,7 @@ $font-size-base: 8pt;
 
   th, td {
     border: 1px solid #888;
-    padding: 2px 3px;
+        height: 18px;
     vertical-align: top;
   }
 
@@ -503,17 +524,17 @@ $font-size-base: 8pt;
   }
 
   .seccion-sub th {
-    background: #f5f5f5;
+    background: #f0f0f0;
     font-weight: bold;
     font-size: 7.5pt;
   }
 
-  .sc-lbl { font-weight: bold; }
+  .sc-lbl { font-weight: bold; text-align: left; }
   .sc-val { text-align: center; }
   .sc-sep {
-    border-left: 2px solid $border-color !important;
-    border-right: 2px solid $border-color !important;
-    width: 2px;
+    border-left: 1px solid $border-color !important;
+    border-right: none !important;
+    width: 1px;
     padding: 0;
   }
 
@@ -528,6 +549,57 @@ $font-size-base: 8pt;
 
   .fila-obs-alta td {
     height: 24px;
+  }
+
+  .fila-obs-arb td {
+    height: 14px;
+  }
+       .fila-obs-alta td {
+         height: 18px;
+       }
+       .fila-obs-arb td {
+         height: 18px;
+       }
+.tabla-arbitro {
+  .arb-izq {
+    border-right: 1px solid #888 !important;
+  }
+
+  .fila-firmas-vocal td {
+    height: 55px;
+  }
+}
+
+  .fila-marcador-resultado td {
+    height: 32px !important;
+    min-height: 32px !important;
+    vertical-align: middle !important;
+  }
+
+  .marcador-equipo-cell {
+    vertical-align: middle !important;
+
+    .marcador-equipo-inner {
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      padding-bottom: 3px;
+
+      .marcador-equipo-nombre {
+        white-space: nowrap;
+        font-size: 7.8pt;
+        font-weight: 700;
+      }
+
+      .marcador-resultado-linea {
+        display: inline-block;
+        width: 42px;
+        border-bottom: 1px solid #333;
+        margin-bottom: 1px;
+      }
+    }
   }
 
   .fila-firmas-vocal td {
@@ -549,12 +621,156 @@ $font-size-base: 8pt;
   }
 
   .celda-obs-larga {
-    height: 38px;
+    height: 18px;
+  }
+
+  .firma-vocal-row {
+    padding: 2px 4px;
+
+    .firma-vocal-inner {
+      display: flex;
+      gap: 8px;
+      font-size: 7.8pt;
+      font-weight: 400;
+
+      .firma-field {
+        display: flex;
+        flex: 1;
+        align-items: flex-end;
+
+        .firma-lbl {
+          white-space: nowrap;
+        }
+
+        .firma-dots {
+          flex: 1;
+          border-bottom: 1px dotted #333;
+          margin-bottom: 2px;
+          margin-left: 2px;
+        }
+      }
+    }
+  }
+}
+
+.tabla-tribunal {
+  table-layout: fixed;
+
+  .col-trib-lbl  { width: 14%; }
+  .col-trib-dato { width: 14%; }
+  .col-trib-val  { width: 9%;  }
+  .col-trib-sep  { width: 1px; padding: 0; }
+
+  .sc-sep {
+    border-left: 1px solid #888 !important;
+    border-right: none !important;
+    width: 1px !important;
+    padding: 0 !important;
+  }
+
+  .trib-div {
+    border-right: 1px solid #888 !important;
+  }
+
+  .seccion-sub th {
+    background: #eaf4e0;
+  }
+
+  .sc-equipo-nombre {
+    font-weight: 400;
+    color: #1565c0;
+    margin-left: 2px;
+  }
+
+  .trib-lbl {
+    font-weight: 700;
+    font-size: 7.5pt;
+    white-space: nowrap;
+  }
+
+  .fila-trib-dato td {
+    height: 20px;
+    vertical-align: middle;
+  }
+
+  .fila-trib-sancion td {
+    height: 22px;
+    vertical-align: middle;
+  }
+
+  .trib-sancion-lbl {
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-align: center;
+  }
+
+  .fila-sancion-vacia td {
+    height: 18px;
+  }
+
+  .fila-total-trib td {
+    height: 18px;
+    background: #f0f0f0;
+    font-size: 7.5pt;
+    vertical-align: middle;
+  }
+
+  .trib-total-lbl {
+    text-align: right;
+    font-weight: 700;
+    padding-right: 4px;
+  }
+
+  .fila-marcador-trib td {
+    height: 22px;
+    vertical-align: middle;
+  }
+
+  .trib-marcador-cell {
+    font-size: 7.5pt;
+    text-align: left;
+    padding-left: 4px;
+
+    .trib-marcador-equipo {
+      font-weight: 700;
+      font-size: 7.5pt;
+    }
+
+    .trib-marcador-linea {
+      display: inline-block;
+      width: 30px;
+      border-bottom: 1px solid #333;
+      margin: 0 3px 1px;
+    }
+  }
+
+  .trib-marcador-titulo {
+    font-size: 8pt;
+    padding: 2px;
+  }
+
+  .fila-marcador-trib td {
+    height: 32px !important;
+    min-height: 32px !important;
+    vertical-align: middle !important;
+  }
+
+  .trib-izq {
+    border-right: 1px solid #888 !important;
+  }
+
+  .trib-goles-cell {
+    font-size: 7.5pt;
+    font-weight: 700;
+    vertical-align: middle;
+    padding-left: 4px;
   }
 }
 
 .tabla-impugnacion {
   margin-top: 0;
+  table-layout: fixed;
+  width: 100%;
 
   td {
     font-size: 7.5pt;
@@ -564,33 +780,34 @@ $font-size-base: 8pt;
 
 // ─── PIE DE APROBACIÓN ────────────────────────────────────────────────────────
 .aprobacion-footer {
-  margin-top: auto;
-  font-size: 7.5pt;
+  margin-top: 10px;
+  font-size: 9pt;
   border-top: 1px solid $border-color;
-  padding-top: 4px;
+  padding-top: 8px;
 
-  p { margin: 2px 0 8px; }
+  p { margin: 4px 0 0; font-size: 9pt; }
 }
 
 .firmas-tribunal {
   display: flex;
-  justify-content: space-around;
-  margin-top: 16px;
+  justify-content: space-between;
+  margin-top: 36px;
+  padding: 0 20px;
 }
 
 .firma-tribunal-box {
   text-align: center;
+  min-width: 200px;
 
   .firma-linea-trib {
-    font-size: 10pt;
-    color: #555;
-    border-bottom: 1px solid #333;
+    font-size: 9pt;
+    color: #333;
+    letter-spacing: 1px;
     margin-bottom: 4px;
-    padding: 0 20px;
   }
 
   .firma-cargo {
-    font-size: 7.5pt;
+    font-size: 9pt;
     font-weight: bold;
   }
 }
@@ -622,12 +839,31 @@ $font-size-base: 8pt;
     margin: 0;
     padding: 4mm 4.5mm 4mm;
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
+    overflow: hidden;
     page-break-after: always;
 
     &:last-child {
       page-break-after: auto;
     }
+  }
+
+  .pagina-1-top {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .equipos-wrapper {
+    flex: 1;
+    min-height: unset;
+  }
+
+  .pagina-1-bottom {
+    flex-shrink: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   @page {
@@ -639,13 +875,11 @@ $font-size-base: 8pt;
 .tabla-informe-vocal {
   font-size: 8pt;
   min-height: 49mm;
+  table-layout: fixed;
 
-  .col-vocal-a { width: 16%; }
-  .col-vocal-b { width: 34%; }
-  .col-vocal-c { width: 16%; }
-  .col-vocal-d { width: 16%; }
-  .col-vocal-e { width: 8%; }
-  .col-vocal-f { width: 10%; }
+  // ── CAMBIO 1: EQUIPO ancho para el nombre, BALON estrecho (solo Sí/No)
+  .col-vocal-lbl { width: 35%; }
+  .col-vocal-val { width: 15%; }
 
   th, td {
     padding: 1px 3px;
@@ -658,30 +892,34 @@ $font-size-base: 8pt;
   }
 
   .seccion-sub th {
-    background: #fff;
+    background: #f0f0f0;
     font-size: 7.7pt;
     padding-top: 1px;
     padding-bottom: 1px;
   }
 
-  .sc-lbl,
-  .sc-val {
+  .sc-lbl {
     font-weight: 700;
+    text-align: left;
   }
 
-  .vocal-balon-amplio {
+  .sc-val {
+    font-weight: 700;
     text-align: center;
   }
 
-  .sc-sep {
-    display: none;
+  .sc-equipo-nombre {
+    font-weight: 400;
+    color: #1565c0;
+    margin-left: 2px;
   }
 
-  .equipo-der-label,
-  .equipo-der-bloque {
+  // ── CAMBIO 2: separador vertical derecho igual al físico
+  .equipo-der-label {
     border-left: 2px solid #000 !important;
   }
 
+  // ── CAMBIO 3: OBSERVACIONES — sin borde extra, ocupa todo el ancho
   .obs-unica-lbl,
   .obs-unica {
     border-left: 1px solid #888 !important;
@@ -692,6 +930,8 @@ $font-size-base: 8pt;
     padding-bottom: 2px !important;
     height: 14px;
     line-height: 1;
+    font-weight: 700;
+    font-size: 7.8pt;
   }
 
   .celda-dato {
@@ -699,25 +939,25 @@ $font-size-base: 8pt;
     min-width: 22mm;
   }
 
+  .celda-campo {
+    height: 15px;
+    vertical-align: middle;
+    font-size: 7.8pt;
+    font-weight: 700;
+    padding: 1px 4px;
+  }
+
   .celda-obs {
     min-height: 12px;
   }
 
   .fila-obs-linea td {
-    height: 14px;
+    height: 18px;
     vertical-align: top;
   }
 
-  .fila-firmas-vocal td {
-    height: 30px;
-    vertical-align: middle;
-    font-size: 8pt;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
   .fila-valores-header td {
-    height: 6px;
+    height: 18px;
     padding-top: 0;
     padding-bottom: 0;
   }
@@ -742,85 +982,83 @@ $font-size-base: 8pt;
   }
 
   .fila-valor-item td {
+    height: 18px;
     padding-top: 0;
     padding-bottom: 0;
   }
 
+  // ── CAMBIO 4: entrega al tesorero — ahora con celdas reales, no divs
   .fila-entrega-vocal td {
-    height: 13px;
+    height: 14px;
     font-size: 7.1pt;
-    padding-top: 0;
-    padding-bottom: 0;
+    font-weight: 700;
+    padding: 2px 4px;
     vertical-align: middle;
     white-space: nowrap;
   }
 
-  .entrega-vocal-full {
-    padding: 2px 4px !important;
-  }
-
-  .entrega-vocal-grid {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .entrega-vocal-lbl {
-    font-size: 7.1pt;
-  }
-
-  .entrega-vocal-linea {
-    flex: 0 0 84px;
+  .entrega-vocal-texto {
     text-align: left;
+
+    .valor-entrega {
+      color: #1565c0;
+      margin-left: 4px;
+    }
   }
 
-  .entrega-vocal-total {
-    margin-left: auto;
+  .entrega-total-lbl {
+    text-align: right;
+    font-weight: 700;
     font-size: 7.1pt;
-  }
-
-  .entrega-vocal-linea-corta {
-    flex-basis: 34px;
-  }
-
-  .firma-vocal-item {
     white-space: nowrap;
-    padding-left: 4px;
-    padding-right: 4px;
+    border-left: 1px solid #888;
   }
 
-  .fila-firmas-vocal td.firma-vocal-item {
-    font-size: 7.2pt;
+  .linea-valor {
+    display: inline-block;
+    min-width: 28px;
+    border-bottom: 1px solid #000;
+    vertical-align: bottom;
+    margin-left: 2px;
   }
 
-  .firma-vocal-full {
-    padding: 8px 10px !important;
+  // ── CAMBIO 5: firmas — celdas reales con borde inferior azul como el físico
+  .fila-firmas-vocal td {
+    height: 50px;
+    min-height: 50px;
+    vertical-align: bottom;
+    font-size: 7.8pt;
+    font-weight: 400;
+    padding: 2px 4px;
+    border-bottom: 1.5px solid #1565c0 !important;
   }
 
-  .firma-vocal-grid {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-  }
+  .firma-vocal-row {
+    padding: 2px 4px;
 
-  .firma-vocal-slot {
-    display: block;
-    white-space: nowrap;
-    font-size: 8.2pt;
-  }
+    .firma-vocal-inner {
+      display: flex;
+      gap: 8px;
+      font-size: 7.8pt;
+      font-weight: 400;
 
-  .firma-vocal-nombre {
-    flex: 1.2;
-  }
+      .firma-field {
+        display: flex;
+        flex: 1;
+        align-items: flex-end;
 
-  .firma-vocal-firma {
-    flex: 2.2;
-  }
+        .firma-lbl {
+          white-space: nowrap;
+        }
 
-  .firma-vocal-equipo {
-    flex: 1.2;
+        .firma-dots {
+          flex: 1;
+          border-bottom: 1px dotted #333;
+          margin-bottom: 2px;
+          margin-left: 2px;
+        }
+      }
+    }
   }
 }
 
@@ -834,4 +1072,15 @@ $font-size-base: 8pt;
 
 .pagina-2 .tabla-impugnacion {
   min-height: 20mm;
+}
+
+.tabla-arbitro .fila-marcador-resultado td {
+  height: 32px !important;
+  min-height: 32px !important;
+  vertical-align: middle !important;
+}
+
+.tabla-arbitro .fila-firmas-vocal td {
+  height: 50px !important;
+  min-height: 50px !important;
 }

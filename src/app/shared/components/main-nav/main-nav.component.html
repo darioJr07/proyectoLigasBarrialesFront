@@ -21,7 +21,7 @@
     <div class="nav-dropdown">
       <a *ngIf="permissions.canAccessCampeonatos()" routerLink="/campeonatos" routerLinkActive="active">🏅 Campeonatos</a>
       <a *ngIf="permissions.canAccessPartidos()" routerLink="/partidos" routerLinkActive="active">📅 Partidos</a>
-      <a *ngIf="permissions.canAccessPartidos()" routerLink="/tabla-posiciones" routerLinkActive="active">📊 Tabla</a>
+      <a *ngIf="permissions.canAccessTablaPosiciones()" routerLink="/tabla-posiciones" routerLinkActive="active">📊 Tabla</a>
       <a *ngIf="permissions.canAccessGoleadores()" routerLink="/goleadores" routerLinkActive="active">⚽ Goleadores</a>
     </div>
   </div>

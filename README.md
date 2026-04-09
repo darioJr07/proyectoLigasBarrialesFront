@@ -150,5 +150,7 @@ Nota: Primero debes crear el rol en la base de datos.
 - Modelos: `nombre.model.ts`
 - Usar camelCase para variables y funciones
 - Usar PascalCase para clases e interfaces
-- Comentar código complejo
-# proyectoLigasBarrialesFront
+
+### Abril 2026: Equivalencia visual de impresión de acta
+- El acta impresa es ahora idéntica al formato físico: bordes, colores, espacios para firmas y estructura visual.
+- Cambios documentados en ACTA_IMPRIMIR_IMPLEMENTACION.md y ACTA_DIGITAL_IMPLEMENTACION.md.

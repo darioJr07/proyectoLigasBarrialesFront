@@ -219,179 +219,227 @@
   <div class="acta-page pagina-2">
 
     <!-- ══ INFORME DEL VOCAL ══════════════════════════════════ -->
+    <div class="bloque-p2">
     <table class="tabla-seccion tabla-informe-vocal">
       <colgroup>
-        <col class="col-vocal-a">
-        <col class="col-vocal-b">
-        <col class="col-vocal-c">
-        <col class="col-vocal-d">
-        <col class="col-vocal-e">
-        <col class="col-vocal-f">
+        <col class="col-vocal-lbl">
+        <col class="col-vocal-val">
+        <col class="col-vocal-lbl">
+        <col class="col-vocal-val">
       </colgroup>
       <thead>
         <tr>
-          <th colspan="6" class="seccion-titulo">INFORME DEL VOCAL</th>
+          <th colspan="4" class="seccion-titulo">INFORME DEL VOCAL</th>
         </tr>
         <tr class="seccion-sub">
-          <th class="sc-lbl">EQUIPO:</th>
+          <th class="sc-lbl">EQUIPO: <span class="sc-equipo-nombre">{{ equipoLocalNombre }}</span></th>
           <th class="sc-val">BALON:</th>
-          <th class="sc-lbl equipo-der-label">EQUIPO:</th>
-          <th colspan="3" class="sc-val vocal-balon-amplio">BALON:</th>
+          <th class="sc-lbl equipo-der-label">EQUIPO: <span class="sc-equipo-nombre">{{ equipoVisitanteNombre }}</span></th>
+          <th class="sc-val">BALON:</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>T/A #</td><td class="celda-dato"></td>
-          <td class="equipo-der-label">T/A #</td><td colspan="3" class="celda-dato"></td>
+          <td colspan="2" class="celda-campo">T/A #</td>
+          <td colspan="2" class="celda-campo equipo-der-label">T/A #</td>
         </tr>
         <tr>
-          <td>T/R #</td><td class="celda-dato"></td>
-          <td class="equipo-der-label">T/R #</td><td colspan="3" class="celda-dato"></td>
+          <td colspan="2" class="celda-campo">T/R #</td>
+          <td colspan="2" class="celda-campo equipo-der-label">T/R #</td>
         </tr>
         <tr>
-          <td colspan="6" class="obs-unica-lbl">Observaciones:</td>
+          <td colspan="4" class="obs-unica-lbl">OBSERVACIONES:</td>
         </tr>
         <tr class="fila-obs-linea">
-          <td colspan="6" class="celda-obs obs-unica"></td>
+          <td colspan="4" class="celda-obs obs-unica"></td>
         </tr>
         <tr class="fila-obs-linea">
-          <td colspan="6" class="celda-obs obs-unica"></td>
+          <td colspan="4" class="celda-obs obs-unica"></td>
         </tr>
         <tr class="fila-obs-linea">
-          <td colspan="6" class="celda-obs obs-unica"></td>
+          <td colspan="4" class="celda-obs obs-unica"></td>
         </tr>
         <tr class="fila-obs-linea">
-          <td colspan="6" class="celda-obs obs-unica"></td>
+          <td colspan="4" class="celda-obs obs-unica"></td>
+        </tr>
+        <tr class="fila-obs-linea">
+          <td colspan="4" class="celda-obs obs-unica"></td>
         </tr>
         <tr class="fila-valores-header">
-          <td colspan="4"></td>
-          <td colspan="2" class="valores-header">VALORES:</td>
+          <td colspan="3"></td>
+          <td class="valores-header">VALORES:</td>
         </tr>
         <tr class="fila-valor-item">
-          <td colspan="4"></td>
-          <td class="valor-lbl">VALOR 1</td>
+          <td colspan="3" class="valor-lbl">VALOR 1</td>
           <td class="celda-dato"></td>
         </tr>
         <tr class="fila-valor-item">
-          <td colspan="4"></td>
-          <td class="valor-lbl">VALOR 2</td>
+          <td colspan="3" class="valor-lbl">VALOR 2</td>
           <td class="celda-dato"></td>
         </tr>
         <tr class="fila-entrega-vocal">
-          <td colspan="6" class="entrega-vocal-full">
-            <div class="entrega-vocal-grid">
-              <span class="entrega-vocal-lbl">ENTREGO AL SE�OR TESORERO EL VALOR DE:</span>
-              <span class="entrega-vocal-linea">__________________</span>
-              <span class="entrega-vocal-total">TOTAL ENTREGADO:</span>
-              <span class="entrega-vocal-linea entrega-vocal-linea-corta">__________</span>
-            </div>
-          </td>
+          <td colspan="2" class="entrega-vocal-texto">ENTREGO AL SE&Ntilde;OR TESORERO EL VALOR DE: <strong class="valor-entrega">$ {{ (getTotalVocalia('local') + getTotalVocalia('visitante')).toFixed(2) }}</strong></td>
+          <td class="valor-lbl entrega-total-lbl">TOTAL ENTREGADO:</td>
+          <td class="celda-dato"></td>
         </tr>
         <tr class="fila-firmas-vocal">
-          <td colspan="6" class="firma-vocal-full">
-            <div class="firma-vocal-grid">
-              <span class="firma-vocal-slot firma-vocal-nombre">Nombre:................................</span>
-              <span class="firma-vocal-slot firma-vocal-firma">Firma del Vocal:................................</span>
-              <span class="firma-vocal-slot firma-vocal-equipo">Equipo:................................</span>
+          <td colspan="4" class="firma-vocal-row">
+            <div class="firma-vocal-inner">
+              <span class="firma-field"><span class="firma-lbl">Nombre:</span><span class="firma-dots"></span></span>
+              <span class="firma-field"><span class="firma-lbl">Firma del Vocal:</span><span class="firma-dots"></span></span>
+              <span class="firma-field"><span class="firma-lbl">Equipo:</span><span class="firma-dots"></span></span>
             </div>
           </td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ══ INFORME DEL ARBITRO ════════════════════════════════ -->
-    <table class="tabla-seccion">
+    <div class="bloque-p2">
+    <table class="tabla-seccion tabla-arbitro">
       <thead>
         <tr>
-          <th colspan="6" class="seccion-titulo">INFORME DEL ARBITRO</th>
+          <th colspan="4" class="seccion-titulo">INFORME DEL ARBITRO</th>
         </tr>
         <tr class="seccion-sub">
-          <th class="sc-lbl">EQUIPO:</th>
-          <th class="sc-val">T/A#</th>
-          <th class="sc-lbl equipo-der-label">EQUIPO:</th>
-          <th class="sc-val">T/A#</th>
-          <td></td>
+          <th colspan="2" class="sc-lbl arb-izq">EQUIPO: <span class="sc-equipo-nombre">{{ equipoLocalNombre }}</span></th>
+          <th colspan="2" class="sc-lbl">EQUIPO: <span class="sc-equipo-nombre">{{ equipoVisitanteNombre }}</span></th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>T/M</td><td class="celda-dato"></td>
-          <td class="sc-sep"></td>
-          <td>T/M</td><td class="celda-dato"></td>
-          <td></td>
+          <td colspan="2" class="celda-campo arb-izq">T/A #</td>
+          <td colspan="2" class="celda-campo">T/A #</td>
         </tr>
         <tr>
-          <td>Observaciones:</td><td colspan="1" class="celda-obs"></td>
-          <td class="sc-sep"></td>
-          <td>Observaciones:</td><td colspan="1" class="celda-obs"></td>
-          <td></td>
-        </tr>
-        <tr class="fila-obs-alta">
-          <td colspan="2" class="celda-obs"></td>
-          <td class="sc-sep"></td>
-          <td colspan="2" class="celda-obs"></td>
-          <td></td>
+          <td colspan="2" class="celda-campo arb-izq">T/R #</td>
+          <td colspan="2" class="celda-campo">T/R #</td>
         </tr>
         <tr>
-          <td colspan="6" class="text-center"><strong>MARCADOR:</strong> &nbsp;&nbsp;&nbsp; {{ equipoLocalNombre }} ___ - ___ {{ equipoVisitanteNombre }}</td>
+          <td colspan="2" class="celda-campo arb-izq">OBSERVACIONES:</td>
+          <td colspan="2" class="celda-campo">OBSERVACIONES:</td>
+        </tr>
+        <tr class="fila-obs-arb">
+          <td colspan="2" class="celda-obs arb-izq"></td>
+          <td colspan="2" class="celda-obs"></td>
+        </tr>
+        <tr class="fila-obs-arb">
+          <td colspan="2" class="celda-obs arb-izq"></td>
+          <td colspan="2" class="celda-obs"></td>
+        </tr>
+        <tr class="fila-obs-arb">
+          <td colspan="2" class="celda-obs arb-izq"></td>
+          <td colspan="2" class="celda-obs"></td>
+        </tr>
+        <tr class="fila-obs-arb">
+          <td colspan="2" class="celda-obs arb-izq"></td>
+          <td colspan="2" class="celda-obs"></td>
+        </tr>
+        <tr>
+          <td colspan="4" class="text-center marcador-titulo"><strong>MARCADOR</strong></td>
+        </tr>
+        <tr class="fila-marcador-resultado">
+          <td colspan="2" class="marcador-equipo-cell arb-izq">
+            <div class="marcador-equipo-inner">
+              <span class="marcador-equipo-nombre">{{ equipoLocalNombre }}</span>
+              <span class="marcador-resultado-linea"></span>
+            </div>
+          </td>
+          <td colspan="2" class="marcador-equipo-cell">
+            <div class="marcador-equipo-inner">
+              <span class="marcador-equipo-nombre">{{ equipoVisitanteNombre }}</span>
+              <span class="marcador-resultado-linea"></span>
+            </div>
+          </td>
         </tr>
         <tr class="fila-firmas-vocal">
-          <td colspan="3">Nombre: ............................................</td>
-          <td colspan="3">Firma: ............................................</td>
+          <td colspan="4" class="firma-vocal-row">
+            <div class="firma-vocal-inner">
+              <span class="firma-field"><span class="firma-lbl">Nombre:</span><span class="firma-dots"></span></span>
+              <span class="firma-field"><span class="firma-lbl">Firma:</span><span class="firma-dots"></span></span>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ══ INFORME TRIBUNAL DE PENAS ══════════════════════════ -->
-    <table class="tabla-seccion">
+    <!-- 8 cols: lbl(1)+dato(2)+valor(1) | lbl(1)+dato(2)+valor(1) -->
+    <div class="bloque-p2">
+    <table class="tabla-seccion tabla-tribunal">
+      <colgroup>
+        <col class="col-trib-lbl">
+        <col class="col-trib-dato">
+        <col class="col-trib-dato">
+        <col class="col-trib-val col-trib-div">
+        <col class="col-trib-lbl">
+        <col class="col-trib-dato">
+        <col class="col-trib-dato">
+        <col class="col-trib-val">
+      </colgroup>
       <thead>
         <tr>
           <th colspan="8" class="seccion-titulo">INFORME TRIBUNAL DE PENAS</th>
         </tr>
         <tr class="seccion-sub">
-          <th colspan="3" class="sc-lbl">EQUIPO: {{ equipoLocalNombre }}</th>
-          <th class="sc-val">VALOR</th>
-          <td class="sc-sep"></td>
-          <th colspan="2" class="sc-lbl">EQUIPO: {{ equipoVisitanteNombre }}</th>
+          <th colspan="3" class="sc-lbl">EQUIPO: <span class="sc-equipo-nombre">{{ equipoLocalNombre }}</span></th>
+          <th class="sc-val trib-div">VALOR</th>
+          <th colspan="3" class="sc-lbl">EQUIPO: <span class="sc-equipo-nombre">{{ equipoVisitanteNombre }}</span></th>
           <th class="sc-val">VALOR</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>T/A #</td><td colspan="2" class="celda-dato"></td><td class="celda-dato"></td>
-          <td class="equipo-der-label">T/A #</td><td class="celda-dato"></td><td class="celda-dato"></td>
+        <tr class="fila-trib-dato">
+          <td colspan="3" class="trib-lbl">T/A #</td><td class="celda-dato trib-div"></td>
+          <td colspan="3" class="trib-lbl">T/A #</td><td class="celda-dato"></td>
         </tr>
-        <tr>
-          <td>T/R #</td><td colspan="2" class="celda-dato"></td><td class="celda-dato"></td>
-          <td class="equipo-der-label">T/R #</td><td class="celda-dato"></td><td class="celda-dato"></td>
+        <tr class="fila-trib-sancion">
+          <td colspan="3" class="trib-sancion-lbl">SANCIÓN:</td><td class="celda-dato trib-div"></td>
+          <td colspan="3" class="trib-sancion-lbl">SANCIÓN:</td><td class="celda-dato"></td>
         </tr>
-        <tr>
-          <td>SANCIÓN:</td><td colspan="2" class="celda-dato"></td><td class="celda-dato"></td>
-          <td class="sc-sep"></td>
-          <td>SANCIÓN:</td><td class="celda-dato"></td><td class="celda-dato"></td>
+        <tr class="fila-trib-dato">
+          <td colspan="3" class="trib-lbl">T/R #</td><td class="celda-dato trib-div"></td>
+          <td colspan="3" class="trib-lbl">T/R #</td><td class="celda-dato"></td>
         </tr>
-        <tr class="fila-sancion-vacia"><td colspan="4"></td><td class="sc-sep"></td><td colspan="3"></td></tr>
-        <tr class="fila-sancion-vacia"><td colspan="4"></td><td class="sc-sep"></td><td colspan="3"></td></tr>
-        <tr class="fila-sancion-vacia"><td colspan="4"></td><td class="sc-sep"></td><td colspan="3"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
+        <tr class="fila-sancion-vacia"><td colspan="3"></td><td class="celda-dato trib-div"></td><td colspan="3"></td><td class="celda-dato"></td></tr>
         <tr class="fila-total-trib">
-          <td colspan="3"><strong>TOTAL VALORES:</strong> $</td><td class="celda-dato"></td>
-          <td class="sc-sep"></td>
-          <td colspan="2"><strong>TOTAL VALORES:</strong> $</td><td class="celda-dato"></td>
+          <td colspan="3" class="trib-total-lbl"><strong>TOTAL, VALORES:</strong></td><td class="celda-dato trib-div"></td>
+          <td colspan="3" class="trib-total-lbl"><strong>TOTAL, VALORES:</strong></td><td class="celda-dato"></td>
         </tr>
         <tr>
-          <td colspan="4" class="text-center"><strong>MARCADOR:</strong> &nbsp;&nbsp; {{ equipoLocalNombre }} ___ - ___ {{ equipoVisitanteNombre }}</td>
-          <td class="sc-sep"></td>
-          <td colspan="3" class="text-center"><strong>GOLES:</strong></td>
+          <td colspan="8" class="text-center trib-marcador-titulo"><strong>MARCADOR</strong></td>
+        </tr>
+        <tr class="fila-marcador-trib">
+          <td colspan="4" class="trib-goles-cell trib-div"><strong>GOLES:</strong></td>
+          <td colspan="4" class="trib-goles-cell"><strong>GOLES:</strong></td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ══ IMPUGNACIÓN DEL PARTIDO ════════════════════════════ -->
+    <div class="bloque-p2">
     <table class="tabla-seccion tabla-impugnacion">
+      <colgroup>
+        <col style="width: 35%">
+        <col style="width: 35%">
+        <col style="width: 15%">
+        <col style="width: 15%">
+      </colgroup>
       <tbody>
         <tr>
-          <td colspan="2"><strong>NOMBRE DIRECTIVO Y/O CAPITAN:</strong> ........................................................</td>
-          <td colspan="2"><strong>FIRMA:</strong> ........................................................</td>
+          <th colspan="4" class="seccion-titulo">IMPUGNACIÓN DEL PARTIDO</th>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>NOMBRE DIRECTIVO Y/O CAPITAN:</strong></td>
+          <td colspan="2"><strong>FIRMA:</strong></td>
         </tr>
         <tr>
           <td colspan="4"><strong>MOTIVO DE LA IMPUGNACIÓN:</strong></td>
@@ -399,13 +447,23 @@
         <tr class="fila-impugnacion-texto">
           <td colspan="4" class="celda-obs-larga"></td>
         </tr>
+        <tr class="fila-impugnacion-texto">
+          <td colspan="4" class="celda-obs-larga"></td>
+        </tr>
+        <tr class="fila-impugnacion-texto">
+          <td colspan="4" class="celda-obs-larga"></td>
+        </tr>
+        <tr class="fila-impugnacion-texto">
+          <td colspan="4" class="celda-obs-larga"></td>
+        </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ══ APROBACIÓN ═════════════════════════════════════════ -->
     <div class="aprobacion-footer">
       <p>
-        Aprobado en la sesión del ................. de ............................. de ............... del 20.....
+        Aprobado en la sesión del.................................................................. de.................................................................. del 202...
       </p>
       <div class="firmas-tribunal">
         <div class="firma-tribunal-box">

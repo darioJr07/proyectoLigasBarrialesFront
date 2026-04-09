@@ -19,8 +19,8 @@
     <div class="actions-bar" *ngIf="permissions.canGestionarSanciones()">
       <div class="action-links">
         <a routerLink="/sanciones/nueva" class="btn-primary-action">+ Registrar sanción</a>
-        <a routerLink="/sanciones/tipos" class="btn-secondary-action">⚙️ Tipos</a>
-        <a routerLink="/sanciones/reglas" class="btn-secondary-action">📋 Reglas</a>
+        <a *ngIf="permissions.canConfigureSanciones()" routerLink="/sanciones/tipos" class="btn-secondary-action">⚙️ Tipos</a>
+        <a *ngIf="permissions.canConfigureSanciones()" routerLink="/sanciones/reglas" class="btn-secondary-action">📋 Reglas</a>
       </div>
     </div>
 

@@ -63,10 +63,15 @@ export class UsuariosListComponent implements OnInit {
     this.usuariosService.getUsuarios().subscribe({
       next: (data) => {
         if (currentUser?.rol?.nombre === 'directivo_liga') {
-          // Directivo_liga: solo mostrar dirigentes de su liga
+          // Directivo_liga: ver dirigentes de equipos de su liga
+          // y otros directivo_liga de su misma liga (incluido sí mismo)
           if (currentUser.ligaId) {
-            this.usuarios = data.filter(u => 
-              u.rol.nombre === 'dirigente_equipo' && u.ligaId === currentUser.ligaId
+            this.usuarios = data.filter(u =>
+              u.ligaId === currentUser.ligaId &&
+              (u.rol.nombre === 'dirigente_equipo' ||
+               u.rol.nombre === 'directivo_liga' ||
+               u.rol.nombre === 'tribuna_penas' ||
+               u.rol.nombre === 'tesoreria')
             );
           } else {
             // Directivo sin liga asignada no ve ningún usuario

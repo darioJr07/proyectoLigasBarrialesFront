@@ -295,9 +295,16 @@ export class PermissionsService {
 
   /**
    * Verifica si puede acceder al módulo de partidos
-   * Los tres roles pueden ver el fixture
+   * Los tres roles pueden ver el fixture, más tribuna_penas y tesoreria
    */
   canAccessPartidos(): boolean {
+    return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo', 'tribuna_penas', 'tesoreria']);
+  }
+
+  /**
+   * Pueden acceder a tabla de posiciones: master, directivo_liga y dirigente_equipo
+   */
+  canAccessTablaPosiciones(): boolean {
     return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo']);
   }
 
@@ -337,18 +344,25 @@ export class PermissionsService {
     return this.hasRole(['master', 'directivo_liga']);
   }
 
+  /**
+   * Pueden imprimir actas: master, directivo_liga, tribuna_penas y tesoreria
+   */
+  canImprimirActa(): boolean {
+    return this.hasRole(['master', 'directivo_liga', 'tribuna_penas', 'tesoreria']);
+  }
+
   // ==================== SANCIONES ====================
 
   canAccessSanciones(): boolean {
-    return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo']);
+    return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo', 'tribuna_penas']);
   }
 
   canGestionarSanciones(): boolean {
-    return this.hasRole(['master', 'directivo_liga']);
+    return this.hasRole(['master', 'directivo_liga', 'tribuna_penas']);
   }
 
   canAccessTribunal(): boolean {
-    return this.hasRole(['master', 'directivo_liga']);
+    return this.hasRole(['master', 'directivo_liga', 'tribuna_penas']);
   }
 
   canConfigureSanciones(): boolean {

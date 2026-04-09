@@ -82,7 +82,9 @@ export class PartidosListComponent implements OnInit {
       next: (data) => {
         this.ligas = data;
         const user = this.authService.getCurrentUser();
-        if ((user?.rol?.nombre === 'directivo_liga' || user?.rol?.nombre === 'dirigente_equipo') && user.ligaId) {
+        const rolesConLiga = ['directivo_liga', 'dirigente_equipo', 'tribuna_penas', 'tesoreria'];
+        const rolNombre = user?.rol?.nombre ?? '';
+        if (user && rolesConLiga.includes(rolNombre) && user.ligaId) {
           this.selectedLigaId = user.ligaId;
           this.loadCampeonatos(user.ligaId);
         }

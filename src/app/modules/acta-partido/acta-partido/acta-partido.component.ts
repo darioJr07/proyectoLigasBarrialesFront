@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { ActaPartidoService } from '../acta-partido.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { EquiposService } from '../../../core/services/equipos.service';
+import { PermissionsService } from '../../../core/services/permissions.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 import {
   ActaIncidencia,
@@ -94,8 +95,13 @@ export class ActaPartidoComponent implements OnInit {
     private actaService: ActaPartidoService,
     private authService: AuthService,
     private equiposService: EquiposService,
+    private permissions: PermissionsService,
   ) {
     this.user$ = this.authService.currentUser$;
+  }
+
+  get soloLectura(): boolean {
+    return this.permissions.hasRole(['tribuna_penas', 'tesoreria']);
   }
 
   logout(): void {

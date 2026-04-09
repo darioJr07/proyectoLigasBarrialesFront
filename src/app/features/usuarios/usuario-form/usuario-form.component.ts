@@ -75,9 +75,15 @@ export class UsuarioFormComponent implements OnInit {
   loadRoles(): void {
     this.authService.getRoles().subscribe({
       next: (data) => {
-        // Si es directivo_liga, solo mostrar rol dirigente_equipo
+        // Si es directivo_liga, mostrar dirigente_equipo y directivo_liga
+        // (necesario para que el campo muestre correctamente el rol al editar un directivo_liga)
         if (this.currentUser?.rol?.nombre === 'directivo_liga') {
-          this.roles = data.filter(rol => rol.nombre === 'dirigente_equipo');
+          this.roles = data.filter(rol =>
+            rol.nombre === 'dirigente_equipo' ||
+            rol.nombre === 'directivo_liga' ||
+            rol.nombre === 'tribuna_penas' ||
+            rol.nombre === 'tesoreria'
+          );
         } else {
           // Master ve todos los roles
           this.roles = data;
@@ -124,8 +130,9 @@ export class UsuarioFormComponent implements OnInit {
     const rol = this.roles.find(r => r.id === Number(rolId));
     const rolNombre = rol?.nombre;
 
-    // Mostrar campo ligaId solo para directivo_liga o dirigente_equipo
-    if (rolNombre === 'directivo_liga' || rolNombre === 'dirigente_equipo') {
+    // Mostrar campo ligaId para roles que pertenecen a una liga
+    if (rolNombre === 'directivo_liga' || rolNombre === 'dirigente_equipo' ||
+        rolNombre === 'tribuna_penas' || rolNombre === 'tesoreria') {
       this.showLigaField = true;
       // No hacer el campo requerido - puede asignarse después
       this.usuarioForm.get('ligaId')?.clearValidators();
@@ -156,6 +163,16 @@ export class UsuarioFormComponent implements OnInit {
           ligaId: usuario.ligaId || null,
         });
         this.updateLigaFieldVisibility(usuario.rol.id);
+
+        // Si el usuario actual es directivo_liga y el usuario a editar
+        // también es directivo_liga, bloquear el campo de rol
+        if (
+          this.currentUser?.rol?.nombre === 'directivo_liga' &&
+          usuario.rol.nombre === 'directivo_liga'
+        ) {
+          this.usuarioForm.get('rolId')?.disable();
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -179,6 +196,11 @@ export class UsuarioFormComponent implements OnInit {
     // Incluir ligaId si está deshabilitado (caso directivo_liga)
     if (this.usuarioForm.get('ligaId')?.disabled) {
       formValue.ligaId = this.usuarioForm.get('ligaId')?.value;
+    }
+
+    // Incluir rolId si está deshabilitado (caso editar directivo_liga)
+    if (this.usuarioForm.get('rolId')?.disabled) {
+      formValue.rolId = this.usuarioForm.get('rolId')?.value;
     }
 
     // Convertir rolId y ligaId a número, o null si está vacío

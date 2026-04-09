@@ -36,7 +36,7 @@
       <button class="tab-btn" [class.activa]="tabActiva === 'planilla'" (click)="tabActiva = 'planilla'">
         📋 Planilla
       </button>
-      <button class="tab-btn" [class.activa]="tabActiva === 'informe'" (click)="tabActiva = 'informe'">
+      <button *ngIf="!soloLectura" class="tab-btn" [class.activa]="tabActiva === 'informe'" (click)="tabActiva = 'informe'">
         ⚠️ Incidencias Vocal
         <span class="tab-badge" *ngIf="filasIncidencias.length > 0">{{ filasIncidencias.length }}</span>
       </button>
@@ -80,11 +80,11 @@
                 <div class="jugador-controles">
                   <select [(ngModel)]="fila.estadoSeleccionado"
                     [class]="'estado-select ' + getEstadoClass(fila.estadoSeleccionado)"
-                    [disabled]="!!fila.sancionActiva"
+                    [disabled]="!!fila.sancionActiva || soloLectura"
                     [title]="fila.sancionActiva ? 'Jugador suspendido, no puede participar' : ''">
                     <option *ngFor="let e of estados" [value]="e">{{ estadoLabels[e] }}</option>
                   </select>
-                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva" />
+                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura" />
                 </div>
               </div>
             </div>
@@ -106,11 +106,11 @@
                 <div class="jugador-controles">
                   <select [(ngModel)]="fila.estadoSeleccionado"
                     [class]="'estado-select ' + getEstadoClass(fila.estadoSeleccionado)"
-                    [disabled]="!!fila.sancionActiva"
+                    [disabled]="!!fila.sancionActiva || soloLectura"
                     [title]="fila.sancionActiva ? 'Jugador suspendido, no puede participar' : ''">
                     <option *ngFor="let e of estados" [value]="e">{{ estadoLabels[e] }}</option>
                   </select>
-                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva" />
+                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura" />
                 </div>
               </div>
             </div>
@@ -118,7 +118,7 @@
 
         </div>
 
-        <div class="form-footer" *ngIf="filasLocal.length > 0 || filasVisitante.length > 0">
+        <div class="form-footer" *ngIf="(filasLocal.length > 0 || filasVisitante.length > 0) && !soloLectura">
           <div class="resumen">
             <span>Total jugaron: <strong>{{ totalJugaron }}</strong></span>
             <span class="texto-gris">Suspendidos: <strong>{{ totalSuspendidos }}</strong></span>

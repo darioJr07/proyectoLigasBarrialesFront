@@ -65,7 +65,7 @@
           <p>Ver fixture y registrar resultados de los partidos</p>
         </a>
 
-        <a *ngIf="canAccessPartidos()" routerLink="/tabla-posiciones" class="action-card">
+        <a *ngIf="permissions.canAccessTablaPosiciones()" routerLink="/tabla-posiciones" class="action-card">
           <span class="action-icon">🏆</span>
           <h3>Tabla de Posiciones</h3>
           <p>Clasificación de equipos por categoría y etapa</p>

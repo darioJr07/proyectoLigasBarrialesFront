@@ -30,3 +30,9 @@
     }
   }
 }
+
+@media print {
+  .app-footer {
+    display: none !important;
+  }
+}
