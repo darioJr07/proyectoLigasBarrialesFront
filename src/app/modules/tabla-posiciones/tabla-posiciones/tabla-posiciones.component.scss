@@ -208,6 +208,8 @@ $color-primary: #3498db;
     &.pos-1 { background: linear-gradient(90deg, rgba(243,156,18,0.08) 0%, transparent 60%); }
     &.pos-2 { background: linear-gradient(90deg, rgba(149,165,166,0.08) 0%, transparent 60%); }
     &.pos-3 { background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 60%); }
+    // Zona de descenso
+    &.pos-descenso { background: linear-gradient(90deg, rgba(231,76,60,0.08) 0%, transparent 60%); }
 
     td {
       padding: 0.7rem 0.8rem;
@@ -259,6 +261,7 @@ $color-primary: #3498db;
   &.pos-1 { background: $color-oro;    color: #fff; box-shadow: 0 2px 6px rgba(243,156,18,0.4); }
   &.pos-2 { background: $color-plata;  color: #fff; box-shadow: 0 2px 6px rgba(149,165,166,0.4); }
   &.pos-3 { background: $color-bronce; color: #fff; box-shadow: 0 2px 6px rgba(205,127,50,0.4); }
+  &.pos-descenso { background: #e74c3c; color: #fff; box-shadow: 0 2px 6px rgba(231,76,60,0.4); }
 }
 
 // ─── Leyenda ──────────────────────────────────────────────────────────────────
@@ -290,6 +293,7 @@ $color-primary: #3498db;
   &.pos-1 { background: $color-oro; }
   &.pos-2 { background: $color-plata; }
   &.pos-3 { background: $color-bronce; }
+  &.pos-descenso { background: #e74c3c; }
 }
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────

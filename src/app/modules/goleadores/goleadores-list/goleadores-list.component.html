@@ -113,7 +113,9 @@
                   {{ getPosicionEmoji(fila.posicion) }}
                 </span>
               </td>
-              <td class="col-jugador">{{ fila.jugadorNombre }}</td>
+              <td class="col-jugador">
+                <span *ngIf="fila.numeroCancha != null" class="jugador-num">#{{ fila.numeroCancha }} · </span>{{ fila.jugadorNombre }}
+              </td>
               <td class="col-equipo">{{ fila.equipoNombre }}</td>
               <td class="col-stat goles-total">
                 <strong>{{ fila.total }}</strong>

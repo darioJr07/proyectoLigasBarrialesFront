@@ -121,11 +121,11 @@
         <tbody>
           <tr
             *ngFor="let fila of tabla"
-            [class]="getPosicionClass(fila.posicion)"
+            [class]="getPosicionClass(fila.posicion, tabla.length)"
             [class.mi-equipo-row]="miEquipoId && fila.equipoId === miEquipoId"
           >
             <td class="col-pos">
-              <span class="posicion-badge" [class]="getPosicionClass(fila.posicion)">
+              <span class="posicion-badge" [class]="getPosicionClass(fila.posicion, tabla.length)">
                 {{ fila.posicion }}
               </span>
             </td>
@@ -156,6 +156,8 @@
       <span class="leyenda-item"><span class="dot pos-2"></span> 2° lugar</span>
       <span class="leyenda-item"><span class="dot pos-3"></span> 3° lugar</span>
       <span class="leyenda-sep">|</span>
+      <span class="leyenda-item" *ngIf="tabla.length >= 7"><span class="dot pos-descenso"></span> Zona de descenso</span>
+      <span class="leyenda-sep" *ngIf="tabla.length >= 7">|</span>
       <span class="leyenda-item">PJ: Jugados · PG: Ganados · PE: Empatados · PP: Perdidos · GF: Goles Favor · GC: Goles Contra · DG: Diferencia</span>
     </div>
 

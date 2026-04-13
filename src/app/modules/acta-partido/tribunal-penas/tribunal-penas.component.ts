@@ -209,7 +209,26 @@ export class TribunalPenasComponent implements OnInit {
       }
       mapa.get(inc.partidoId)!.incidencias.push(inc);
     }
-    return [...mapa.values()];
+
+    // Ordenar incidencias dentro de cada partido por minuto ascendente (min.1 primero)
+    const grupos = [...mapa.values()].map(grupo => ({
+      ...grupo,
+      incidencias: grupo.incidencias.slice().sort((a, b) => (a.minuto ?? 0) - (b.minuto ?? 0)),
+    }));
+
+    // Ordenar partidos por fecha + hora ascendente (igual que el módulo de partidos)
+    return grupos.sort((a, b) => {
+      const fechaA = a.partido?.fechaPartido
+        ? `${a.partido.fechaPartido}T${a.partido.horaPartido ?? '00:00'}`
+        : null;
+      const fechaB = b.partido?.fechaPartido
+        ? `${b.partido.fechaPartido}T${b.partido.horaPartido ?? '00:00'}`
+        : null;
+      if (fechaA && fechaB) return fechaA.localeCompare(fechaB);
+      if (fechaA) return -1;
+      if (fechaB) return 1;
+      return 0;
+    });
   }
 
   // ── Panel de resolución ────────────────────────────────────────────────────

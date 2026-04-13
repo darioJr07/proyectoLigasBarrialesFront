@@ -172,11 +172,14 @@ export class TablaPosicionesComponent implements OnInit {
     return this.selectedEtapa;
   }
 
-  /** Clase CSS para destacar las primeras posiciones */
-  getPosicionClass(posicion: number): string {
+  /** Clase CSS para destacar las primeras posiciones y la zona de descenso.
+   *  La zona de descenso solo se activa si hay 7 o más equipos en la tabla,
+   *  para evitar solapamiento con el podio en tablas pequeñas. */
+  getPosicionClass(posicion: number, total: number = 0): string {
     if (posicion === 1) return 'pos-1';
     if (posicion === 2) return 'pos-2';
     if (posicion === 3) return 'pos-3';
+    if (total >= 7 && posicion > total - 3) return 'pos-descenso';
     return '';
   }
 

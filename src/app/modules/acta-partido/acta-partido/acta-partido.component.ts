@@ -292,27 +292,29 @@ export class ActaPartidoComponent implements OnInit {
   }
 
   /** Jugadores de ambos equipos para los selectores de incidencia */
-  get todosLosJugadores(): { jugadorId: number; nombre: string; equipoId: number; suspendido: boolean }[] {
+  get todosLosJugadores(): { jugadorId: number; nombre: string; equipoId: number; suspendido: boolean; numeroCancha: number | null }[] {
     return [...this.filasLocal, ...this.filasVisitante].map((f) => ({
-      jugadorId:  f.jugadorId,
-      nombre:     f.nombreCompleto,
-      equipoId:   f.equipoId,
-      suspendido: f.estadoSugerido === 'suspendido',
+      jugadorId:    f.jugadorId,
+      nombre:       f.nombreCompleto,
+      equipoId:     f.equipoId,
+      suspendido:   f.estadoSugerido === 'suspendido',
+      numeroCancha: f.numeroCancha ?? null,
     }));
   }
 
   /** Devuelve los jugadores del equipo seleccionado para el selector de incidencia.
    *  Los suspendidos se incluyen (pueden cometer faltas fuera del campo)
-   *  pero se marcan con (SUSPENDIDO) para diferenciarlos visualmente. */
+   *  pero se marcan con (SUSPENDIDO) para diferenciarlos visualmente.
+   *  Se incluye el número de camiseta de la habilitación para identificar al jugador. */
   jugadoresPorEquipo(equipoId: number | string): { jugadorId: number; nombre: string; suspendido: boolean }[] {
     const numId = Number(equipoId);
     return this.todosLosJugadores
       .filter((j) => Number(j.equipoId) === numId)
-      .map((j) => ({
-        jugadorId:  j.jugadorId,
-        nombre:     j.suspendido ? `⚠️ ${j.nombre} (SUSPENDIDO)` : j.nombre,
-        suspendido: j.suspendido,
-      }));
+      .map((j) => {
+        const num    = j.numeroCancha != null ? `#${j.numeroCancha} · ` : '';
+        const nombre = j.suspendido ? `⚠️ ${num}${j.nombre} (SUSPENDIDO)` : `${num}${j.nombre}`;
+        return { jugadorId: j.jugadorId, nombre, suspendido: j.suspendido };
+      });
   }
 
   /** Al cambiar el equipo de una incidencia, resetea el jugador para evitar datos cruzados */

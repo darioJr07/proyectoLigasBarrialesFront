@@ -151,18 +151,6 @@
         <div class="seccion-card">
           <h3 class="seccion-titulo">📝 Datos Generales del Partido</h3>
           <div class="form-row">
-            <label>Nombre del árbitro</label>
-            <input type="text" [(ngModel)]="nombreArbitro" placeholder="Ej: Juan Pérez" maxlength="200" class="form-control" />
-          </div>
-          <div class="form-row">
-            <label>Observaciones del vocal</label>
-            <textarea [(ngModel)]="observacionesVocal" placeholder="Describa el desarrollo del partido..." rows="4" maxlength="2000" class="form-control"></textarea>
-          </div>
-          <div class="form-row">
-            <label>Observaciones del árbitro</label>
-            <textarea [(ngModel)]="observacionesArbitro" placeholder="Comentarios del árbitro..." rows="3" maxlength="2000" class="form-control"></textarea>
-          </div>
-          <div class="form-row">
             <label>Vocal responsable <small>(equipo, jugador o directivo)</small></label>
             <div class="vocal-row">
               <input type="text" [(ngModel)]="vocalNombre" placeholder="Ej: SPARTA, Juan Pérez, Directivos Liga..." maxlength="200" class="form-control" />
@@ -172,6 +160,18 @@
                 <option [ngValue]="null">Directivos Liga</option>
               </select>
             </div>
+          </div>
+          <div class="form-row">
+            <label>Observaciones del vocal</label>
+            <textarea [(ngModel)]="observacionesVocal" placeholder="Describa el desarrollo del partido..." rows="4" maxlength="2000" class="form-control"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Nombre del árbitro</label>
+            <input type="text" [(ngModel)]="nombreArbitro" placeholder="Ej: Juan Pérez" maxlength="200" class="form-control" />
+          </div>
+          <div class="form-row">
+            <label>Observaciones del árbitro</label>
+            <textarea [(ngModel)]="observacionesArbitro" placeholder="Comentarios del árbitro..." rows="3" maxlength="2000" class="form-control"></textarea>
           </div>
         </div>
 

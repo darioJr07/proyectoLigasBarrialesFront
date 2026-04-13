@@ -8,7 +8,8 @@ export interface FilaGoleador {
   jugadorNombre: string;
   equipoId: number;
   equipoNombre: string;
-  total: number;     // Total de goles (normal + penal). Autogoles NO cuentan aquí.
-  penales: number;   // Cuántos del total fueron tiro penal
-  autogoles: number; // Goles en contra (informativo)
+  total: number;        // Total de goles (normal + penal). Autogoles NO cuentan aquí.
+  penales: number;      // Cuántos del total fueron tiro penal
+  autogoles: number;    // Goles en contra (informativo)
+  numeroCancha: number | null; // Número de camiseta de la habilitación
 }

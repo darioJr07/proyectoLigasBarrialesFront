@@ -588,14 +588,17 @@ $font-size-base: 8pt;
       padding-bottom: 3px;
 
       .marcador-equipo-nombre {
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
         font-size: 7.8pt;
         font-weight: 700;
       }
 
       .marcador-resultado-linea {
-        display: inline-block;
-        width: 42px;
+        flex: 0 0 42px;
         border-bottom: 1px solid #333;
         margin-bottom: 1px;
       }
