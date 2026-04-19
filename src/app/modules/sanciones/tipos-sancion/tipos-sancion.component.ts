@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { SancionesService } from '../sanciones.service';
@@ -13,13 +13,14 @@ import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.c
 @Component({
   selector: 'app-tipos-sancion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, MainNavComponent],
   templateUrl: './tipos-sancion.component.html',
   styleUrl: './tipos-sancion.component.scss',
 })
 export class TiposSancionComponent implements OnInit {
   tipos: TipoSancion[] = [];
   ligas: Liga[] = [];
+  selectedLigaId: number | null = null;
   form: FormGroup;
   editandoId: number | null = null;
   cargando = false;
@@ -54,11 +55,18 @@ export class TiposSancionComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarLigas();
-    this.cargarTipos();
+    // master espera a que seleccione liga; otros roles cargan directo
+    if (this.usuario?.rol?.nombre !== 'master') {
+      this.cargarTipos();
+    }
   }
 
   logout(): void {
     this.authService.logout();
+  }
+
+  get isMaster(): boolean {
+    return this.usuario?.rol?.nombre === 'master';
   }
 
   get usuario() {
@@ -67,6 +75,15 @@ export class TiposSancionComponent implements OnInit {
 
   get ligaIdUsuario(): number | null {
     return (this.usuario as any)?.ligaId ?? null;
+  }
+
+  get ligaIdEfectivo(): number | null {
+    return this.isMaster ? this.selectedLigaId : this.ligaIdUsuario;
+  }
+
+  onLigaChange(): void {
+    this.tipos = [];
+    if (this.selectedLigaId) this.cargarTipos();
   }
 
   cargarLigas(): void {
@@ -78,10 +95,10 @@ export class TiposSancionComponent implements OnInit {
   }
 
   cargarTipos(): void {
+    if (!this.ligaIdEfectivo) return;
     this.cargando = true;
     this.error = '';
-    const ligaId = this.usuario?.rol?.nombre === 'master' ? undefined : this.ligaIdUsuario ?? undefined;
-    this.sancionesService.getTiposSancion(ligaId).subscribe({
+    this.sancionesService.getTiposSancion(this.ligaIdEfectivo).subscribe({
       next: (t) => {
         this.tipos = t;
         this.cargando = false;
@@ -94,7 +111,7 @@ export class TiposSancionComponent implements OnInit {
   }
 
   abrirFormulario(): void {
-    this.form.reset({ aplicaA: 'jugador', ligaId: this.ligaIdUsuario });
+    this.form.reset({ aplicaA: 'jugador', ligaId: this.ligaIdEfectivo });
     this.editandoId = null;
     this.mostrarFormulario = true;
     this.exito = '';

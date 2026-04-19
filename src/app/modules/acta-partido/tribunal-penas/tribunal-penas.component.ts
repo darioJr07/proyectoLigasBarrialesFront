@@ -58,6 +58,33 @@ export class TribunalPenasComponent implements OnInit {
   reglas: any[] = [];
   loading = false;
   error   = '';
+  Math = Math;
+
+  // ── Paginación de grupos de partido ─────────────────────────────────────────
+  currentGrupoPage = 1;
+  gruposPerPage = 3;
+
+  get gruposPaginados(): { partido: any; incidencias: ActaIncidencia[] }[] {
+    const start = (this.currentGrupoPage - 1) * this.gruposPerPage;
+    return this.incidenciasAgrupadasPorPartido.slice(start, start + this.gruposPerPage);
+  }
+
+  get totalGruposPages(): number {
+    return Math.ceil(this.incidenciasAgrupadasPorPartido.length / this.gruposPerPage);
+  }
+
+  get totalGruposPagesArray(): number[] {
+    return Array.from({ length: this.totalGruposPages }, (_, i) => i + 1);
+  }
+
+  onGrupoPageChange(page: number): void {
+    if (page < 1 || page > this.totalGruposPages) return;
+    this.currentGrupoPage = page;
+  }
+
+  onGruposPerPageChange(): void {
+    this.currentGrupoPage = 1;
+  }
 
   // ── Panel de resolución ────────────────────────────────────────────────────
   incidenciaAbierta: ActaIncidencia | null = null;
@@ -167,6 +194,7 @@ export class TribunalPenasComponent implements OnInit {
       next: (list) => {
         this.incidencias = list;
         this.derivarFiltros();
+        this.currentGrupoPage = 1;
         this.loading = false;
       },
       error: (err) => {

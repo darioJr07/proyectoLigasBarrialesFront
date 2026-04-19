@@ -35,6 +35,34 @@ export class SancionesListComponent implements OnInit {
   busqueda = '';
   filtroEquipoId: number | null = null;
 
+  // Paginación
+  Math = Math;
+  currentPage = 1;
+  pageSize = 10;
+  pageSizeOptions = [10, 20, 50];
+
+  get sancionesFiltradasPaginadas(): Sancion[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.sancionesFiltradas.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.sancionesFiltradas.length / this.pageSize);
+  }
+
+  get totalPagesArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
   get equiposDisponibles(): { id: number; nombre: string }[] {
     const mapa = new Map<number, string>();
     for (const s of this.sanciones) {
@@ -137,6 +165,7 @@ export class SancionesListComponent implements OnInit {
     this.sancionesService.getSanciones(filtros).subscribe({
       next: (s) => {
         this.sanciones = s;
+        this.currentPage = 1;
         this.cargando = false;
       },
       error: () => {
@@ -156,6 +185,7 @@ export class SancionesListComponent implements OnInit {
     this.soloActivas = false;
     this.busqueda = '';
     this.filtroEquipoId = null;
+    this.currentPage = 1;
     this.cargarSanciones();
   }
 

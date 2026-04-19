@@ -16,9 +16,20 @@
     <div class="alert alert-error" *ngIf="error">{{ error }}</div>
     <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
 
+    <!-- Selector de liga para master -->
+    <div class="filtros-card" *ngIf="isMaster">
+      <div class="filtro-item">
+        <label>Liga</label>
+        <select class="form-select" [(ngModel)]="selectedLigaId" (change)="onLigaChange()">
+          <option [ngValue]="null">— Seleccionar liga —</option>
+          <option *ngFor="let l of ligas" [ngValue]="l.id">{{ l.nombre }}</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Botón nuevo -->
     <div class="actions-bar">
-      <button class="btn-primary-action" (click)="abrirFormulario()" *ngIf="!mostrarFormulario">
+      <button class="btn-primary-action" (click)="abrirFormulario()" *ngIf="!mostrarFormulario && ligaIdEfectivo">
         + Nuevo tipo de sanción
       </button>
     </div>

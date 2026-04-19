@@ -24,6 +24,34 @@ export class GoleadoresListComponent implements OnInit {
   errorMessage = '';
   tablaCargada = false;
 
+  // ─── Paginación ───────────────────────────────────────────────────────────
+  Math = Math;
+  currentPage = 1;
+  pageSize = 15;
+  pageSizeOptions = [15, 20, 50];
+
+  get paginatedGoleadores(): FilaGoleador[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.goleadores.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.goleadores.length / this.pageSize);
+  }
+
+  get totalPagesArray(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
   // ─── Filtros disponibles ──────────────────────────────────────────────────
   ligas: any[] = [];
   campeonatos: any[] = [];
@@ -134,6 +162,7 @@ export class GoleadoresListComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.goleadores = data;
+          this.currentPage = 1;
           this.loading = false;
         },
         error: () => {

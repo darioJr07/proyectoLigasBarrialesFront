@@ -40,6 +40,10 @@ export class PartidosListComponent implements OnInit {
   selectedEtapa = '';
   selectedJornada: number | null = null;
 
+  // Paginación de jornadas
+  currentJornadaPage = 1;
+  jornadasPerPage = 3;
+
   // Modal resultado
   resultadoModal: { visible: boolean; partido: Partido | null } = { visible: false, partido: null };
   resultadoForm: RegistrarResultadoDto = { golesLocal: 0, golesVisitante: 0, sancionado: 'ninguno' };
@@ -142,6 +146,7 @@ export class PartidosListComponent implements OnInit {
         next: (data) => {
           this.partidos = data;
           this.calcularEtapasYJornadas();
+          this.currentJornadaPage = 1;
           this.loading = false;
         },
         error: (err) => {
@@ -190,6 +195,29 @@ export class PartidosListComponent implements OnInit {
 
   get jornadasOrdenadas(): number[] {
     return [...this.partidosPorJornada.keys()].sort((a, b) => a - b);
+  }
+
+  // ── Paginación de jornadas ──
+  get jornadasPaginadas(): number[] {
+    const start = (this.currentJornadaPage - 1) * this.jornadasPerPage;
+    return this.jornadasOrdenadas.slice(start, start + this.jornadasPerPage);
+  }
+
+  get totalJornadasPages(): number {
+    return Math.ceil(this.jornadasOrdenadas.length / this.jornadasPerPage);
+  }
+
+  get totalJornadasPagesArray(): number[] {
+    return Array.from({ length: this.totalJornadasPages }, (_, i) => i + 1);
+  }
+
+  onJornadaPageChange(page: number): void {
+    if (page < 1 || page > this.totalJornadasPages) return;
+    this.currentJornadaPage = page;
+  }
+
+  onJornadasPerPageChange(): void {
+    this.currentJornadaPage = 1;
   }
 
   // ===== Resultado =====

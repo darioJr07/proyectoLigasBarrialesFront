@@ -1,23 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { SancionesService } from '../sanciones.service';
 import { ReglaSancion, TipoSancion, CreateReglaSancionDto, UpdateReglaSancionDto } from '../sancion.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 
 @Component({
   selector: 'app-reglas-sancion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, MainNavComponent],
   templateUrl: './reglas-sancion.component.html',
   styleUrl: './reglas-sancion.component.scss',
 })
 export class ReglasSancionComponent implements OnInit {
   reglas: ReglaSancion[] = [];
   tipos: TipoSancion[] = [];
+  ligas: any[] = [];
+  selectedLigaId: number | null = null;
   form: FormGroup;
   reglaEditando: ReglaSancion | null = null;
   cargando = false;
@@ -31,6 +35,7 @@ export class ReglasSancionComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly sancionesService: SancionesService,
     private readonly authService: AuthService,
+    private readonly ligasService: LigasService,
   ) {
     this.user$ = this.authService.currentUser$;
     this.form = this.fb.group({
@@ -76,25 +81,45 @@ export class ReglasSancionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarTipos();
-    this.cargarReglas();
+    if (this.isMaster) {
+      this.ligasService.getAll().subscribe({ next: (l) => (this.ligas = l) });
+    } else {
+      this.cargarTipos();
+      this.cargarReglas();
+    }
   }
 
   logout(): void {
     this.authService.logout();
   }
 
-  get ligaId(): number {
-    return (this.authService.currentUserValue as any)?.ligaId;
+  get isMaster(): boolean {
+    return this.authService.currentUserValue?.rol?.nombre === 'master';
+  }
+
+  get ligaId(): number | null {
+    if (this.isMaster) return this.selectedLigaId;
+    return (this.authService.currentUserValue as any)?.ligaId ?? null;
+  }
+
+  onLigaChange(): void {
+    this.reglas = [];
+    this.tipos = [];
+    if (this.selectedLigaId) {
+      this.cargarTipos();
+      this.cargarReglas();
+    }
   }
 
   cargarTipos(): void {
+    if (!this.ligaId) return;
     this.sancionesService.getTiposSancion(this.ligaId).subscribe({
       next: (t) => (this.tipos = t),
     });
   }
 
   cargarReglas(): void {
+    if (!this.ligaId) return;
     this.cargando = true;
     this.sancionesService.getReglas(this.ligaId).subscribe({
       next: (r) => {
@@ -183,7 +208,7 @@ export class ReglasSancionComponent implements OnInit {
     } else {
       // ── Modo creación ─────────────────────────────────────────────────────
       const dto: CreateReglaSancionDto = {
-        ligaId: this.ligaId,
+        ligaId: this.ligaId!,
         tipoSancionId: Number(val.tipoSancionId),
         descripcion: val.descripcion || undefined,
         modoCastigo: val.modoCastigo ?? 'partidos',

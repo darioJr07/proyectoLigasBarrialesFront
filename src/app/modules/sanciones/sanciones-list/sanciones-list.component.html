@@ -119,7 +119,7 @@
 
     <!-- Lista -->
     <div class="sanciones-grid" *ngIf="!cargando && sancionesFiltradas.length > 0">
-      <div class="sancion-card" *ngFor="let s of sancionesFiltradas"
+      <div class="sancion-card" *ngFor="let s of sancionesFiltradasPaginadas"
         [class.inactiva]="!s.activo"
         [style.borderLeftColor]="colorTipo(s.tipoSancion?.aplicaA ?? '')">
 
@@ -183,6 +183,36 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Paginador -->
+    <div *ngIf="!cargando && totalPages > 1" class="paginator-container">
+      <div class="paginator-left">
+        <label>Sanciones por página:</label>
+        <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()" class="page-size-select">
+          <option *ngFor="let opt of pageSizeOptions" [ngValue]="opt">{{ opt }}</option>
+        </select>
+      </div>
+      <div class="paginator-center">
+        <button class="page-btn" (click)="onPageChange(1)" [disabled]="currentPage === 1" title="Primera página">«</button>
+        <button class="page-btn" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1" title="Anterior">‹</button>
+        <ng-container *ngFor="let page of totalPagesArray">
+          <button
+            class="page-btn"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)"
+            *ngIf="page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)">
+            {{ page }}
+          </button>
+          <span class="page-ellipsis"
+            *ngIf="(page === currentPage - 3 && page > 1) || (page === currentPage + 3 && page < totalPages)">…</span>
+        </ng-container>
+        <button class="page-btn" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages" title="Siguiente">›</button>
+        <button class="page-btn" (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages" title="Última página">»</button>
+      </div>
+      <div class="paginator-right">
+        Mostrando {{ Math.min(currentPage * pageSize, sancionesFiltradas.length) }} de {{ sancionesFiltradas.length }} sanción(es)
       </div>
     </div>
 

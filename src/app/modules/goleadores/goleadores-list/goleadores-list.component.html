@@ -105,7 +105,7 @@
           </thead>
           <tbody>
             <tr
-              *ngFor="let fila of goleadores"
+              *ngFor="let fila of paginatedGoleadores"
               [class]="getPosicionClass(fila.posicion)"
             >
               <td class="col-pos">
@@ -140,6 +140,36 @@
         <span class="leyenda-item"><span class="dot pos-3"></span> 3° lugar</span>
         <span class="leyenda-sep">|</span>
         <span class="leyenda-item">AG: Autogoles (no cuentan en el total del jugador) · p: de penal</span>
+      </div>
+
+      <!-- Paginador -->
+      <div *ngIf="totalPages > 1" class="paginator-container">
+        <div class="paginator-left">
+          <label>Goleadores por página:</label>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()" class="page-size-select">
+            <option *ngFor="let opt of pageSizeOptions" [ngValue]="opt">{{ opt }}</option>
+          </select>
+        </div>
+        <div class="paginator-center">
+          <button class="page-btn" (click)="onPageChange(1)" [disabled]="currentPage === 1" title="Primera página">«</button>
+          <button class="page-btn" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1" title="Anterior">‹</button>
+          <ng-container *ngFor="let page of totalPagesArray">
+            <button
+              class="page-btn"
+              [class.active]="page === currentPage"
+              (click)="onPageChange(page)"
+              *ngIf="page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)">
+              {{ page }}
+            </button>
+            <span class="page-ellipsis"
+              *ngIf="(page === currentPage - 3 && page > 1) || (page === currentPage + 3 && page < totalPages)">…</span>
+          </ng-container>
+          <button class="page-btn" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages" title="Siguiente">›</button>
+          <button class="page-btn" (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages" title="Última página">»</button>
+        </div>
+        <div class="paginator-right">
+          Mostrando {{ Math.min(currentPage * pageSize, goleadores.length) }} de {{ goleadores.length }} goleadores
+        </div>
       </div>
 
     </div>

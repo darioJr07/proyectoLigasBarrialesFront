@@ -43,8 +43,9 @@ export class SancionesService {
 
   // ─── Reglas de sanción ────────────────────────────────────────────────────
 
-  getReglas(ligaId: number, campeonatoId?: number): Observable<ReglaSancion[]> {
-    let params = new HttpParams().set('ligaId', ligaId.toString());
+  getReglas(ligaId?: number | null, campeonatoId?: number): Observable<ReglaSancion[]> {
+    let params = new HttpParams();
+    if (ligaId) params = params.set('ligaId', ligaId.toString());
     if (campeonatoId) params = params.set('campeonatoId', campeonatoId.toString());
     return this.http.get<ReglaSancion[]>(`${this.apiUrl}/reglas`, { params });
   }

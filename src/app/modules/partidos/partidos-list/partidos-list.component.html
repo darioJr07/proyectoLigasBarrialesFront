@@ -127,7 +127,7 @@
 
     <!-- Fixture por jornadas -->
     <div *ngIf="!loading && partidosFiltrados.length > 0">
-      <div *ngFor="let jornada of jornadasOrdenadas" class="jornada-section">
+      <div *ngFor="let jornada of jornadasPaginadas" class="jornada-section">
         <div class="jornada-header">
           <span class="jornada-badge">Jornada {{ jornada }}</span>
           <span class="jornada-count">{{ (partidosPorJornada.get(jornada) ?? []).length }} partido(s)</span>
@@ -214,6 +214,38 @@
               </a>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Paginador de jornadas -->
+      <div *ngIf="totalJornadasPages > 1" class="paginator-container">
+        <div class="paginator-left">
+          <label>Jornadas por página:</label>
+          <select [(ngModel)]="jornadasPerPage" (ngModelChange)="onJornadasPerPageChange()" class="page-size-select">
+            <option [ngValue]="2">2</option>
+            <option [ngValue]="3">3</option>
+            <option [ngValue]="5">5</option>
+          </select>
+        </div>
+        <div class="paginator-center">
+          <button class="page-btn" (click)="onJornadaPageChange(1)" [disabled]="currentJornadaPage === 1" title="Primera página">«</button>
+          <button class="page-btn" (click)="onJornadaPageChange(currentJornadaPage - 1)" [disabled]="currentJornadaPage === 1" title="Anterior">‹</button>
+          <ng-container *ngFor="let page of totalJornadasPagesArray">
+            <button
+              class="page-btn"
+              [class.active]="page === currentJornadaPage"
+              (click)="onJornadaPageChange(page)"
+              *ngIf="page === 1 || page === totalJornadasPages || (page >= currentJornadaPage - 2 && page <= currentJornadaPage + 2)">
+              {{ page }}
+            </button>
+            <span class="page-ellipsis"
+              *ngIf="(page === currentJornadaPage - 3 && page > 1) || (page === currentJornadaPage + 3 && page < totalJornadasPages)">…</span>
+          </ng-container>
+          <button class="page-btn" (click)="onJornadaPageChange(currentJornadaPage + 1)" [disabled]="currentJornadaPage === totalJornadasPages" title="Siguiente">›</button>
+          <button class="page-btn" (click)="onJornadaPageChange(totalJornadasPages)" [disabled]="currentJornadaPage === totalJornadasPages" title="Última página">»</button>
+        </div>
+        <div class="paginator-right">
+          Página {{ currentJornadaPage }} de {{ totalJornadasPages }}
         </div>
       </div>
     </div>
