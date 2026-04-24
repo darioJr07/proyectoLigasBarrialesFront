@@ -8,6 +8,10 @@
     <label>Vocal:</label>
     <input type="text" [(ngModel)]="vocalEditable" placeholder="Equipo, nombre o directivo..." class="input-vocal" maxlength="200" />
   </div>
+  <div class="toolbar-vocal">
+    <label>Árbitro:</label>
+    <input type="text" [(ngModel)]="arbitroEditable" placeholder="Nombre del árbitro..." class="input-vocal" maxlength="200" />
+  </div>
   <button class="btn-imprimir" (click)="imprimir()">🖨️ Imprimir / Guardar PDF</button>
 </div>
 
@@ -360,7 +364,7 @@
         <tr class="fila-firmas-vocal">
           <td colspan="4" class="firma-vocal-row">
             <div class="firma-vocal-inner">
-              <span class="firma-field"><span class="firma-lbl">Nombre:</span><span class="firma-dots"></span></span>
+              <span class="firma-field"><span class="firma-lbl">Nombre:</span><span class="firma-dots" [class.firma-dots--nombre]="!!arbitroEditable">{{ arbitroEditable }}</span></span>
               <span class="firma-field"><span class="firma-lbl">Firma:</span><span class="firma-dots"></span></span>
             </div>
           </td>

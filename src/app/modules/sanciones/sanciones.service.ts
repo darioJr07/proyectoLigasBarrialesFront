@@ -11,6 +11,7 @@ import {
   UpdateReglaSancionDto,
   CreateSancionDto,
   FiltrosSanciones,
+  ApelarSancionDto,
 } from './sancion.model';
 
 @Injectable({
@@ -68,6 +69,7 @@ export class SancionesService {
     if (filtros.equipoId) params = params.set('equipoId', filtros.equipoId.toString());
     if (filtros.tipoSancionId) params = params.set('tipoSancionId', filtros.tipoSancionId.toString());
     if (filtros.soloActivas) params = params.set('soloActivas', 'true');
+    if (filtros.incluirAnuladas) params = params.set('incluirAnuladas', 'true');
     return this.http.get<Sancion[]>(this.apiUrl, { params });
   }
 
@@ -112,5 +114,14 @@ export class SancionesService {
       `${this.apiUrl}/${sancionId}/transferir/${nuevoCampeonatoId}`,
       {},
     );
+  }
+
+  /**
+   * Apela/reemplaza una sanción existente.
+   * Anula la original y crea una nueva con el nuevo tipo/partidos,
+   * heredando jugador/campeonato/partido y los partidos ya cumplidos.
+   */
+  apelarSancion(id: number, dto: ApelarSancionDto): Observable<Sancion> {
+    return this.http.patch<Sancion>(`${this.apiUrl}/${id}/apelar`, dto);
   }
 }

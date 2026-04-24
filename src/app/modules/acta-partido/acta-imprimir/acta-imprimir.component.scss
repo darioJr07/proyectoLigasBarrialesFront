@@ -568,6 +568,12 @@ $font-size-base: 8pt;
   .fila-firmas-vocal td {
     height: 55px;
   }
+
+  .firma-dots--nombre {
+    font-size: 20pt !important;
+    font-weight: 700 !important;
+    border-bottom: none !important;
+  }
 }
 
   .fila-marcador-resultado td {
@@ -1059,6 +1065,12 @@ $font-size-base: 8pt;
           border-bottom: 1px dotted #333;
           margin-bottom: 2px;
           margin-left: 2px;
+
+          &.firma-dots--nombre {
+            font-size: 14pt;
+            font-weight: 700;
+            border-bottom: none;
+          }
         }
       }
     }

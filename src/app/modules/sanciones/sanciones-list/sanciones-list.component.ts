@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { SancionesService } from '../sanciones.service';
-import { Sancion, FiltrosSanciones, TipoSancion } from '../sancion.model';
+import { Sancion, FiltrosSanciones, TipoSancion, ApelarSancionDto } from '../sancion.model';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
@@ -30,6 +30,7 @@ export class SancionesListComponent implements OnInit {
   filtroTipoId: number | null = null;
   filtroLigaId: number | null = null;
   soloActivas = false;
+  incluirAnuladas = false;
 
   // Filtros client-side
   busqueda = '';
@@ -91,6 +92,93 @@ export class SancionesListComponent implements OnInit {
   cargando = false;
   error = '';
   exito = '';
+
+  // ── Apelación ────────────────────────────────────────────────────────────────
+  sancionApelando: Sancion | null = null;
+  apelarForm: ApelarSancionDto = { tipoSancionId: 0 };
+  apelando = false;
+  errorApelacion = '';
+  reglasFiltradas: any[] = [];  // reglas del tipo seleccionado en el modal
+
+  abrirApelar(sancion: Sancion): void {
+    this.sancionApelando = sancion;
+    this.reglasFiltradas = [];
+    this.apelarForm = {
+      tipoSancionId: sancion.tipoSancionId,
+      reglaSancionId: sancion.reglaSancionId,
+      partidosSuspension: sancion.partidosSuspension,
+      descripcion: '',
+      fechaSancion: new Date().toLocaleDateString('en-CA'),
+    };
+    this.errorApelacion = '';
+    // Cargar las reglas del tipo original al abrir
+    if (sancion.tipoSancionId) {
+      this.cargarReglasPorTipo(sancion.tipoSancionId);
+    }
+  }
+
+  onApelarTipoChange(tipoId: number): void {
+    this.apelarForm.reglaSancionId = undefined;
+    this.reglasFiltradas = [];
+    if (tipoId) this.cargarReglasPorTipo(Number(tipoId));
+  }
+
+  private cargarReglasPorTipo(tipoSancionId: number): void {
+    const ligaId = this.ligaIdEfectivo;
+    if (!ligaId) return;
+    const campeonatoId = this.filtroCampeonatoId ?? undefined;
+    this.sancionesService.getReglas(ligaId, campeonatoId).subscribe({
+      next: (reglas) => {
+        this.reglasFiltradas = reglas.filter(r => r.tipoSancionId === tipoSancionId);
+      },
+    });
+  }
+
+  onApelarReglaChange(reglaId: number | undefined): void {
+    if (!reglaId) return;
+    const regla = this.reglasFiltradas.find(r => r.id === Number(reglaId));
+    if (!regla) return;
+    if (regla.modoCastigo === 'tiempo' && regla.duracionMeses) {
+      const inicio = new Date();
+      const fin = new Date(inicio);
+      fin.setMonth(fin.getMonth() + regla.duracionMeses);
+      this.apelarForm.partidosSuspension = 0;
+      this.apelarForm.fechaInicioSuspension = inicio.toISOString().substring(0, 10);
+      this.apelarForm.fechaFinSuspension   = fin.toISOString().substring(0, 10);
+    } else if (regla.partidosSuspension != null) {
+      this.apelarForm.partidosSuspension    = regla.partidosSuspension;
+      this.apelarForm.fechaInicioSuspension = undefined;
+      this.apelarForm.fechaFinSuspension    = undefined;
+    }
+  }
+
+  cerrarApelar(): void {
+    this.sancionApelando = null;
+    this.errorApelacion = '';
+  }
+
+  confirmarApelar(): void {
+    if (!this.sancionApelando) return;
+    if (!this.apelarForm.tipoSancionId) {
+      this.errorApelacion = 'Debes seleccionar el nuevo tipo de sanción.';
+      return;
+    }
+    this.apelando = true;
+    this.errorApelacion = '';
+    this.sancionesService.apelarSancion(this.sancionApelando.id, this.apelarForm).subscribe({
+      next: () => {
+        this.exito = 'Apelación aplicada. Se creó la nueva sanción correctamente.';
+        this.cerrarApelar();
+        this.cargarSanciones();
+        this.apelando = false;
+        setTimeout(() => (this.exito = ''), 5000);
+      },
+      error: (e) => {
+        this.errorApelacion = e?.error?.message ?? 'Error al aplicar la apelación.';
+        this.apelando = false;
+      },
+    });
+  }
 
   get isMaster(): boolean {
     return this.permissions.isMaster();
@@ -161,6 +249,7 @@ export class SancionesListComponent implements OnInit {
     if (this.filtroCampeonatoId) filtros.campeonatoId = this.filtroCampeonatoId;
     if (this.filtroTipoId) filtros.tipoSancionId = this.filtroTipoId;
     if (this.soloActivas) filtros.soloActivas = true;
+    if (this.incluirAnuladas) filtros.incluirAnuladas = true;
 
     this.sancionesService.getSanciones(filtros).subscribe({
       next: (s) => {
@@ -183,6 +272,7 @@ export class SancionesListComponent implements OnInit {
     this.filtroCampeonatoId = null;
     this.filtroTipoId = null;
     this.soloActivas = false;
+    this.incluirAnuladas = false;
     this.busqueda = '';
     this.filtroEquipoId = null;
     this.currentPage = 1;

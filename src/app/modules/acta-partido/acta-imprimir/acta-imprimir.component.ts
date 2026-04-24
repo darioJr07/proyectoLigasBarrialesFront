@@ -25,22 +25,26 @@ export class ActaImprimirComponent implements OnInit {
   /** Campo editable del vocal — pre-llenado desde el informe guardado, editable antes de imprimir */
   vocalEditable = '';
 
+  /** Campo editable del árbitro — se escribe antes de imprimir, aparece en el Informe del Árbitro */
+  arbitroEditable = '';
+
   /** Mínimo de filas visibles por equipo en la tabla de jugadores */
   readonly MIN_FILAS = 22;
 
   /** Valores predeterminados de la planilla vocalia (configurables por liga en el futuro) */
   readonly valoresVocalia = [
-    { label: '1.-Valor Arbitraje',     valor: 9.00 },
-    { label: '2.-Aporte a la Liga',    valor: 2.00 },
-    { label: '3.-Valor premios',       valor: 2.00 },
-    { label: '4.-Fondo de accidentes', valor: 2.00 },
-    { label: '5.-TARJETAS TA / TR',    valor: null },
-    { label: '6.-OTROS',               valor: null },
+    { label: '1.-Valor Arbitraje',              valor: 9.00 },
+    { label: '2.-Aporte a la Liga',             valor: 2.00 },
+    { label: '3.-Valor premios',                valor: 2.00 },
+    { label: '4.-Fondo de accidentes',          valor: 2.00 },
+    { label: '5.-Limpieza y cuidado de baños',  valor: 1.00 },
+    { label: '6.-TARJETAS TA / TR',             valor: null },
+    { label: '7.-OTROS',                        valor: null },
   ];
 
   readonly filasExtrasVocalia = Array.from({ length: 5 });
   readonly totalFijoVocalia = this.valoresVocalia
-    .slice(0, 4)
+    .slice(0, 5)
     .reduce((sum, item) => sum + (item.valor ?? 0), 0);
 
   vocaliaLocal = {
@@ -203,16 +207,16 @@ export class ActaImprimirComponent implements OnInit {
     const vocalia = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
 
     return [
-      ...this.valoresVocalia.slice(0, 4).map((item) => ({
+      ...this.valoresVocalia.slice(0, 5).map((item) => ({
         label: item.label,
         valor: item.valor,
       })),
       {
-        label: this.valoresVocalia[4].label,
+        label: this.valoresVocalia[5].label,
         valor: vocalia.tarjetas,
       },
       {
-        label: this.valoresVocalia[5].label,
+        label: this.valoresVocalia[6].label,
         valor: null,
       },
       ...vocalia.extras.map((extra) => ({

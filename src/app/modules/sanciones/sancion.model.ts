@@ -40,6 +40,7 @@ export interface Sancion {
   partido?: { id: number; jornada: number; etapa: string };
   jugadorId?: number;
   jugador?: { id: number; nombre: string };
+  numeroCanchaCalificacion?: number | null;
   equipoId?: number;
   equipo?: { id: number; nombre: string };
   descripcion?: string;
@@ -109,4 +110,16 @@ export interface FiltrosSanciones {
   equipoId?: number;
   tipoSancionId?: number;
   soloActivas?: boolean;
+  incluirAnuladas?: boolean;
+}
+
+export interface ApelarSancionDto {
+  /** Nuevo tipo de sanción que resulta de la apelación */
+  tipoSancionId: number;
+  reglaSancionId?: number;
+  partidosSuspension?: number;
+  descripcion?: string;
+  fechaSancion?: string;
+  fechaInicioSuspension?: string;
+  fechaFinSuspension?: string;
 }

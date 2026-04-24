@@ -60,6 +60,13 @@
           </label>
         </div>
 
+        <div class="filtro-item checkbox-item">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="incluirAnuladas">
+            Incluir anuladas / apeladas
+          </label>
+        </div>
+
         <div class="filtro-actions">
           <button class="btn-filtrar" (click)="aplicarFiltros()">Filtrar</button>
           <button class="btn-limpiar" (click)="limpiarFiltros()">Limpiar</button>
@@ -130,7 +137,12 @@
               {{ s.tipoSancion?.nombre ?? 'Sanción' }}
             </span>
             <span class="aplica-badge">{{ s.tipoSancion?.aplicaA ?? '' }}</span>
-            <span class="badge-arrastrada" *ngIf="s.origenSancionId" title="Arrastrada de campeonato anterior">↩ Arrastrada</span>
+            <span class="badge-arrastrada"
+              *ngIf="s.origenSancionId && s.descripcion?.startsWith('Arrastrada')"
+              title="Arrastrada de campeonato anterior">↩ Arrastrada</span>
+            <span class="badge-apelada"
+              *ngIf="s.origenSancionId && !s.descripcion?.startsWith('Arrastrada')"
+              title="Generada por apelación de sanción anterior">⚖️ Apelada</span>
           </div>
           <span class="estado-badge" [class.activa]="s.suspensionActiva" [class.cumplida]="!s.suspensionActiva && s.activo"
             [class.anulada]="!s.activo">
@@ -140,7 +152,10 @@
 
         <div class="sancion-body">
           <p class="sancionado">
-            <strong>{{ sancionadoLabel(s) }}</strong>
+            <strong>
+              <span *ngIf="s.jugador && s.numeroCanchaCalificacion != null" class="num-cancha">#{{ s.numeroCanchaCalificacion }}</span>
+              {{ sancionadoLabel(s) }}
+            </strong>
             <span *ngIf="s.equipo && s.jugador"> — {{ s.equipo.nombre }}</span>
             <span *ngIf="s.equipo && !s.jugador"> (equipo)</span>
           </p>
@@ -179,6 +194,7 @@
               title="Transferir suspensión al campeonato seleccionado en el filtro">
               ↩ Transferir al campeonato
             </button>
+            <button class="btn-apelar" (click)="abrirApelar(s)" title="Apelar / reemplazar esta sanción">⚖️ Apelar</button>
             <button class="btn-anular" (click)="anular(s)">Anular</button>
           </div>
         </div>
@@ -214,6 +230,96 @@
       <div class="paginator-right">
         Mostrando {{ Math.min(currentPage * pageSize, sancionesFiltradas.length) }} de {{ sancionesFiltradas.length }} sanción(es)
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── Modal de apelación ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="sancionApelando" (click)="cerrarApelar()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>⚖️ Apelar / Reemplazar sanción</h2>
+      <button class="modal-close" (click)="cerrarApelar()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Info de la sanción original -->
+      <div class="apelacion-original">
+        <p class="apelacion-label">Sanción original</p>
+        <p>
+          <strong>{{ sancionApelando!.tipoSancion?.nombre }}</strong>
+          &nbsp;·&nbsp; {{ sancionApelando!.jugador?.nombre ?? sancionApelando!.equipo?.nombre ?? '—' }}
+        </p>
+        <p class="partidos-cumplidos-info">
+          Partidos ya cumplidos: <strong>{{ sancionApelando!.partidosCumplidos }}</strong> / {{ sancionApelando!.partidosSuspension }}
+        </p>
+        <p class="apelacion-nota">💡 Los partidos ya cumplidos se heredan en la nueva sanción.</p>
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorApelacion">{{ errorApelacion }}</div>
+
+      <!-- Formulario de la nueva sanción -->
+      <div class="form-group">
+        <label>Nuevo tipo de sanción <span class="req">*</span></label>
+        <select class="form-select" [(ngModel)]="apelarForm.tipoSancionId"
+          (ngModelChange)="onApelarTipoChange($event)">
+          <option [ngValue]="0">— Seleccionar —</option>
+          <option *ngFor="let t of tipos" [ngValue]="t.id">{{ t.nombre }} ({{ t.aplicaA }})</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="reglasFiltradas.length > 0">
+        <label>Regla del reglamento</label>
+        <select class="form-select" [(ngModel)]="apelarForm.reglaSancionId"
+          (ngModelChange)="onApelarReglaChange($event)">
+          <option [ngValue]="undefined">— Sin regla / manual —</option>
+          <option *ngFor="let r of reglasFiltradas" [ngValue]="r.id">
+            {{ r.descripcion ?? ('Regla #' + r.id) }}
+            <ng-container *ngIf="r.modoCastigo === 'tiempo' && r.duracionMeses">
+              — {{ r.duracionMeses }} mes(es)
+            </ng-container>
+            <ng-container *ngIf="r.modoCastigo !== 'tiempo' && r.partidosSuspension != null">
+              — {{ r.partidosSuspension }} partido(s)
+            </ng-container>
+          </option>
+        </select>
+        <small class="hint-regla">Al seleccionar una regla se autocompletan los partidos de suspensión.</small>
+      </div>
+
+      <div class="form-group" *ngIf="reglasFiltradas.length === 0 && apelarForm.tipoSancionId">
+        <p class="hint-sin-reglas">ℹ️ No hay reglas configuradas para este tipo. Ingresa los partidos manualmente.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Partidos de suspensión nueva</label>
+        <input type="number" class="form-input" [(ngModel)]="apelarForm.partidosSuspension" min="0" />
+        <small *ngIf="(apelarForm.partidosSuspension ?? 0) <= sancionApelando!.partidosCumplidos" class="hint-libre">
+          ✅ El jugador ya cumplió los partidos — quedará libre inmediatamente.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción / motivo de la resolución</label>
+        <textarea class="form-textarea" [(ngModel)]="apelarForm.descripcion" rows="3"
+          placeholder="Ej: Apelación aceptada, reducida a 1 partido por...">
+        </textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha de la nueva sanción</label>
+        <input type="date" class="form-input" [(ngModel)]="apelarForm.fechaSancion" />
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarApelar()" [disabled]="apelando">Cancelar</button>
+      <button class="btn-primary" (click)="confirmarApelar()" [disabled]="apelando">
+        {{ apelando ? 'Aplicando...' : 'Confirmar apelación' }}
+      </button>
     </div>
 
   </div>
