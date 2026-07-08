@@ -67,6 +67,13 @@
                 placeholder="Descripción opcional del tipo de sanción..."></textarea>
             </div>
 
+            <div class="form-item">
+              <label>Monto multa ($ por defecto)</label>
+              <input class="form-input" type="number" formControlName="montoMulta"
+                min="0" step="0.01" placeholder="0.00">
+              <span class="field-hint">Opcional. Se auto-completa al crear reglas de sanción con este tipo.</span>
+            </div>
+
           </div>
 
           <div class="form-actions">
@@ -100,6 +107,9 @@
           </span>
         </div>
         <p class="tipo-desc" *ngIf="tipo.descripcion">{{ tipo.descripcion }}</p>
+        <p class="tipo-desc tipo-monto" *ngIf="tipo.montoMulta">
+          💰 Multa por defecto: <strong>$ {{ tipo.montoMulta | number:'1.2-2' }}</strong>
+        </p>
         <p class="tipo-alcance" *ngIf="!tipo.ligaId">🌐 Global (todas las ligas)</p>
         <div class="tipo-actions">
           <button class="btn-edit" (click)="editarTipo(tipo)">✏️ Editar</button>

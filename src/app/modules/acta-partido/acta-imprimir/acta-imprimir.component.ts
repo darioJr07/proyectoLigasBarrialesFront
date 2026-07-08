@@ -3,6 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActaPartidoService } from '../acta-partido.service';
+import { TesoreriaService, ConfigVocaliaItem } from '../../../core/services/tesoreria.service';
+import { SancionesService } from '../../sanciones/sanciones.service';
+import { Sancion } from '../../sanciones/sancion.model';
+import { DerramasService } from '../../../core/services/derramas.service';
 
 @Component({
   selector: 'app-acta-imprimir',
@@ -43,9 +47,6 @@ export class ActaImprimirComponent implements OnInit {
   ];
 
   readonly filasExtrasVocalia = Array.from({ length: 5 });
-  readonly totalFijoVocalia = this.valoresVocalia
-    .slice(0, 5)
-    .reduce((sum, item) => sum + (item.valor ?? 0), 0);
 
   vocaliaLocal = {
     tarjetas: null as number | null,
@@ -57,10 +58,27 @@ export class ActaImprimirComponent implements OnInit {
     extras: Array.from({ length: 5 }, () => ({ detalle: '', valor: null as number | null })),
   };
 
+  /** Config de vocalía cargada del backend (vacía hasta que se cargue) */
+  configVocalia: ConfigVocaliaItem[] = [];
+
+  /** Estado del guardado de cobros en tesorería */
+  guardandoCobros = false;
+  cobrosGuardados: boolean | null = null;
+  cobrosMensaje = '';
+  /** true cuando al menos uno de los cobros ya fue marcado como pagado en tesorería */
+  cobrosBloqueados = false;
+
+  /** Sanciones aprobadas y no cobradas de cada equipo (se auto-cargan desde el backend) */
+  sancionesLocal: Sancion[] = [];
+  sancionesVisitante: Sancion[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private actaService: ActaPartidoService,
+    private tesoreriaService: TesoreriaService,
+    private sancionesService: SancionesService,
+    private derramasService: DerramasService,
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +109,7 @@ export class ActaImprimirComponent implements OnInit {
     this.actaService.obtenerJugadoresDisponibles(this.partidoId).subscribe({
       next: (res) => {
         this.partido = res.partido;
+        this.cargarTesoreria();
         if (res.jugadoresLocal.length > 0 || res.jugadoresVisitante.length > 0) {
           this.jugadoresLocal     = this.ordenarPorNumero(res.jugadoresLocal);
           this.jugadoresVisitante = this.ordenarPorNumero(res.jugadoresVisitante);
@@ -109,6 +128,7 @@ export class ActaImprimirComponent implements OnInit {
     this.actaService.obtenerAlineacion(this.partidoId).subscribe({
       next: (res) => {
         this.partido = res.partido;
+        this.cargarTesoreria();
         this.jugadoresLocal     = this.ordenarPorNumero(res.jugadoresLocal);
         this.jugadoresVisitante = this.ordenarPorNumero(res.jugadoresVisitante);
         this.loading = false;
@@ -203,33 +223,216 @@ export class ActaImprimirComponent implements OnInit {
     return fila.numeroCancha != null ? String(fila.numeroCancha) : '';
   }
 
+  /** Items fijos de vocalía: usa la config del backend si fue cargada, sino los valores por defecto */
+  get vocaliaFixedItems(): Array<{ label: string; monto: number }> {
+    if (this.configVocalia.length > 0) {
+      return [...this.configVocalia]
+        .filter((c) => c.activo)
+        .sort((a, b) => a.orden - b.orden)
+        .map((c) => ({ label: c.nombre, monto: Number(c.monto) }));
+    }
+    return this.valoresVocalia.slice(0, 5).map((v) => ({ label: v.label, monto: v.valor ?? 0 }));
+  }
+
+  get totalFijoVocalia(): number {
+    return this.vocaliaFixedItems.reduce((sum, item) => sum + item.monto, 0);
+  }
+
   getFilasVocalia(equipo: 'local' | 'visitante') {
     const vocalia = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
+    const fixed   = this.vocaliaFixedItems;
 
     return [
-      ...this.valoresVocalia.slice(0, 5).map((item) => ({
-        label: item.label,
-        valor: item.valor,
-      })),
-      {
-        label: this.valoresVocalia[5].label,
-        valor: vocalia.tarjetas,
-      },
-      {
-        label: this.valoresVocalia[6].label,
-        valor: null,
-      },
-      ...vocalia.extras.map((extra) => ({
-        label: extra.detalle,
-        valor: extra.valor,
-      })),
+      ...fixed.map((item) => ({ label: item.label, valor: item.monto })),
+      { label: '6.-TARJETAS TA / TR', valor: vocalia.tarjetas },
+      { label: '7.-OTROS',            valor: null },
+      ...vocalia.extras.map((extra) => ({ label: extra.detalle, valor: extra.valor })),
     ];
   }
 
   getTotalVocalia(equipo: 'local' | 'visitante'): number {
-    const vocalia = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
+    const vocalia     = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
     const totalExtras = vocalia.extras.reduce((sum, extra) => sum + (extra.valor ?? 0), 0);
     return this.totalFijoVocalia + (vocalia.tarjetas ?? 0) + totalExtras;
+  }
+
+  // ── Tesorería ────────────────────────────────────────────────────────────────────────────────────
+
+  /** Carga config de vocalía, cobros previos y sanciones pendientes de cobro */
+  private cargarTesoreria(): void {
+    const ligaId = this.partido?.campeonato?.liga?.id ?? this.partido?.campeonato?.ligaId;
+    if (!ligaId) { return; }
+    this.cargarConfigVocalia(ligaId);
+    this.cargarCobrosGuardados(ligaId);
+  }
+
+  private cargarConfigVocalia(ligaId: number): void {
+    this.tesoreriaService.getConfigVocalia(ligaId).subscribe({
+      next: (config) => { this.configVocalia = config; },
+      error: () => { /* usa valores por defecto del array valoresVocalia */ },
+    });
+  }
+
+  private cargarCobrosGuardados(ligaId: number): void {
+    this.tesoreriaService.getCobrosDePartido(this.partidoId).subscribe({
+      next: (cobros) => {
+        if (cobros.length) {
+          this.cobrosGuardados = true;
+          // Si al menos uno ya fue cerrado (pagado o no presentado), bloquear edición
+          this.cobrosBloqueados = cobros.some((c) => c.estado === 'pagado' || c.estado === 'no_presentado');
+          cobros.forEach((cobro) => {
+            const isLocal = this.partido?.equipoLocalId === cobro.equipoId
+              || this.partido?.equipoLocal?.id === cobro.equipoId;
+            const vocalia = isLocal ? this.vocaliaLocal : this.vocaliaVisitante;
+            vocalia.tarjetas = cobro.montoTarjetas !== null && cobro.montoTarjetas !== undefined
+              ? Number(cobro.montoTarjetas)
+              : null;
+            if (cobro.extrasJson?.length) {
+              cobro.extrasJson.forEach((e, i) => {
+                if (vocalia.extras[i]) {
+                  vocalia.extras[i].detalle = e.detalle;
+                  vocalia.extras[i].valor   = e.valor !== null && e.valor !== undefined ? Number(e.valor) : null;
+                }
+              });
+            }
+          });
+        } else {
+          // Sin cobros previos → auto-cargar sanciones pendientes de cobro
+          this.cargarSancionesPendientes(ligaId);
+        }
+      },
+      error: () => {
+        // Sin cobros previos → auto-cargar sanciones pendientes de cobro
+        this.cargarSancionesPendientes(ligaId);
+      },
+    });
+  }
+
+  /**
+   * Carga las sanciones aprobadas y no cobradas para cada equipo.
+   * Pre-llena el campo "Tarjetas" con la suma de sus multas.
+   */
+  private cargarSancionesPendientes(ligaId: number): void {
+    const equipoLocalId     = this.partido?.equipoLocal?.id;
+    const equipoVisitanteId = this.partido?.equipoVisitante?.id;
+    if (!equipoLocalId || !equipoVisitanteId) { return; }
+
+    this.sancionesService.getSancionesParaCobro(equipoLocalId, ligaId).subscribe({
+      next: (sanciones) => {
+        this.sancionesLocal = sanciones;
+        const suma = sanciones.reduce((acc, s) => acc + Number(s.montoMulta ?? 0), 0);
+        if (suma > 0) { this.vocaliaLocal.tarjetas = Math.round(suma * 100) / 100; }
+      },
+      error: () => {},
+    });
+
+    this.sancionesService.getSancionesParaCobro(equipoVisitanteId, ligaId).subscribe({
+      next: (sanciones) => {
+        this.sancionesVisitante = sanciones;
+        const suma = sanciones.reduce((acc, s) => acc + Number(s.montoMulta ?? 0), 0);
+        if (suma > 0) { this.vocaliaVisitante.tarjetas = Math.round(suma * 100) / 100; }
+      },
+      error: () => {},
+    });
+
+    // Pre-llenar slots de extras con derramas por_vocalia pendientes de cada equipo.
+    // Esto permite al vocal ver y cobrar cuotas de derrama dentro del acta.
+    const campeonatoId = this.partido?.campeonato?.id;
+    if (campeonatoId) {
+      this.cargarDerramasVocalia(campeonatoId, equipoLocalId,     this.vocaliaLocal);
+      this.cargarDerramasVocalia(campeonatoId, equipoVisitanteId, this.vocaliaVisitante);
+    }
+  }
+
+  /**
+   * Carga las derramas modo 'por_vocalia' activas de un equipo y pre-rellena
+   * los primeros slots vacíos del array extras con detalle + montoUnitario.
+   * Si el slot ya tiene contenido, se respeta (el vocal puede haber llenado a mano).
+   */
+  private cargarDerramasVocalia(
+    campeonatoId: number,
+    equipoId: number,
+    vocalia: { extras: Array<{ detalle: string; valor: number | null }> },
+  ): void {
+    this.derramasService.vocaliasActivas(campeonatoId, equipoId).subscribe({
+      next: (derramas) => {
+        let slotIdx = 0;
+        for (const d of derramas) {
+          // Avanzar hasta el primer slot vacío
+          while (slotIdx < vocalia.extras.length && (vocalia.extras[slotIdx].detalle || vocalia.extras[slotIdx].valor !== null)) {
+            slotIdx++;
+          }
+          if (slotIdx >= vocalia.extras.length) break;
+          vocalia.extras[slotIdx].detalle = d.descripcion;
+          vocalia.extras[slotIdx].valor   = Number(d.montoUnitario);
+          slotIdx++;
+        }
+      },
+      error: () => { /* Si falla, el vocal lo llena manualmente */ },
+    });
+  }
+
+  /** Guarda los cobros de vocalía de ambos equipos en tesorería */
+  guardarCobros(): void {
+    const campeonato = this.partido?.campeonato;
+    if (!campeonato) { return; }
+    const ligaId = campeonato.liga?.id ?? campeonato.ligaId;
+    const fixed  = this.vocaliaFixedItems;
+
+    const buildCobro = (equipo: 'local' | 'visitante') => {
+      const vocalia  = equipo === 'local' ? this.vocaliaLocal : this.vocaliaVisitante;
+      const equipoId = equipo === 'local'
+        ? this.partido.equipoLocal.id
+        : this.partido.equipoVisitante.id;
+
+      return {
+        partidoId:            this.partidoId,
+        equipoId,
+        campeonatoId:         campeonato.id,
+        ligaId,
+        jornada:              this.partido.jornada ?? undefined,
+        montoArbitraje:       fixed[0]?.monto ?? 9,
+        montoAporteLiga:      fixed[1]?.monto ?? 2,
+        montoPremios:         fixed[2]?.monto ?? 2,
+        montoFondoAccidentes: fixed[3]?.monto ?? 2,
+        montoLimpieza:        fixed[4]?.monto ?? 1,
+        montoTarjetas:        vocalia.tarjetas ?? 0,
+        extrasJson:           vocalia.extras.filter((e) => e.detalle || e.valor),
+      };
+    };
+
+    this.guardandoCobros = true;
+    this.cobrosMensaje   = '';
+
+    this.tesoreriaService.guardarCobroPartido(buildCobro('local')).subscribe({
+      next: () => {
+        this.tesoreriaService.guardarCobroPartido(buildCobro('visitante')).subscribe({
+          next: () => {
+            // Marcar sanciones como cobradas (fire-and-forget, no bloquea el flujo)
+            const idsACobrar = [
+              ...this.sancionesLocal.map((s) => s.id),
+              ...this.sancionesVisitante.map((s) => s.id),
+            ].filter((id) => id != null);
+            if (idsACobrar.length) {
+              this.sancionesService.marcarCobradas(idsACobrar).subscribe();
+              this.sancionesLocal     = [];
+              this.sancionesVisitante = [];
+            }
+            this.guardandoCobros = false;
+            this.cobrosGuardados = true;
+            this.cobrosMensaje   = '¡Cobros guardados exitosamente!';
+          },
+          error: (err) => {
+            this.guardandoCobros = false;
+            this.cobrosMensaje   = err?.error?.message ?? 'Error al guardar cobro visitante';
+          },
+        });
+      },
+      error: (err) => {
+        this.guardandoCobros = false;
+        this.cobrosMensaje   = err?.error?.message ?? 'Error al guardar cobro local';
+      },
+    });
   }
 
   imprimir(): void {

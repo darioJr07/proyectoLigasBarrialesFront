@@ -1,0 +1,97 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-content">
+
+    <div class="section-title">
+      <h2>⚙️ Configuración de Vocalía</h2>
+      <div class="section-links">
+        <a routerLink="/tesoreria" class="btn-secondary-action">📊 Resumen</a>
+        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
+      </div>
+    </div>
+
+    <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
+    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+
+    <!-- Selector de liga (solo visible para master) -->
+    <div class="filtros-card" *ngIf="permissions.isMaster()">
+      <div class="filtros-grid">
+        <div class="filtro-item">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="filtroLigaId" (change)="cargarConfig()">
+            <option [ngValue]="null">-- Seleccione liga --</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">Cargando configuración...</div>
+
+    <!-- Tabla de items editables -->
+    <div class="config-card" *ngIf="!loading && filtroLigaId">
+      <p class="config-info">
+        Estos son los cobros fijos que se mostrarán en la planilla de vocalía.
+        Los montos configurados aquí se usarán como valores por defecto al guardar cobros desde el acta de imprimir.
+      </p>
+
+      <table class="config-table">
+        <thead>
+          <tr>
+            <th>Orden</th>
+            <th>Nombre del cobro</th>
+            <th class="text-right">Monto ($)</th>
+            <th>Activo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items; let i = index">
+            <td class="orden-col">{{ i + 1 }}</td>
+            <td>
+              <input type="text"
+                     class="form-input full-width"
+                     [(ngModel)]="item.nombre"
+                     maxlength="100"
+                     placeholder="Nombre del cobro..." />
+            </td>
+            <td>
+              <input type="number"
+                     class="form-input monto-input"
+                     [(ngModel)]="item.monto"
+                     min="0" step="0.01" />
+            </td>
+            <td class="text-center">
+              <input type="checkbox" [(ngModel)]="item.activo" />
+            </td>
+            <td>
+              <button class="btn-quitar" (click)="quitarItem(i)" title="Quitar este ítem">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="config-actions">
+        <button class="btn-secondary-action" (click)="agregarItem()">+ Agregar fila</button>
+        <button class="btn-primary-action" (click)="guardar()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : '💾 Guardar configuración' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !filtroLigaId && permissions.isMaster()">
+      Seleccione una liga para ver y editar su configuración de vocalía.
+    </div>
+
+  </div>
+</div>

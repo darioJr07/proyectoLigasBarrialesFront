@@ -1,0 +1,178 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-content">
+
+    <div class="section-title">
+      <h2>💰 Tesorería — Resumen de Caja</h2>
+      <div class="section-links">
+        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
+        <a routerLink="/tesoreria/movimientos" class="btn-secondary-action">📒 Movimientos</a>
+        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
+        <a routerLink="/tesoreria/garantias" class="btn-secondary-action">🔒 Garantías</a>
+        <a routerLink="/tesoreria/derramas" class="btn-secondary-action">📦 Derramas</a>
+        <a routerLink="/tesoreria/deudas" class="btn-secondary-action">⚠️ Deudas</a>
+        <a *ngIf="permissions.canConfigurTesoreria()" routerLink="/tesoreria/config" class="btn-secondary-action">⚙️ Config. Vocalía</a>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-item" *ngIf="permissions.isMaster()">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="filtroLigaId" (change)="onLigaChange()">
+            <option [ngValue]="null">-- Seleccione liga --</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Campeonato</label>
+          <select class="form-select" [(ngModel)]="filtroCampeonatoId" (change)="cargarResumen()">
+            <option [ngValue]="null">-- Seleccione campeonato --</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item filtro-accion">
+          <button class="btn-primary-action" (click)="cargarResumen()" [disabled]="!filtroCampeonatoId">
+            Actualizar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+    <div class="loading-state" *ngIf="loading">Cargando resumen...</div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="resumen-grid" *ngIf="resumen && !loading">
+      <div class="resumen-card ingreso">
+        <div class="card-label">Cobros de partido pagados</div>
+        <div class="card-valor">$ {{ resumen.totalCobrosPartidoPagados | number:'1.2-2' }}</div>
+      </div>
+      <div class="resumen-card pendiente">
+        <div class="card-label">Cobros de partido pendientes</div>
+        <div class="card-valor">$ {{ resumen.totalCobrosPartidoPendientes | number:'1.2-2' }}</div>
+      </div>
+      <div class="resumen-card ingreso">
+        <div class="card-label">Ingresos manuales cobrados</div>
+        <div class="card-valor">$ {{ resumen.totalIngresosManualesPagados | number:'1.2-2' }}</div>
+      </div>
+      <div class="resumen-card pendiente">
+        <div class="card-label">Ingresos manuales pendientes</div>
+        <div class="card-valor">$ {{ resumen.totalIngresosManualesPendientes | number:'1.2-2' }}</div>
+      </div>
+      <div class="resumen-card egreso">
+        <div class="card-label">Total egresos</div>
+        <div class="card-valor">$ {{ resumen.totalEgresos | number:'1.2-2' }}</div>
+      </div>
+      <div class="resumen-card" [class.saldo-pos]="resumen.saldo >= 0" [class.saldo-neg]="resumen.saldo < 0">
+        <div class="card-label">Saldo neto</div>
+        <div class="card-valor">$ {{ resumen.saldo | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+    <!-- Botón de traslado de saldo (solo si campeonato finalizado y saldo > 0) -->
+    <div class="traslado-banner" *ngIf="puedeTrasldar && !mensajeTraslado">
+      <div class="traslado-info">
+        <span>🏁 Este campeonato está <strong>finalizado</strong> con un saldo a favor de <strong>$ {{ resumen!.saldo | number:'1.2-2' }}</strong></span>
+        <span class="traslado-hint">Puedes trasladar este saldo al nuevo campeonato para que el tesorero arranque con el dinero correcto.</span>
+      </div>
+      <button class="btn-traslado" (click)="abrirModalTraslado()">
+        Trasladar saldo →
+      </button>
+    </div>
+
+    <!-- Confirmación de traslado exitoso -->
+    <div class="alert alert-success" *ngIf="mensajeTraslado">
+      ✅ {{ mensajeTraslado }}
+    </div>
+
+    <!-- Detalle por equipo -->
+    <div class="table-card" *ngIf="resumen?.resumenPorEquipo?.length && !loading">
+      <h3 class="table-title">Detalle por Equipo</h3>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Equipo</th>
+              <th class="text-right">Cobros partido</th>
+              <th class="text-right">Ingresos manuales</th>
+              <th class="text-right">Pendiente total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of resumen!.resumenPorEquipo">
+              <td>{{ fila.equipo }}</td>
+              <td class="text-right">$ {{ fila.cobrosPartido | number:'1.2-2' }}</td>
+              <td class="text-right">$ {{ fila.ingresosManuales | number:'1.2-2' }}</td>
+              <td class="text-right">
+                <span class="badge" [class.badge-warning]="fila.pendienteTotal > 0" [class.badge-success]="fila.pendienteTotal === 0">
+                  $ {{ fila.pendienteTotal | number:'1.2-2' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!resumen && !loading && !error && filtroCampeonatoId">
+      No hay datos de tesorería para este campeonato todavía.
+    </div>
+
+    <div class="empty-state" *ngIf="!filtroCampeonatoId && !loading">
+      Seleccione una liga y un campeonato para ver el resumen.
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Trasladar saldo al nuevo campeonato -->
+<div class="modal-overlay" *ngIf="modalTraslado" (click)="cerrarModalTraslado()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Trasladar saldo al nuevo campeonato</h3>
+      <button class="btn-close" (click)="cerrarModalTraslado()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="traslado-monto">
+        <span class="monto-label">Monto a trasladar</span>
+        <span class="monto-valor">$ {{ resumen!.saldo | number:'1.2-2' }}</span>
+      </div>
+      <div class="form-item">
+        <label>Campeonato destino</label>
+        <select class="form-select" [(ngModel)]="campeonatoDestinoId">
+          <option [ngValue]="null">-- Seleccione el nuevo campeonato --</option>
+          <option *ngFor="let c of campeonatosDestino" [ngValue]="c.id">
+            {{ c.nombre }} <span *ngIf="c.estado === 'finalizado'">(finalizado)</span>
+          </option>
+        </select>
+      </div>
+      <p class="traslado-nota">
+        Se creará automáticamente un ingreso de <strong>$ {{ resumen!.saldo | number:'1.2-2' }}</strong>
+        en el campeonato seleccionado con la descripción
+        <em>"Saldo trasladado del campeonato: {{ campeonatoSeleccionado?.nombre }}"</em>.
+      </p>
+      <div class="alert alert-error" *ngIf="errorTraslado">{{ errorTraslado }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalTraslado()" [disabled]="trasladando">
+        Cancelar
+      </button>
+      <button class="btn-confirm" (click)="confirmarTraslado()" [disabled]="!campeonatoDestinoId || trasladando">
+        {{ trasladando ? 'Trasladando...' : '✔ Confirmar traslado' }}
+      </button>
+    </div>
+  </div>
+</div>

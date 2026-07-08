@@ -277,6 +277,23 @@
             <label>Descripción de la sanción</label>
             <input type="text" [(ngModel)]="form.descripcion" placeholder="Motivo de la sanción..." maxlength="500" class="form-control" />
           </div>
+
+          <!-- Monto de multa económica -->
+          <div class="form-row">
+            <label>Monto multa (opcional)</label>
+            <div class="monto-input-wrap">
+              <span class="monto-prefix">$</span>
+              <input
+                type="number"
+                [(ngModel)]="form.montoMulta"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                class="form-control input-short"
+              />
+            </div>
+            <small class="form-hint">Se cobrará en la próxima vocalía. Deje en 0 si no aplica multa.</small>
+          </div>
         </ng-container>
 
         <div class="form-row">

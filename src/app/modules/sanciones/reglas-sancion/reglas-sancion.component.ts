@@ -47,6 +47,7 @@ export class ReglasSancionComponent implements OnInit {
       partidosSuspension: [null],
       duracionMeses: [{ value: null, disabled: true }],
       puntosDescuento: [0],
+      montoMulta: [null, [Validators.min(0)]],
     });
 
     // Habilitar/deshabilitar campos según modo de castigo
@@ -67,15 +68,20 @@ export class ReglasSancionComponent implements OnInit {
 
     // Al cambiar tipo de sanción: si NO aplica a jugador, limpiar campos de suspensión.
     // Un equipo/barra/directivo no cumple partidos de suspensión.
+    // Además, auto-llenar montoMulta desde el tipo seleccionado.
     this.form.get('tipoSancionId')!.valueChanges.subscribe((tipoId) => {
       if (!tipoId) return;
       const tipo = this.tipos.find((t) => t.id === Number(tipoId));
-      if (tipo && tipo.aplicaA !== 'jugador') {
-        this.form.patchValue({
-          modoCastigo:       'partidos',
-          partidosSuspension: null,
-          duracionMeses:      null,
-        });
+      if (tipo) {
+        // Auto-llenar monto desde el tipo (editable por el admin)
+        this.form.patchValue({ montoMulta: tipo.montoMulta ?? null }, { emitEvent: false });
+        if (tipo.aplicaA !== 'jugador') {
+          this.form.patchValue({
+            modoCastigo:        'partidos',
+            partidosSuspension: null,
+            duracionMeses:      null,
+          });
+        }
       }
     });
 
@@ -185,6 +191,7 @@ export class ReglasSancionComponent implements OnInit {
       partidosSuspension: regla.partidosSuspension ?? null,
       duracionMeses: regla.duracionMeses ?? null,
       puntosDescuento: regla.puntosDescuento ?? 0,
+      montoMulta: regla.montoMulta ?? null,
     });
     // Ajustar estado de duracionMeses según modo guardado
     const ctrlMeses = this.form.get('duracionMeses')!;
@@ -223,6 +230,7 @@ export class ReglasSancionComponent implements OnInit {
         partidosSuspension: (this.esParaJugador && val.modoCastigo !== 'tiempo') ? (val.partidosSuspension ?? undefined) : undefined,
         duracionMeses: (this.esParaJugador && val.modoCastigo === 'tiempo') ? (val.duracionMeses ?? undefined) : undefined,
         puntosDescuento: val.puntosDescuento ?? 0,
+        montoMulta: val.montoMulta ?? null,
       };
       this.sancionesService.updateRegla(this.reglaEditando.id, dto).subscribe({
         next: () => {
@@ -249,6 +257,7 @@ export class ReglasSancionComponent implements OnInit {
         partidosSuspension: (this.esParaJugador && val.modoCastigo !== 'tiempo') ? (val.partidosSuspension ?? undefined) : undefined,
         duracionMeses: (this.esParaJugador && val.modoCastigo === 'tiempo') ? (val.duracionMeses ?? undefined) : undefined,
         puntosDescuento: val.puntosDescuento ?? 0,
+        montoMulta: val.montoMulta ?? undefined,
       };
       this.sancionesService.createRegla(dto).subscribe({
         next: () => {

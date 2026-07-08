@@ -344,6 +344,71 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'tesoreria',
+    canActivate: [AuthGuard, RolesGuard],
+    data: { roles: ['master', 'directivo_liga', 'tesoreria'] },
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-resumen/tesoreria-resumen.component').then(
+            (m) => m.TesoreriaResumenComponent
+          ),
+      },
+      {
+        path: 'cobros-partido',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-cobros-partido/tesoreria-cobros-partido.component').then(
+            (m) => m.TesoreríaCobrosPartidoComponent
+          ),
+      },
+      {
+        path: 'movimientos',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-movimientos/tesoreria-movimientos.component').then(
+            (m) => m.TesoreriaMovimientosComponent
+          ),
+      },
+      {
+        path: 'libro-caja',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-libro-caja/tesoreria-libro-caja.component').then(
+            (m) => m.TesoreriaLibroCajaComponent
+          ),
+      },
+      {
+        path: 'config',
+        canActivate: [RolesGuard],
+        data: { roles: ['master', 'directivo_liga'] },
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-config/tesoreria-config.component').then(
+            (m) => m.TesoreriaConfigComponent
+          ),
+      },
+      {
+        path: 'garantias',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-garantias/tesoreria-garantias.component').then(
+            (m) => m.TesoreriaGarantiasComponent
+          ),
+      },
+      {
+        path: 'derramas',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-derramas/tesoreria-derramas.component').then(
+            (m) => m.TesoreriaDerrmasComponent
+          ),
+      },
+      {
+        path: 'deudas',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-deudas/tesoreria-deudas.component').then(
+            (m) => m.TesoreriaDeudaComponent
+          ),
+      },
+    ],
+  },
+  {
     path: 'tribunal-penas',
     canActivate: [AuthGuard, RolesGuard],
     data: { roles: ['master', 'directivo_liga', 'tribuna_penas'] },

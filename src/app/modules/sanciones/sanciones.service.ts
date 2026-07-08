@@ -124,4 +124,25 @@ export class SancionesService {
   apelarSancion(id: number, dto: ApelarSancionDto): Observable<Sancion> {
     return this.http.patch<Sancion>(`${this.apiUrl}/${id}/apelar`, dto);
   }
+
+  // ─── Cobro de multas en vocalía ───────────────────────────────────────────
+
+  /**
+   * Retorna sanciones aprobadas y no cobradas de un equipo en una liga.
+   * Se usa desde acta-imprimir para pre-llenar el campo "Tarjetas".
+   */
+  getSancionesParaCobro(equipoId: number, ligaId: number): Observable<Sancion[]> {
+    const params = new HttpParams()
+      .set('equipoId', equipoId.toString())
+      .set('ligaId', ligaId.toString());
+    return this.http.get<Sancion[]>(`${this.apiUrl}/para-cobro`, { params });
+  }
+
+  /**
+   * Marca un conjunto de sanciones como cobradas.
+   * Se llama tras guardar el cobro-partido en tesorería.
+   */
+  marcarCobradas(ids: number[]): Observable<{ actualizadas: number }> {
+    return this.http.post<{ actualizadas: number }>(`${this.apiUrl}/marcar-cobradas`, { ids });
+  }
 }

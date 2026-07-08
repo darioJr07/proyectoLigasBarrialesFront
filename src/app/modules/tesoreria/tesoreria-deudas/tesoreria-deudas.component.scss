@@ -1,0 +1,255 @@
+// Reutiliza los mismos bloques base que el resto de módulos de tesorería
+
+.page-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.page-header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  h1 { margin: 0; font-size: 1.5rem; }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .user-role { color: #95a5a6; font-size: 0.9rem; }
+
+    .btn-logout {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      &:hover { background-color: #c0392b; }
+    }
+  }
+}
+
+.page-content {
+  padding: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+
+  h2 { margin: 0; font-size: 1.3rem; color: #2c3e50; }
+}
+
+.section-links {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary-action {
+  background: #2980b9;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.88; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-secondary-action {
+  background: white;
+  color: #475569;
+  border: 1.5px solid #e2e8f0;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.15s;
+  &:hover { background: #f1f5f9; }
+}
+
+.filtros-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.filtros-grid {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 200px;
+
+  label { font-size: 0.82rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+
+  &.filtro-accion { justify-content: flex-end; }
+}
+
+.form-select {
+  padding: 0.5rem 0.8rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  &:focus { outline: none; border-color: #3498db; }
+}
+
+.alert {
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+
+  &.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+// ── Sin deuda ──────────────────────────────────────────────────────────────
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.sin-deuda-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+.sin-deuda-msg  { color: #374151; font-size: 1rem; }
+
+// ── Tabla de deudas ────────────────────────────────────────────────────────
+
+.table-card {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.deuda-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+  flex-wrap: wrap;
+
+  &.banner-alerta {
+    background: #fff7ed;
+    border-color: #fed7aa;
+  }
+}
+
+.banner-equipo  { font-size: 1rem; color: #1e293b; }
+.banner-total   {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.monto-deuda    { font-size: 1.1rem; color: #b45309; }
+.banner-aviso   { font-size: 0.82rem; color: #92400e; flex-basis: 100%; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1.5px solid #e2e8f0;
+
+    &.text-right  { text-align: right; }
+    &.text-center { text-align: center; }
+  }
+
+  td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+
+    &.text-right  { text-align: right; }
+    &.text-center { text-align: center; }
+  }
+
+  tr.fila-arrastrado td { background: #fff7ed; }
+
+  tfoot tr.fila-total {
+    td {
+      background: #f8fafc;
+      border-top: 2px solid #e2e8f0;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.badge-warning   { background: #fef9c3; color: #854d0e; }
+  &.badge-danger    { background: #fee2e2; color: #991b1b; }
+  &.badge-secondary { background: #f1f5f9; color: #475569; }
+}
+
+.texto-success { color: #16a34a; }
+.texto-warning { color: #d97706; }
+
+.nota-deudas {
+  padding: 1rem 1.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  margin: 0;
+}
+
+.link-inline {
+  color: #2980b9;
+  text-decoration: underline;
+}

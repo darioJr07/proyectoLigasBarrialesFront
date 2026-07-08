@@ -274,6 +274,7 @@ export class TribunalPenasComponent implements OnInit {
       descripcion:          '',
       observacionesTribunal:'',
       fechaSancion:         new Date().toLocaleDateString('en-CA'),
+      montoMulta:           undefined,
     };
     this.errorResolucion = '';
     this.mensajeOk       = '';
@@ -298,6 +299,10 @@ export class TribunalPenasComponent implements OnInit {
   onReglaSancionChange(): void {
     if (!this.form.reglaSancionId) return;
     const regla = this.reglas.find((r) => r.id === Number(this.form.reglaSancionId));
+    // Pre-llenar monto de multa desde la regla (editable por el tribunal)
+    if (regla?.montoMulta != null) {
+      this.form.montoMulta = Number(regla.montoMulta);
+    }
     if (regla?.modoCastigo === 'tiempo' && regla.duracionMeses) {
       const fechaInicio = this.form.fechaSancion || new Date().toLocaleDateString('en-CA');
       const inicio = new Date(fechaInicio);
@@ -352,6 +357,9 @@ export class TribunalPenasComponent implements OnInit {
       descripcion:           this.form.descripcion              || undefined,
       observacionesTribunal: this.form.observacionesTribunal    || undefined,
       fechaSancion:          this.form.fechaSancion             || undefined,
+      montoMulta:            this.form.decision === 'sancionar' && (this.form.montoMulta ?? 0) > 0
+                               ? this.form.montoMulta
+                               : undefined,
     };
 
     this.actaService.resolverIncidencia(this.incidenciaAbierta.id!, dto).subscribe({

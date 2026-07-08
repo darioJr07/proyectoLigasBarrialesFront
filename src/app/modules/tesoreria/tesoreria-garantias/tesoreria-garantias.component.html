@@ -1,0 +1,398 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-content">
+
+    <div class="section-title">
+      <h2>🔒 Tesorería — Garantías de Equipos</h2>
+      <div class="section-links">
+        <a routerLink="/tesoreria" class="btn-secondary-action">💰 Resumen</a>
+        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
+        <a routerLink="/tesoreria/movimientos" class="btn-secondary-action">📒 Movimientos</a>
+        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
+        <a *ngIf="permissions.canConfigurTesoreria()" routerLink="/tesoreria/config" class="btn-secondary-action">⚙️ Config. Vocalía</a>
+      </div>
+    </div>
+
+    <!-- Selector de liga (solo master) -->
+    <div class="filtros-card" *ngIf="permissions.isMaster()">
+      <div class="filtros-grid">
+        <div class="filtro-item">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="ligaId" (change)="onLigaChange()">
+            <option [ngValue]="null">-- Seleccione liga --</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Campeonato activo (para movimientos de caja)</label>
+          <select class="form-select" [(ngModel)]="campeonatoId">
+            <option [ngValue]="null">-- Sin asociar a campeonato --</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selector de campeonato (no master) -->
+    <div class="filtros-card" *ngIf="!permissions.isMaster() && campeonatos.length > 0">
+      <div class="filtros-grid">
+        <div class="filtro-item">
+          <label>Campeonato activo (para movimientos de caja)</label>
+          <select class="form-select" [(ngModel)]="campeonatoId">
+            <option [ngValue]="null">-- Sin asociar a campeonato --</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+    <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
+
+    <div class="loading-state" *ngIf="loading">Cargando datos...</div>
+
+    <ng-container *ngIf="!loading && ligaId">
+
+      <!-- ══ RESUMEN DEL FONDO ══════════════════════════════════════════════ -->
+      <div class="resumen-fondo" *ngIf="resumen">
+        <div class="fondo-card custodiado">
+          <div class="fondo-label">En custodia</div>
+          <div class="fondo-valor">$ {{ resumen.totalCustodiado | number:'1.2-2' }}</div>
+          <div class="fondo-sub">Garantías pagadas</div>
+        </div>
+        <div class="fondo-card prestamos">
+          <div class="fondo-label">Préstamos activos</div>
+          <div class="fondo-valor">$ {{ resumen.prestamosActivos | number:'1.2-2' }}</div>
+          <div class="fondo-sub">Tomados de la caja</div>
+        </div>
+        <div class="fondo-card ejecutadas">
+          <div class="fondo-label">Ejecutadas → caja</div>
+          <div class="fondo-valor">$ {{ resumen.garantiasEjecutadas | number:'1.2-2' }}</div>
+          <div class="fondo-sub">Ingresaron por sanción</div>
+        </div>
+        <div class="fondo-card disponible" [class.alerta]="resumen.fondoDisponible < 0">
+          <div class="fondo-label">Fondo disponible</div>
+          <div class="fondo-valor">$ {{ resumen.fondoDisponible | number:'1.2-2' }}</div>
+          <div class="fondo-sub">Custodiado − Préstamos</div>
+        </div>
+      </div>
+
+      <!-- ══ GARANTÍAS INDIVIDUALES ════════════════════════════════════════ -->
+      <div class="seccion-card">
+        <div class="seccion-header">
+          <h3>Garantías por equipo</h3>
+          <button class="btn-primary-action" (click)="abrirModalNuevaGarantia()">
+            + Registrar garantía
+          </button>
+        </div>
+
+        <div class="tabla-vacia" *ngIf="garantias.length === 0">
+          No hay garantías registradas para esta liga.
+        </div>
+
+        <div class="tabla-container" *ngIf="garantias.length > 0">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Fecha pago</th>
+                <th>Motivo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let g of garantias" [class]="'fila-' + g.estado">
+                <td class="td-equipo">{{ g.equipo?.nombre ?? '—' }}</td>
+                <td class="td-monto">$ {{ g.monto | number:'1.2-2' }}</td>
+                <td>
+                  <span class="badge-estado" [class]="'badge-' + g.estado">
+                    {{ etiquetaEstadoGarantia(g.estado) }}
+                  </span>
+                </td>
+                <td>{{ g.fechaPago ? (g.fechaPago | date:'dd/MM/yyyy') : '—' }}</td>
+                <td class="td-motivo">{{ g.motivo ?? '—' }}</td>
+                <td class="td-acciones">
+                  <button
+                    *ngIf="g.estado === 'pendiente'"
+                    class="btn-accion btn-pagar"
+                    (click)="marcarPagada(g)">
+                    Marcar pagada
+                  </button>
+                  <button
+                    *ngIf="g.estado === 'pagada'"
+                    class="btn-accion btn-devolver"
+                    (click)="abrirModalResolver(g, 'devolver')">
+                    Devolver
+                  </button>
+                  <button
+                    *ngIf="g.estado === 'pagada'"
+                    class="btn-accion btn-ejecutar"
+                    (click)="abrirModalResolver(g, 'ejecutar')">
+                    Ejecutar
+                  </button>
+                  <span *ngIf="g.estado === 'devuelta' || g.estado === 'ejecutada'" class="sin-accion">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ PRÉSTAMOS DEL FONDO ════════════════════════════════════════════ -->
+      <div class="seccion-card">
+        <div class="seccion-header">
+          <h3>Préstamos del fondo colectivo</h3>
+          <button class="btn-primary-action" (click)="abrirModalNuevoPrestamo()">
+            + Registrar préstamo
+          </button>
+        </div>
+
+        <div class="info-prestamos">
+          Cuando la liga necesita dinero del fondo de garantías para una inversión,
+          se registra aquí. Se crea automáticamente un ingreso en tesorería.
+          Al devolver, se crea el egreso correspondiente.
+        </div>
+
+        <div class="tabla-vacia" *ngIf="prestamos.length === 0">
+          No hay préstamos registrados.
+        </div>
+
+        <div class="tabla-container" *ngIf="prestamos.length > 0">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Motivo</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Fecha toma</th>
+                <th>Fecha devolución</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of prestamos" [class]="'fila-prestamo-' + p.estado">
+                <td>{{ p.motivo }}</td>
+                <td class="td-monto">$ {{ p.monto | number:'1.2-2' }}</td>
+                <td>
+                  <span class="badge-estado" [class]="p.estado === 'tomado' ? 'badge-pendiente' : 'badge-pagada'">
+                    {{ etiquetaEstadoPrestamo(p.estado) }}
+                  </span>
+                </td>
+                <td>{{ p.fechaToma | date:'dd/MM/yyyy' }}</td>
+                <td>{{ p.fechaDevolucion ? (p.fechaDevolucion | date:'dd/MM/yyyy') : '—' }}</td>
+                <td class="td-acciones">
+                  <button
+                    *ngIf="p.estado === 'tomado'"
+                    class="btn-accion btn-devolver"
+                    (click)="abrirModalDevolverPrestamo(p)">
+                    Marcar devuelto
+                  </button>
+                  <span *ngIf="p.estado === 'devuelto'" class="sin-accion">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- Mensaje cuando no hay liga seleccionada -->
+    <div class="sin-liga" *ngIf="!loading && !ligaId">
+      Seleccione una liga para ver las garantías.
+    </div>
+
+  </div><!-- /page-content -->
+</div><!-- /page-container -->
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Nueva garantía                                                      -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalNuevaGarantia" (click)="cerrarModalNuevaGarantia()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Registrar garantía</h3>
+      <button class="btn-close" (click)="cerrarModalNuevaGarantia()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="errorGarantia">{{ errorGarantia }}</div>
+
+      <div class="form-item">
+        <label>Equipo *</label>
+        <select class="form-select" [(ngModel)]="nuevaEquipoId">
+          <option [ngValue]="null">-- Seleccione equipo --</option>
+          <option *ngFor="let e of equiposSinGarantia" [ngValue]="e.id">{{ e.nombre }}</option>
+        </select>
+        <small *ngIf="equiposSinGarantia.length === 0" class="form-hint">
+          Todos los equipos tienen garantía activa.
+        </small>
+      </div>
+
+      <div class="form-item">
+        <label>Monto ($) *</label>
+        <input type="number" class="form-input" [(ngModel)]="nuevaMonto" min="1" placeholder="100" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalNuevaGarantia()">Cancelar</button>
+      <button class="btn-confirm" (click)="confirmarNuevaGarantia()" [disabled]="guardandoGarantia">
+        {{ guardandoGarantia ? 'Guardando...' : 'Registrar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Resolver garantía (devolver / ejecutar)                             -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalResolver" (click)="cerrarModalResolver()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header" [class.header-ejecutar]="resolverAccion === 'ejecutar'">
+      <h3>
+        {{ resolverAccion === 'ejecutar' ? '⚡ Ejecutar garantía' : '↩ Devolver garantía' }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalResolver()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="errorResolver">{{ errorResolver }}</div>
+
+      <div class="resolver-info">
+        <strong>Equipo:</strong> {{ modalResolver?.equipo?.nombre }}<br>
+        <strong>Monto:</strong> $ {{ modalResolver?.monto | number:'1.2-2' }}
+      </div>
+
+      <div class="resolver-descripcion" *ngIf="resolverAccion === 'ejecutar'">
+        El equipo <strong>pierde</strong> la garantía. Se creará un
+        <strong>ingreso</strong> en tesorería por $ {{ modalResolver?.monto | number:'1.2-2' }}.
+      </div>
+      <div class="resolver-descripcion" *ngIf="resolverAccion === 'devolver'">
+        Se <strong>devuelve</strong> la garantía al equipo. Se creará un
+        <strong>egreso</strong> en tesorería por $ {{ modalResolver?.monto | number:'1.2-2' }}.
+      </div>
+
+      <div class="form-item">
+        <label>Motivo *</label>
+        <textarea class="form-input" [(ngModel)]="resolverMotivo" rows="3"
+          [placeholder]="resolverAccion === 'ejecutar' ? 'Ej: Agresión al árbitro en jornada 8' : 'Ej: Equipo se retira de la liga'">
+        </textarea>
+      </div>
+
+      <div class="form-item" *ngIf="campeonatos.length > 0">
+        <label>Campeonato (para el movimiento de caja)</label>
+        <select class="form-select" [(ngModel)]="resolverCampeonatoId">
+          <option [ngValue]="null">-- Sin campeonato --</option>
+          <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalResolver()">Cancelar</button>
+      <button class="btn-confirm" [class.btn-danger]="resolverAccion === 'ejecutar'"
+        (click)="confirmarResolver()" [disabled]="resolviendo">
+        {{ resolviendo ? 'Procesando...' : (resolverAccion === 'ejecutar' ? 'Ejecutar garantía' : 'Confirmar devolución') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Nuevo préstamo del fondo                                            -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalNuevoPrestamo" (click)="cerrarModalNuevoPrestamo()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Registrar préstamo del fondo</h3>
+      <button class="btn-close" (click)="cerrarModalNuevoPrestamo()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="errorPrestamo">{{ errorPrestamo }}</div>
+
+      <div class="resolver-descripcion">
+        Se tomará dinero del fondo de garantías para uso de la liga.
+        Se registrará un <strong>ingreso</strong> en tesorería.
+        <span *ngIf="resumen">
+          Fondo disponible: <strong>$ {{ resumen.fondoDisponible | number:'1.2-2' }}</strong>
+        </span>
+      </div>
+
+      <div class="form-item">
+        <label>Monto a tomar ($) *</label>
+        <input type="number" class="form-input" [(ngModel)]="prestamoMonto" min="1"
+          [max]="resumen?.fondoDisponible ?? null" placeholder="0.00" />
+      </div>
+
+      <div class="form-item">
+        <label>Motivo / descripción *</label>
+        <textarea class="form-input" [(ngModel)]="prestamoMotivo" rows="3"
+          placeholder="Ej: Mejora de los arcos norte">
+        </textarea>
+      </div>
+
+      <div class="form-item" *ngIf="campeonatos.length > 0">
+        <label>Campeonato (para el movimiento de caja)</label>
+        <select class="form-select" [(ngModel)]="prestamoCampeonatoId">
+          <option [ngValue]="null">-- Sin campeonato --</option>
+          <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalNuevoPrestamo()">Cancelar</button>
+      <button class="btn-confirm" (click)="confirmarNuevoPrestamo()" [disabled]="guardandoPrestamo">
+        {{ guardandoPrestamo ? 'Guardando...' : 'Registrar préstamo' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Devolver préstamo                                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalDevolverPrestamo" (click)="cerrarModalDevolverPrestamo()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>↩ Devolver préstamo al fondo</h3>
+      <button class="btn-close" (click)="cerrarModalDevolverPrestamo()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="errorDevolucion">{{ errorDevolucion }}</div>
+
+      <div class="resolver-info">
+        <strong>Motivo original:</strong> {{ modalDevolverPrestamo?.motivo }}<br>
+        <strong>Monto a devolver:</strong> $ {{ modalDevolverPrestamo?.monto | number:'1.2-2' }}
+      </div>
+
+      <div class="resolver-descripcion">
+        Se registrará un <strong>egreso</strong> en tesorería por
+        $ {{ modalDevolverPrestamo?.monto | number:'1.2-2' }},
+        devolviendo el dinero al fondo de garantías.
+      </div>
+
+      <div class="form-item" *ngIf="campeonatos.length > 0">
+        <label>Campeonato (para el movimiento de caja)</label>
+        <select class="form-select" [(ngModel)]="devolucionCampeonatoId">
+          <option [ngValue]="null">-- Sin campeonato --</option>
+          <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDevolverPrestamo()">Cancelar</button>
+      <button class="btn-confirm" (click)="confirmarDevolucionPrestamo()" [disabled]="devolviendo">
+        {{ devolviendo ? 'Procesando...' : 'Confirmar devolución' }}
+      </button>
+    </div>
+  </div>
+</div>

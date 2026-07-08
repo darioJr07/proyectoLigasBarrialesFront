@@ -1,0 +1,366 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-content">
+
+    <!-- ── Título + nav de sección ─────────────────────────────────────── -->
+    <div class="section-title">
+      <h2>📦 Tesorería — Derramas Colectivas</h2>
+      <div class="section-links">
+        <a routerLink="/tesoreria"                class="btn-secondary-action">💰 Resumen</a>
+        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
+        <a routerLink="/tesoreria/movimientos"    class="btn-secondary-action">📒 Movimientos</a>
+        <a routerLink="/tesoreria/libro-caja"     class="btn-secondary-action">📖 Libro de Caja</a>
+        <a routerLink="/tesoreria/garantias"      class="btn-secondary-action">🔒 Garantías</a>
+        <a routerLink="/tesoreria/deudas"         class="btn-secondary-action">⚠️ Deudas</a>
+        <a *ngIf="permissions.canConfigurTesoreria()"
+           routerLink="/tesoreria/config"         class="btn-secondary-action">⚙️ Config. Vocalía</a>
+      </div>
+    </div>
+
+    <!-- ── Filtros ─────────────────────────────────────────────────────── -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-item" *ngIf="permissions.isMaster()">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="ligaId" (change)="onLigaChange()">
+            <option [ngValue]="null">-- Seleccione liga --</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Campeonato</label>
+          <select class="form-select" [(ngModel)]="campeonatoId" (change)="onCampeonatoChange()">
+            <option [ngValue]="null">-- Seleccione campeonato --</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item filtro-accion" *ngIf="canEdit() && campeonatoId">
+          <button class="btn-primary-action" (click)="abrirModalNueva()">+ Nueva Derrama</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Alertas ────────────────────────────────────────────────────── -->
+    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+    <div class="alert alert-error"   *ngIf="error && !modalNueva && !modalAsignar && !modalPago">
+      {{ error }}
+    </div>
+
+    <div class="loading-state" *ngIf="loading">Cargando derramas...</div>
+
+    <!-- ── Sin datos ──────────────────────────────────────────────────── -->
+    <div class="empty-state" *ngIf="!loading && campeonatoId && derramas.length === 0">
+      <p>No hay derramas registradas para este campeonato.</p>
+      <button class="btn-primary-action" *ngIf="canEdit()" (click)="abrirModalNueva()">
+        + Crear primera derrama
+      </button>
+    </div>
+
+    <!-- ── Lista de derramas ──────────────────────────────────────────── -->
+    <ng-container *ngIf="!loading">
+      <div class="derrama-card" *ngFor="let d of derramas">
+
+        <!-- Cabecera de la derrama -->
+        <div class="derrama-header" (click)="toggleDetalle(d)">
+          <div class="derrama-info">
+            <span class="derrama-desc">{{ d.descripcion }}</span>
+            <span class="badge" [ngClass]="badgeEstado(d.estado)">{{ etiquetaEstado(d.estado) }}</span>
+            <span class="badge badge-secondary">{{ d.tipo === 'unidades' ? 'Por unidades' : 'Monetaria' }}</span>
+          </div>
+          <div class="derrama-montos">
+            <span class="monto-label">Asignado:</span>
+            <span class="monto-valor">$ {{ d.totalAsignado | number:'1.2-2' }}</span>
+            <span class="monto-label">Cobrado:</span>
+            <span class="monto-valor texto-success">$ {{ d.totalAbonado | number:'1.2-2' }}</span>
+            <span class="monto-label">Pendiente:</span>
+            <span class="monto-valor texto-warning">$ {{ d.totalPendiente | number:'1.2-2' }}</span>
+            <span class="monto-pu">$ {{ d.montoUnitario | number:'1.2-2' }} / ud.</span>
+          </div>
+          <div class="derrama-acciones">
+            <button class="btn-icon" *ngIf="canEdit() && d.estado === 'activa'"
+                    (click)="abrirModalAsignar(d); $event.stopPropagation()"
+                    title="Asignar equipos">👥</button>
+            <button class="btn-icon btn-danger" *ngIf="canEdit() && d.estado === 'activa'"
+                    (click)="cerrarDerrama(d); $event.stopPropagation()"
+                    title="Cerrar derrama">🔒</button>
+            <span class="expand-icon">{{ d.expandida ? '▲' : '▼' }}</span>
+          </div>
+        </div>
+
+        <!-- Detalle por equipo (colapsable) -->
+        <div class="derrama-detalle" *ngIf="d.expandida && d.equipos && d.equipos.length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-right">Total</th>
+                <th class="text-right">Abonado</th>
+                <th class="text-right">Pendiente</th>
+                <th class="text-center">Modo de Pago</th>
+                <th class="text-center">Estado</th>
+                <th *ngIf="canEdit()" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of d.equipos">
+                <td>{{ e.equipo?.nombre }}</td>
+                <td class="text-center">{{ e.cantidad }}</td>
+                <td class="text-right">$ {{ e.montoTotal | number:'1.2-2' }}</td>
+                <td class="text-right texto-success">$ {{ e.montoAbonado | number:'1.2-2' }}</td>
+                <td class="text-right" [class.texto-warning]="saldoPendiente(e) > 0">
+                  $ {{ saldoPendiente(e) | number:'1.2-2' }}
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-secondary">{{ etiquetaModoPago(e.modoPago) }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="badgeEstado(e.estado)">{{ etiquetaEstado(e.estado) }}</span>
+                </td>
+                <td class="text-center" *ngIf="canEdit()">
+                  <!-- Por vocalía: se paga solo al marcar el cobro de partido como pagado -->
+                  <span *ngIf="e.modoPago === 'por_vocalia' && e.estado !== 'pagado'"
+                        class="badge badge-secondary"
+                        title="Se cobra automáticamente en cada vocalía de partido">🔄 Auto</span>
+                  <button class="btn-icon btn-info"
+                          *ngIf="e.modoPago === 'por_vocalia' && e.estado !== 'pagado' && d.estado === 'activa'"
+                          (click)="abrirModalCuotas(d, e)"
+                          title="Dividir deuda en cuotas de vocalía">✂ Cuotas</button>
+                  <button class="btn-icon btn-success"
+                          *ngIf="e.modoPago !== 'por_vocalia' && e.estado !== 'pagado' && d.estado === 'activa'"
+                          (click)="abrirModalPago(d, e)"
+                          title="Registrar pago">💵</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mensaje vacío si no hay equipos -->
+        <div class="detalle-vacio" *ngIf="d.expandida && (!d.equipos || d.equipos.length === 0)">
+          No hay equipos asignados.
+          <button class="btn-link" *ngIf="canEdit() && d.estado === 'activa'"
+                  (click)="abrirModalAsignar(d)">Asignar ahora</button>
+        </div>
+
+      </div>
+    </ng-container>
+
+  </div><!-- /page-content -->
+</div><!-- /page-container -->
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Nueva Derrama                                                      -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalNueva" (click)="cerrarModalNueva()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nueva Derrama</h3>
+      <button class="modal-close" (click)="cerrarModalNueva()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+      <div class="form-group">
+        <label>Descripción *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevaDerrama.descripcion"
+               placeholder="Ej: Rifas enero 2026, Ayuda dirigente…" maxlength="200">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select class="form-select" [(ngModel)]="nuevaDerrama.tipo">
+            <option value="monetaria">Monetaria (monto fijo por equipo)</option>
+            <option value="unidades">Por unidades (precio × cantidad)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            {{ nuevaDerrama.tipo === 'unidades' ? 'Precio por unidad ($)' : 'Monto por equipo ($)' }}
+          </label>
+          <input type="number" class="form-control" [(ngModel)]="nuevaDerrama.montoUnitario"
+                 min="0.01" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+
+      <p class="modal-hint">
+        <strong>Monetaria:</strong> cada equipo debe pagar exactamente ese monto.<br>
+        <strong>Por unidades:</strong> cada equipo elige cuántas unidades toma (rifas, platos, etc.).
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalNueva()">Cancelar</button>
+      <button class="btn-primary-action" (click)="guardarDerrama()" [disabled]="guardandoNueva">
+        {{ guardandoNueva ? 'Guardando…' : 'Crear Derrama' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Asignar Equipos                                                    -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalAsignar" (click)="cerrarModalAsignar()">
+  <div class="modal-box modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Asignar Equipos — {{ derramaSeleccionada?.descripcion }}</h3>
+      <button class="modal-close" (click)="cerrarModalAsignar()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+      <div class="asignar-toolbar">
+        <button class="btn-link" (click)="toggleTodos(true)">Seleccionar todos</button>
+        <span>|</span>
+        <button class="btn-link" (click)="toggleTodos(false)">Deseleccionar todos</button>
+        <span class="asignar-hint">
+          Precio: <strong>$ {{ derramaSeleccionada?.montoUnitario | number:'1.2-2' }}</strong>
+        </span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="text-center">✓</th>
+            <th>Equipo</th>
+            <th class="text-center">Cantidad</th>
+            <th class="text-right">Monto Total</th>
+            <th class="text-center">Modo de Pago</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of asignaciones" [class.fila-inactiva]="!a.seleccionado">
+            <td class="text-center">
+              <input type="checkbox" [(ngModel)]="a.seleccionado">
+            </td>
+            <td>{{ a.equipoNombre }}</td>
+            <td class="text-center">
+              <input type="number" class="input-cantidad" [(ngModel)]="a.cantidad"
+                     min="1" [disabled]="!a.seleccionado">
+            </td>
+            <td class="text-right">
+              $ {{ (a.cantidad * (derramaSeleccionada?.montoUnitario ?? 0)) | number:'1.2-2' }}
+            </td>
+            <td class="text-center">
+              <select class="form-select-sm" [(ngModel)]="a.modoPago" [disabled]="!a.seleccionado">
+                <option value="por_vocalia">Por Vocalía</option>
+                <option value="inmediato">Inmediato</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalAsignar()">Cancelar</button>
+      <button class="btn-primary-action" (click)="guardarAsignacion()" [disabled]="guardandoAsignar">
+        {{ guardandoAsignar ? 'Guardando…' : 'Guardar Asignación' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Registrar Pago                                                     -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalPago" (click)="cerrarModalPago()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Registrar Pago — {{ pagoEquipo?.equipo?.nombre }}</h3>
+      <button class="modal-close" (click)="cerrarModalPago()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+      <div class="pago-resumen">
+        <div class="pago-item">
+          <span>Total derrama:</span>
+          <strong>$ {{ pagoEquipo?.montoTotal | number:'1.2-2' }}</strong>
+        </div>
+        <div class="pago-item">
+          <span>Ya abonado:</span>
+          <strong class="texto-success">$ {{ pagoEquipo?.montoAbonado | number:'1.2-2' }}</strong>
+        </div>
+        <div class="pago-item">
+          <span>Saldo pendiente:</span>
+          <strong class="texto-warning">
+            $ {{ saldoPendiente(pagoEquipo!) | number:'1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Monto a pagar ($) *</label>
+        <input type="number" class="form-control" [(ngModel)]="montoPago"
+               min="0.01" [max]="saldoPendiente(pagoEquipo!)" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones</label>
+        <input type="text" class="form-control" [(ngModel)]="observacionesPago"
+               placeholder="Opcional: número de recibo, etc." maxlength="500">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalPago()">Cancelar</button>
+      <button class="btn-primary-action" (click)="guardarPago()" [disabled]="guardandoPago">
+        {{ guardandoPago ? 'Registrando…' : 'Registrar Pago' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Dividir en cuotas                                                  -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalCuotas" (click)="cerrarModalCuotas()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>✂ Dividir en Cuotas</h3>
+      <button class="modal-close" (click)="cerrarModalCuotas()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+      <p class="modal-hint" *ngIf="cuotasEquipo">
+        <strong>Equipo:</strong> {{ cuotasEquipo.equipo?.nombre }}<br>
+        <strong>Saldo pendiente:</strong> ${{ saldoPendiente(cuotasEquipo) | number:'1.2-2' }}<br>
+        La deuda se descontará automáticamente cada partido en que el equipo pague su vocalía.
+      </p>
+
+      <div class="form-group">
+        <label>Número de cuotas *</label>
+        <input type="number" class="form-control" [(ngModel)]="numeroCuotas"
+               min="2" max="50" step="1" placeholder="Ej: 3">
+        <small class="form-hint" *ngIf="numeroCuotas >= 2 && cuotasEquipo">
+          Cada cuota: <strong>${{ cuotaCalculada | number:'1.2-2' }}</strong> por partido
+        </small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalCuotas()">Cancelar</button>
+      <button class="btn-primary-action" (click)="guardarCuotas()" [disabled]="guardandoCuotas || numeroCuotas < 2">
+        {{ guardandoCuotas ? 'Guardando…' : 'Aplicar Cuotas' }}
+      </button>
+    </div>
+  </div>
+</div>

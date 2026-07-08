@@ -76,6 +76,12 @@
           <h3>Usuarios</h3>
           <p>Administrar usuarios del sistema</p>
         </a>
+
+        <a *ngIf="canAccessTesoreria()" routerLink="/tesoreria" class="action-card">
+          <span class="action-icon">💰</span>
+          <h3>Tesorería</h3>
+          <p>Cobros de vocalía, movimientos e ingresos de la liga</p>
+        </a>
       </div>
     </div>
   </main>

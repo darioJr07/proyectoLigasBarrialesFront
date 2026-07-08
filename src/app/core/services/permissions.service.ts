@@ -368,4 +368,18 @@ export class PermissionsService {
   canConfigureSanciones(): boolean {
     return this.hasRole(['master', 'directivo_liga']);
   }
+
+  // ==================== TESORERÍA ====================
+
+  canAccessTesoreria(): boolean {
+    return this.hasRole(['master', 'directivo_liga', 'tesoreria']);
+  }
+
+  canGestionarTesoreria(): boolean {
+    return this.hasRole(['master', 'directivo_liga', 'tesoreria']);
+  }
+
+  canConfigurTesoreria(): boolean {
+    return this.hasRole(['master', 'directivo_liga']);
+  }
 }

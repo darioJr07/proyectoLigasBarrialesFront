@@ -50,6 +50,7 @@ export class TiposSancionComponent implements OnInit {
       descripcion: [''],
       aplicaA: ['jugador', Validators.required],
       ligaId: [null],
+      montoMulta: [null, [Validators.min(0)]],
     });
   }
 
@@ -125,6 +126,7 @@ export class TiposSancionComponent implements OnInit {
       descripcion: tipo.descripcion ?? '',
       aplicaA: tipo.aplicaA,
       ligaId: tipo.ligaId ?? null,
+      montoMulta: tipo.montoMulta ?? null,
     });
     this.mostrarFormulario = true;
     this.exito = '';
@@ -149,6 +151,7 @@ export class TiposSancionComponent implements OnInit {
           nombre: val.nombre,
           descripcion: val.descripcion ?? undefined,
           aplicaA: val.aplicaA,
+          montoMulta: val.montoMulta ?? null,
         })
       : this.sancionesService.createTipoSancion(val);
 

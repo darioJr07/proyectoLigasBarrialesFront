@@ -12,6 +12,12 @@
     <label>Árbitro:</label>
     <input type="text" [(ngModel)]="arbitroEditable" placeholder="Nombre del árbitro..." class="input-vocal" maxlength="200" />
   </div>
+  <button class="btn-guardar-cobros"
+          (click)="guardarCobros()"
+          [disabled]="guardandoCobros || cobrosBloqueados"
+          [title]="cobrosBloqueados ? 'Los cobros ya fueron registrados como pagados en tesorería' : ''">
+    {{ cobrosBloqueados ? '🔒 Cobros Pagados' : (guardandoCobros ? '⏳ Guardando...' : (cobrosGuardados ? '✅ Cobros Guardados' : '💾 Guardar Cobros')) }}
+  </button>
   <button class="btn-imprimir" (click)="imprimir()">🖨️ Imprimir / Guardar PDF</button>
 </div>
 
@@ -27,37 +33,42 @@
      ACTA PARA IMPRIMIR
 ═══════════════════════════════════════════════════════════ -->
 <div class="vocalia-editor no-print" *ngIf="!loading && !error">
+  <div *ngIf="cobrosBloqueados" class="cobros-bloqueados-aviso">
+    🔒 Los cobros de este partido ya fueron registrados como <strong>pagados</strong> en tesorería. No se pueden modificar.
+  </div>
   <div class="vocalia-card">
     <h3>{{ equipoLocalNombre || 'Equipo local' }}</h3>
     <label>
       Tarjetas TA / TR
-      <input type="number" min="0" step="0.01" [(ngModel)]="vocaliaLocal.tarjetas" />
+      <input type="number" min="0" step="0.01" [(ngModel)]="vocaliaLocal.tarjetas" [disabled]="cobrosBloqueados" />
     </label>
     <div class="extras-list">
       <div class="extra-row" *ngFor="let extra of vocaliaLocal.extras; let i = index">
-        <input type="text" [(ngModel)]="extra.detalle" [placeholder]="'Detalle extra ' + (i + 1)" />
-        <input type="number" min="0" step="0.01" [(ngModel)]="extra.valor" placeholder="Valor" />
+        <input type="text" [(ngModel)]="extra.detalle" [placeholder]="'Detalle extra ' + (i + 1)" [disabled]="cobrosBloqueados" />
+        <input type="number" min="0" step="0.01" [(ngModel)]="extra.valor" placeholder="Valor" [disabled]="cobrosBloqueados" />
       </div>
     </div>
-    <div class="total-preview">Total vocalÃ­a: $ {{ getTotalVocalia('local').toFixed(2) }}</div>
+    <div class="total-preview">Total vocalía: $ {{ getTotalVocalia('local').toFixed(2) }}</div>
   </div>
 
   <div class="vocalia-card">
     <h3>{{ equipoVisitanteNombre || 'Equipo visitante' }}</h3>
     <label>
       Tarjetas TA / TR
-      <input type="number" min="0" step="0.01" [(ngModel)]="vocaliaVisitante.tarjetas" />
+      <input type="number" min="0" step="0.01" [(ngModel)]="vocaliaVisitante.tarjetas" [disabled]="cobrosBloqueados" />
     </label>
     <div class="extras-list">
       <div class="extra-row" *ngFor="let extra of vocaliaVisitante.extras; let i = index">
-        <input type="text" [(ngModel)]="extra.detalle" [placeholder]="'Detalle extra ' + (i + 1)" />
-        <input type="number" min="0" step="0.01" [(ngModel)]="extra.valor" placeholder="Valor" />
+        <input type="text" [(ngModel)]="extra.detalle" [placeholder]="'Detalle extra ' + (i + 1)" [disabled]="cobrosBloqueados" />
+        <input type="number" min="0" step="0.01" [(ngModel)]="extra.valor" placeholder="Valor" [disabled]="cobrosBloqueados" />
       </div>
     </div>
-    <div class="total-preview">Total vocalÃ­a: $ {{ getTotalVocalia('visitante').toFixed(2) }}</div>
+    <div class="total-preview">Total vocalía: $ {{ getTotalVocalia('visitante').toFixed(2) }}</div>
   </div>
 </div>
-
+<div class="cobros-mensaje no-print" *ngIf="cobrosMensaje" [class.error]="cobrosMensaje.includes('Error')">
+  {{ cobrosMensaje }}
+</div>
 <div id="acta-print" *ngIf="!loading && !error">
 
   <!-- ────────────────────────────────────────────────────────

@@ -1,0 +1,190 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <div class="page-content">
+
+    <div class="section-title">
+      <h2>📒 Movimientos de Tesorería</h2>
+      <div class="section-links">
+        <a routerLink="/tesoreria" class="btn-secondary-action">📊 Resumen</a>
+        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
+        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
+        <button *ngIf="permissions.canGestionarTesoreria()"
+                class="btn-primary-action"
+                (click)="toggleFormulario()">
+          {{ mostrarFormulario ? '✕ Cancelar' : '+ Nuevo Movimiento' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
+    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+
+    <!-- Formulario nuevo movimiento -->
+    <div class="form-card" *ngIf="mostrarFormulario">
+      <h3 class="form-title">Registrar Movimiento</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select class="form-select" [(ngModel)]="nuevoMov.tipo">
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoría *</label>
+          <select class="form-select" [(ngModel)]="nuevoMov.categoria">
+            <option *ngFor="let cat of categorias" [value]="cat.value">{{ cat.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Campeonato</label>
+          <select class="form-select" [(ngModel)]="nuevoMov.campeonatoId">
+            <option [ngValue]="undefined">Sin campeonato</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Equipo</label>
+          <select class="form-select" [(ngModel)]="nuevoMov.equipoId">
+            <option [ngValue]="undefined">Sin equipo específico</option>
+            <option *ngFor="let e of equipos" [ngValue]="e.id">{{ e.nombre }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Monto *</label>
+          <input type="number" class="form-input" [(ngModel)]="nuevoMov.monto" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group span-2">
+          <label>Descripción</label>
+          <input type="text" class="form-input" [(ngModel)]="nuevoMov.descripcion" maxlength="500" placeholder="Descripción del movimiento..." />
+        </div>
+        <div class="form-group" *ngIf="nuevoMov.tipo === 'ingreso'">
+          <label>Estado</label>
+          <select class="form-select" [(ngModel)]="nuevoMov.estado">
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de vencimiento</label>
+          <input type="date" class="form-input" [(ngModel)]="nuevoMov.fechaVencimiento" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary-action" (click)="guardarMovimiento()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Guardar Movimiento' }}
+        </button>
+        <button class="btn-secondary-action" (click)="toggleFormulario()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-item" *ngIf="permissions.isMaster()">
+          <label>Liga</label>
+          <select class="form-select" [(ngModel)]="filtroLigaId" (change)="onLigaChange()">
+            <option [ngValue]="null">-- Liga --</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Campeonato</label>
+          <select class="form-select" [(ngModel)]="filtroCampeonatoId">
+            <option [ngValue]="null">Todos</option>
+            <option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Tipo</label>
+          <select class="form-select" [(ngModel)]="filtroTipo">
+            <option value="">Todos</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label>Estado</label>
+          <select class="form-select" [(ngModel)]="filtroEstado">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+            <option value="anulado">Anulado</option>
+          </select>
+        </div>
+        <div class="filtro-item filtro-accion">
+          <button class="btn-primary-action" (click)="buscar()">Buscar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">Cargando movimientos...</div>
+
+    <!-- Tabla -->
+    <div class="table-card" *ngIf="!loading && movimientos.length > 0">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Equipo</th>
+              <th class="text-right">Monto</th>
+              <th>Estado</th>
+              <th *ngIf="permissions.canGestionarTesoreria()">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let mov of movimientos">
+              <td class="text-nowrap">{{ mov.creadoEn | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [class.badge-ingreso]="mov.tipo === 'ingreso'" [class.badge-egreso]="mov.tipo === 'egreso'">
+                  {{ mov.tipo }}
+                </span>
+              </td>
+              <td>{{ mov.categoria }}</td>
+              <td>{{ mov.descripcion ?? '—' }}</td>
+              <td>{{ mov.equipo?.nombre ?? '—' }}</td>
+              <td class="text-right">$ {{ mov.monto | number:'1.2-2' }}</td>
+              <td>
+                <span class="badge"
+                      [class.badge-warning]="mov.estado === 'pendiente'"
+                      [class.badge-success]="mov.estado === 'pagado'"
+                      [class.badge-danger]="mov.estado === 'anulado'">
+                  {{ mov.estado }}
+                </span>
+              </td>
+              <td *ngIf="permissions.canGestionarTesoreria()">
+                <div class="acciones-celda">
+                  <button *ngIf="mov.estado === 'pendiente' && mov.tipo === 'ingreso'"
+                          class="btn-accion btn-pagar"
+                          (click)="marcarPagado(mov)">✔ Cobrado</button>
+                  <button *ngIf="mov.estado !== 'anulado'"
+                          class="btn-accion btn-anular"
+                          (click)="anularMovimiento(mov)">✕ Anular</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && movimientos.length === 0">
+      No hay movimientos con los filtros seleccionados.
+    </div>
+
+  </div>
+</div>

@@ -435,6 +435,18 @@ $bg-light:    #f8f9fa;
 .input-short  { max-width: 90px; }
 .input-medium { max-width: 200px; }
 
+.monto-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  .monto-prefix {
+    font-weight: 600;
+    color: $text-gray;
+    font-size: 0.95rem;
+  }
+}
+
 .form-hint {
   display: block;
   font-size: 0.75rem;

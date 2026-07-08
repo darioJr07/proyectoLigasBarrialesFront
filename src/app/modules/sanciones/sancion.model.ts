@@ -4,6 +4,7 @@ export interface TipoSancion {
   descripcion?: string;
   aplicaA: 'jugador' | 'equipo' | 'directivo' | 'barra';
   ligaId?: number;
+  montoMulta?: number | null;
   activo: boolean;
   creadoEn?: string;
 }
@@ -21,6 +22,7 @@ export interface ReglaSancion {
   puntosDescuento?: number;
   modoCastigo?: 'partidos' | 'tiempo';
   duracionMeses?: number;
+  montoMulta?: number | null;
   activo: boolean;
   creadoEn?: string;
 }
@@ -53,6 +55,10 @@ export interface Sancion {
   origenSancionId?: number | null;
   activo: boolean;
   creadoEn?: string;
+  // Multa económica
+  montoMulta?: number | null;
+  estadoCobro?: 'aprobada' | 'sin_multa';
+  cobrada?: boolean;
 }
 
 export interface CreateTipoSancionDto {
@@ -60,6 +66,7 @@ export interface CreateTipoSancionDto {
   descripcion?: string;
   aplicaA?: string;
   ligaId?: number;
+  montoMulta?: number | null;
 }
 
 export interface CreateReglaSancionDto {
@@ -73,6 +80,7 @@ export interface CreateReglaSancionDto {
   puntosDescuento?: number;
   modoCastigo?: 'partidos' | 'tiempo';
   duracionMeses?: number;
+  montoMulta?: number;
 }
 
 export interface UpdateReglaSancionDto {
@@ -83,6 +91,7 @@ export interface UpdateReglaSancionDto {
   puntosDescuento?: number;
   modoCastigo?: 'partidos' | 'tiempo';
   duracionMeses?: number;
+  montoMulta?: number | null;
   activo?: boolean;
 }
 

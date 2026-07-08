@@ -61,4 +61,8 @@ export class DashboardComponent {
   canAccessPartidos(): boolean {
     return this.permissions.canAccessPartidos();
   }
+
+  canAccessTesoreria(): boolean {
+    return this.permissions.canAccessTesoreria();
+  }
 }
