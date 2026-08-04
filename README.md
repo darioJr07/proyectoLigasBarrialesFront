@@ -1,65 +1,63 @@
 # Frontend - Sistema de Ligas Barriales
 
-Frontend construido con Angular, TypeScript y arquitectura modular.
+Aplicacion web construida con Angular, TypeScript, RxJS y SCSS.
 
-## Tecnologías
+**Estado de documentacion:** actualizado el 30/07/2026.  
+Para el estado funcional completo del sistema, revisar [../ESTADO_ACTUAL_PROYECTO.md](../ESTADO_ACTUAL_PROYECTO.md).
 
-- **Angular 17** - Framework frontend moderno
-- **TypeScript** - Tipado estático
-- **RxJS** - Programación reactiva
-- **SCSS** - Estilos con preprocesador
-- **Reactive Forms** - Formularios reactivos
+## Tecnologias
 
-## Arquitectura
+- Angular
+- TypeScript
+- RxJS
+- SCSS
+- Reactive Forms
+- Angular Material en filtros/autocomplete
+- pdfmake/jsPDF segun modulo de PDF
 
-El proyecto sigue principios SOLID y clean code:
+## Modulos Frontend Principales
 
-- **Single Responsibility**: Cada componente/servicio tiene una única responsabilidad
-- **Dependency Injection**: Las dependencias se inyectan mediante constructores
-- **Modular**: Código organizado en módulos lazy-loaded
-- **Reactive**: Uso de Observables para gestión de estado
+- Auth y dashboard.
+- Usuarios.
+- Ligas.
+- Equipos.
+- Jugadores.
+- Upload de imagenes.
+- Campeonatos.
+- Categorias.
+- Inscripciones.
+- Habilitaciones de jugadores.
+- Transferencias.
+- Partidos y fixture.
+- Tabla de posiciones.
+- Goles y goleadores.
+- Acta digital.
+- Acta de impresion.
+- Sanciones.
+- Tribunal de penas.
+- Tesoreria.
+- Garantias.
+- Derramas y deudas.
+- Componentes compartidos, footer, guards y servicios core.
 
-## Estructura del proyecto
+## Instalacion
 
-```
-frontend/
-├── src/
-│   ├── app/
-│   │   ├── core/              # Servicios core, guards, interceptors
-│   │   │   ├── guards/       # Guards de autenticación
-│   │   │   ├── interceptors/ # HTTP interceptors
-│   │   │   ├── models/       # Modelos e interfaces
-│   │   │   └── services/     # Servicios globales
-│   │   ├── modules/          # Módulos de la aplicación
-│   │   │   ├── auth/         # Módulo de autenticación
-│   │   │   └── dashboard/    # Dashboard principal
-│   │   ├── app.component.ts
-│   │   ├── app.module.ts
-│   │   └── app-routing.module.ts
-│   ├── environments/         # Configuración de entornos
-│   ├── styles.scss          # Estilos globales
-│   └── index.html
-├── angular.json
-├── package.json
-└── tsconfig.json
-```
-
-## Instalación
-
-### Requisitos previos
-- Node.js (v18 o superior)
-- npm o yarn
-- Angular CLI: `npm install -g @angular/cli`
-
-### Pasos
-
-1. Instalar dependencias:
 ```bash
+cd frontend
 npm install
+npm start
 ```
 
-2. Configurar entorno (opcional):
-Editar `src/environments/environment.development.ts` si es necesario:
+Aplicacion local:
+
+```text
+http://localhost:4201
+```
+
+## Configuracion de Entornos
+
+Desarrollo:
+
 ```typescript
 export const environment = {
   production: false,
@@ -67,90 +65,59 @@ export const environment = {
 };
 ```
 
-3. Iniciar el servidor de desarrollo:
+Produccion:
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://proyectoligasbarrialesback.onrender.com/api',
+};
+```
+
+Verificar `src/environments/environment.ts` antes de desplegar.
+
+## Scripts
+
 ```bash
 npm start
-# o
-ng serve --port 4201
+npm run build
+npm test
+npm run test:watch
+npm run lint
 ```
 
-La aplicación estará disponible en `http://localhost:4201`
+## Funcionalidades UI Destacadas
 
-## Scripts disponibles
+- Navegacion protegida por roles.
+- Menus y acciones visibles segun permisos.
+- Filtros avanzados por rol.
+- Autocomplete de jugadores.
+- Filtros en cascada.
+- Formularios reactivos.
+- Generacion de PDFs operativos.
+- Carga y previsualizacion de imagenes.
+- Vistas responsive.
+- Acta impresa equivalente al formato fisico.
+- Libro de caja y pantallas de tesoreria.
 
-```bash
-# Desarrollo
-npm start          # Inicia servidor de desarrollo
-ng serve --open    # Inicia y abre en el navegador
+## Testing
 
-# Producción
-npm run build      # Build de producción
+Los comandos de test existen, pero falta consolidar una cobertura automatizada completa para los modulos actuales.
 
-# Tests
-npm test           # Ejecuta tests unitarios
-npm run test:watch # Tests en modo watch
+## Despliegue
 
-# Linting
-npm run lint       # Ejecuta el linter
-```
+El despliegue documentado usa Netlify.
 
-## Características implementadas
+Ver:
 
-### Módulo de Autenticación
-- ✅ Login con validación de formularios
-- ✅ Autenticación JWT
-- ✅ Interceptor HTTP para agregar token
-- ✅ Guard para proteger rutas
-- ✅ Manejo de sesión en localStorage
-- ✅ Diseño responsive
+- [Despliegue Netlify + Render](../DESPLIEGUE_NETLIFY_RENDER.md)
+- [Forzar rebuild en Netlify](../NETLIFY_REBUILD_INSTRUCTIONS.md)
 
-### Dashboard
-- ✅ Vista protegida (requiere autenticación)
-- ✅ Información del usuario
-- ✅ Cerrar sesión
+## Documentacion Relacionada
 
-## Próximos pasos
+- [Estado actual del proyecto](../ESTADO_ACTUAL_PROYECTO.md)
+- [Mejoras UI y filtros](../MEJORAS_UI_FILTROS.md)
+- [Acta de impresion](./ACTA_IMPRIMIR_IMPLEMENTACION.md)
+- [Acta digital](../ACTA_DIGITAL_IMPLEMENTACION.md)
+- [Upload de imagenes](../UPLOAD_SYSTEM.md)
 
-1. Implementar módulo de registro de usuarios
-2. Crear módulos para ligas, equipos, jugadores
-3. Implementar guards de roles para permisos
-4. Agregar mensajes de notificación (toast/snackbar)
-5. Implementar tests unitarios
-6. Agregar loading states y skeleton loaders
-
-## Uso
-
-### Login
-1. Abrir `http://localhost:4201/login`
-2. Ingresar credenciales (primero crear usuario en el backend)
-3. Serás redirigido al dashboard
-
-### Crear primer usuario (usando el backend)
-```bash
-# Usando curl o Postman
-POST http://localhost:3000/api/auth/register
-Content-Type: application/json
-
-{
-  "nombre": "Admin",
-  "email": "admin@example.com",
-  "password": "123456",
-  "rolId": 1
-}
-```
-
-Nota: Primero debes crear el rol en la base de datos.
-
-## Convenciones de código
-
-- Componentes: `nombre.component.ts`
-- Servicios: `nombre.service.ts`
-- Guards: `nombre.guard.ts`
-- Interceptors: `nombre.interceptor.ts`
-- Modelos: `nombre.model.ts`
-- Usar camelCase para variables y funciones
-- Usar PascalCase para clases e interfaces
-
-### Abril 2026: Equivalencia visual de impresión de acta
-- El acta impresa es ahora idéntica al formato físico: bordes, colores, espacios para firmas y estructura visual.
-- Cambios documentados en ACTA_IMPRIMIR_IMPLEMENTACION.md y ACTA_DIGITAL_IMPLEMENTACION.md.

@@ -9,6 +9,9 @@ import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { CategoriasService } from '../../categorias/categorias.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TablaPosicionesExportService } from '../tabla-posiciones-export.service';
+import { EquiposService } from '../../../core/services/equipos.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-tabla-posiciones',
@@ -41,6 +44,7 @@ export class TablaPosicionesComponent implements OnInit {
   // Para mostrar el nombre del campeonato/categoría en el título de la tabla
   campeonatoNombre = '';
   categoriaNombre = '';
+  ligaNombre = '';
   miEquipoId: number | null = null; // ID del equipo del dirigente autenticado
 
   user$ = this.authService.currentUser$;
@@ -51,6 +55,8 @@ export class TablaPosicionesComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private categoriasService: CategoriasService,
     private authService: AuthService,
+    private tablaExportService: TablaPosicionesExportService,
+    private equiposService: EquiposService,
     private router: Router,
   ) {}
 
@@ -90,6 +96,8 @@ export class TablaPosicionesComponent implements OnInit {
     this.selectedCampeonatoId = null;
     this.selectedCategoriaId = null;
     this.selectedEtapa = '';
+    const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
+    this.ligaNombre = liga?.nombre ?? '';
     if (this.selectedLigaId) this.loadCampeonatos(this.selectedLigaId);
   }
 
@@ -163,6 +171,42 @@ export class TablaPosicionesComponent implements OnInit {
           this.loading = false;
         },
       });
+  }
+
+  descargarPdf(): void {
+    this.tablaExportService.descargarPdf(this.datosExportacion());
+  }
+
+  descargarExcel(): void {
+    this.tablaExportService.descargarExcel(this.datosExportacion());
+  }
+
+  async descargarImagen(): Promise<void> {
+    try {
+      let escudos: Record<number, string | undefined> = {};
+      if (this.selectedLigaId) {
+        try {
+          const equipos = await firstValueFrom(this.equiposService.getByLiga(this.selectedLigaId));
+          escudos = Object.fromEntries(equipos.map((equipo) => [equipo.id, equipo.imagen]));
+        } catch {
+          // La exportación sigue disponible aunque no se puedan recuperar los escudos.
+        }
+      }
+      await this.tablaExportService.descargarImagen(this.datosExportacion(), escudos);
+    } catch {
+      this.errorMessage = 'No se pudo generar la imagen. Intenta nuevamente.';
+    }
+  }
+
+  private datosExportacion() {
+    const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
+    return {
+      ligaNombre: this.ligaNombre || liga?.nombre || 'Liga Barrial',
+      campeonatoNombre: this.campeonatoNombre,
+      categoriaNombre: this.categoriaNombre,
+      etapa: this.etapaLabel,
+      tabla: this.tabla,
+    };
   }
 
   // ─── Helpers de vista ─────────────────────────────────────────────────────

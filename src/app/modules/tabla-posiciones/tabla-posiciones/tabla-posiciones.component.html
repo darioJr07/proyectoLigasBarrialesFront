@@ -95,6 +95,13 @@
   <!-- Tabla de posiciones -->
   <div class="tabla-section" *ngIf="tabla.length > 0">
 
+    <div class="export-actions">
+      <span class="export-label">Descargar tabla</span>
+      <button class="btn btn-social" (click)="descargarImagen()">Imagen para redes</button>
+      <button class="btn btn-outline" (click)="descargarPdf()">PDF</button>
+      <button class="btn btn-outline" (click)="descargarExcel()">Excel</button>
+    </div>
+
     <!-- Título de la tabla -->
     <div class="tabla-titulo">
       <h2>{{ campeonatoNombre }} — {{ categoriaNombre }}</h2>
