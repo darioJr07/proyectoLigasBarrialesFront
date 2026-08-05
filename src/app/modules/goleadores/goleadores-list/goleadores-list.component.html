@@ -83,6 +83,12 @@
 
     <!-- Tabla de goleadores -->
     <div class="tabla-section" *ngIf="goleadores.length > 0">
+      <div class="export-actions">
+        <span class="export-label">Descargar goleadores</span>
+        <button class="btn btn-social" (click)="descargarImagen()">Imagen Top 15</button>
+        <button class="btn btn-outline" (click)="descargarPdf()">PDF</button>
+        <button class="btn btn-outline" (click)="descargarExcel()">Excel</button>
+      </div>
 
       <!-- Título -->
       <div class="tabla-titulo">

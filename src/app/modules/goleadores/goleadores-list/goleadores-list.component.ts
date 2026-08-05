@@ -9,6 +9,7 @@ import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { CategoriasService } from '../../categorias/categorias.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { GoleadoresExportService } from '../goleadores-export.service';
 
 @Component({
   selector: 'app-goleadores-list',
@@ -65,6 +66,7 @@ export class GoleadoresListComponent implements OnInit {
   // Para mostrar en el título
   campeonatoNombre = '';
   categoriaNombre = '';
+  ligaNombre = '';
 
   user$ = this.authService.currentUser$;
 
@@ -74,6 +76,7 @@ export class GoleadoresListComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private categoriasService: CategoriasService,
     private authService: AuthService,
+    private goleadoresExportService: GoleadoresExportService,
   ) {}
 
   logout(): void {
@@ -110,6 +113,8 @@ export class GoleadoresListComponent implements OnInit {
     this.tablaCargada = false;
     this.selectedCampeonatoId = null;
     this.selectedCategoriaId = null;
+    const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
+    this.ligaNombre = liga?.nombre ?? '';
     if (this.selectedLigaId) this.loadCampeonatos(this.selectedLigaId);
   }
 
@@ -170,6 +175,32 @@ export class GoleadoresListComponent implements OnInit {
           this.loading = false;
         },
       });
+  }
+
+  descargarPdf(): void {
+    this.goleadoresExportService.descargarPdf(this.datosExportacion());
+  }
+
+  descargarExcel(): void {
+    this.goleadoresExportService.descargarExcel(this.datosExportacion());
+  }
+
+  async descargarImagen(): Promise<void> {
+    try {
+      await this.goleadoresExportService.descargarImagen(this.datosExportacion());
+    } catch {
+      this.errorMessage = 'No se pudo generar la imagen. Intenta nuevamente.';
+    }
+  }
+
+  private datosExportacion() {
+    const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
+    return {
+      ligaNombre: this.ligaNombre || liga?.nombre || 'Liga Barrial',
+      campeonatoNombre: this.campeonatoNombre,
+      categoriaNombre: this.categoriaNombre,
+      goleadores: this.goleadores,
+    };
   }
 
   // ─── Helpers de vista ─────────────────────────────────────────────────────
