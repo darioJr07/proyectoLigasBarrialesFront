@@ -21,9 +21,9 @@ export class SancionesExportService {
   }
   async descargarImagen(data: SancionesExportables): Promise<void> {
     const logo = data.ligaImagen ? await this.urlADataUrl(data.ligaImagen) : undefined;
-    const activas = data.sanciones
+    const activas = this.ordenarParaImagen(data.sanciones
       .filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? '')))
-      .sort((a, b) => Number(!b.jugador) - Number(!a.jugador));
+    );
     const url = URL.createObjectURL(new Blob([this.svg(data, logo, activas.slice(0, 36))], { type: 'image/svg+xml;charset=utf-8' }));
     try { const imagen = await new Promise<HTMLImageElement>((resolve, reject) => { const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(); el.src = url; }); const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext('2d'); if (!ctx) throw new Error(); ctx.drawImage(imagen, 0, 0); const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png')); if (!png) throw new Error(); const enlace = document.createElement('a'); enlace.href = URL.createObjectURL(png); enlace.download = `${this.nombre(data)}_ACTIVAS.png`; enlace.click(); URL.revokeObjectURL(enlace.href); } finally { URL.revokeObjectURL(url); }
   }
@@ -35,13 +35,58 @@ export class SancionesExportService {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350"><defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#152238"/><stop offset="1" stop-color="#304C70"/></linearGradient></defs><style>.title{font:700 45px Arial;fill:#fff}.league{font:700 24px Arial;fill:#75D1FF}.meta{font:400 21px Arial;fill:#D9E5F2}.th{font:700 16px Arial;fill:#5C6B7A}.num{font:700 20px Arial;fill:#E67E22}.name{font:700 22px Arial;fill:#1A252F}.team{font:400 17px Arial;fill:#52616B}.type{font:600 18px Arial;fill:#34495E}.count{font:700 19px Arial;fill:#152238}.foot{font:400 16px Arial;fill:#6B7A8C}</style><rect width="1080" height="1350" fill="#EAF0F6"/><rect width="1080" height="258" fill="url(#bg)"/><text x="54" y="76" class="league">${this.xml(data.ligaNombre)}</text><text x="54" y="136" class="title">SANCIONES ACTIVAS</text><text x="54" y="183" class="meta">${this.xml(data.campeonatoNombre)} · ${this.xml(data.tipoNombre)}</text><text x="54" y="218" class="meta">Actualizado: ${this.fecha()}</text>${logoSvg}<rect x="54" y="276" width="972" height="996" rx="18" fill="#fff"/><rect x="54" y="276" width="972" height="52" fill="#EDF2F7"/><text x="88" y="309" class="th">#</text><text x="130" y="309" class="th">SANCIONADO / EQUIPO</text><text x="720" y="309" class="th">SANCIÓN</text><text x="974" y="309" class="th" text-anchor="end">CUMPLIMIENTO</text>${items}<text x="54" y="1304" class="foot">${filas.length} sanción(es) activas mostradas · Máximo 12</text><text x="1026" y="1304" class="foot" text-anchor="end">Sistema de Ligas Barriales</text></svg>`;
   }
   private svgLista(data: SancionesExportables, logo: string | undefined, filas: Sancion[]): string {
-    const rows = filas.map((s, i) => { const y = 510 + i * 35, equipo = !s.jugador, texto = equipo ? this.avanceEquipo(s, data) : this.partidosPendientes(s); return `<text x="70" y="${y}" class="r">${equipo ? '' : this.xml(this.cortar(this.persona(s), 24))}</text><text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="700" y="${y}" class="r" text-anchor="middle">${equipo ? '' : (s.numeroCanchaCalificacion ?? '')}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 24))}</text>`; }).join('');
-    const watermark = logo ? `<image href="${logo}" x="270" y="800" width="540" height="540" opacity=".10"/>` : '', pie = logo ? `<image href="${logo}" x="930" y="1810" width="80" height="80"/>` : '';
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#02102f"/><stop offset=".55" stop-color="#06447f"/><stop offset="1" stop-color="#02102f"/></linearGradient></defs><style>.a{font:700 42px Arial;fill:#75a6d5}.b{font:700 50px Arial;fill:#cda412}.m{font:700 20px Arial;fill:white}.h{font:700 18px Arial;fill:white}.r{font:500 18px Arial;fill:white}.foot{font:700 14px Arial;fill:white}</style><rect width="1080" height="1920" fill="url(#g)"/><text x="55" y="150" class="a">JUGADORES Y EQUIPOS</text><text x="55" y="215" class="b">SANCIONADOS</text><text x="55" y="285" class="m">${this.xml(data.campeonatoNombre)} · ${this.fecha()}</text><path d="M45 405H1035L1005 440H75Z" fill="#cda412"/><text x="70" y="430" class="h">NOMBRE</text><text x="380" y="430" class="h">CLUB</text><text x="700" y="430" class="h" text-anchor="middle">NÚMERO</text><text x="1010" y="430" class="h" text-anchor="end">SANCIÓN</text>${watermark}${rows}<text x="55" y="1860" class="foot">COMISION TECNICA LMLT 2026-2028</text>${pie}</svg>`;
+    const rows = filas.map((s, i) => {
+      const y = 510 + i * 35, esSancionGeneral = !s.jugador, texto = esSancionGeneral ? this.avanceEquipo(s, data) : this.partidosPendientes(s);
+      if (esSancionGeneral) return `<text x="70" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 30))}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 42))}</text>`;
+      return `<text x="70" y="${y}" class="r">${this.xml(this.cortar(this.nombreParaImagen(this.persona(s)), 24))}</text><text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="700" y="${y}" class="r" text-anchor="middle">${s.numeroCanchaCalificacion ?? ''}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 24))}</text>`;
+    }).join('');
+    const watermark = logo ? `<image href="${logo}" x="270" y="800" width="540" height="540" opacity=".10"/>` : '', cabecera = logo ? `<circle cx="948" cy="126" r="66" fill="#fff" opacity=".16"/><image href="${logo}" x="898" y="76" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>` : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#02102f"/><stop offset=".55" stop-color="#06447f"/><stop offset="1" stop-color="#02102f"/></linearGradient></defs><style>.a{font:700 42px Arial;fill:#75a6d5}.b{font:700 50px Arial;fill:#cda412}.m{font:700 20px Arial;fill:white}.h{font:700 18px Arial;fill:white}.r{font:500 18px Arial;fill:white}.foot{font:700 14px Arial;fill:white}</style><rect width="1080" height="1920" fill="url(#g)"/><text x="55" y="150" class="a">JUGADORES Y EQUIPOS</text><text x="55" y="215" class="b">SANCIONADOS</text><text x="55" y="285" class="m">${this.xml(data.campeonatoNombre)} · ${this.fecha()}</text>${cabecera}<path d="M45 405H1035L1005 440H75Z" fill="#cda412"/><text x="70" y="430" class="h">NOMBRE</text><text x="380" y="430" class="h">CLUB</text><text x="700" y="430" class="h" text-anchor="middle">NÚMERO</text><text x="1010" y="430" class="h" text-anchor="end">SANCIÓN</text>${watermark}${rows}<text x="55" y="1860" class="foot">COMISION TECNICA LMLT 2026-2028</text></svg>`;
   }
   private persona(s: Sancion): string { return s.jugador?.nombre ?? s.equipo?.nombre ?? 'Sanción general'; }
+  private ordenarParaImagen(sanciones: Sancion[]): Sancion[] {
+    return [...sanciones].sort((a, b) => {
+      const bloqueA = this.bloqueImagen(a), bloqueB = this.bloqueImagen(b);
+      if (bloqueA !== bloqueB) return bloqueA - bloqueB;
+
+      if (bloqueA === 0) {
+        const tipo = (a.tipoSancion?.nombre ?? '').localeCompare(b.tipoSancion?.nombre ?? '', 'es', { sensitivity: 'base' });
+        return tipo || this.fechaMasReciente(a.fechaSancion, b.fechaSancion);
+      }
+      if (bloqueA === 1) {
+        return this.fechaMasReciente(a.fechaFinSuspension, b.fechaFinSuspension)
+          || this.fechaMasReciente(a.fechaSancion, b.fechaSancion);
+      }
+      const pendientesA = Math.max(0, (a.partidosSuspension ?? 0) - (a.partidosCumplidos ?? 0));
+      const pendientesB = Math.max(0, (b.partidosSuspension ?? 0) - (b.partidosCumplidos ?? 0));
+      return pendientesA - pendientesB || this.fechaMasReciente(a.fechaSancion, b.fechaSancion);
+    });
+  }
+  private bloqueImagen(sancion: Sancion): number {
+    if (!sancion.jugador) return 0;
+    return (sancion.partidosSuspension ?? 0) === 0 && !!sancion.fechaFinSuspension ? 1 : 2;
+  }
+  private fechaMasReciente(a?: string, b?: string): number {
+    return this.valorFecha(b) - this.valorFecha(a);
+  }
+  private valorFecha(fecha?: string): number { return fecha ? (Date.parse(fecha) || 0) : 0; }
+  private nombreParaImagen(nombre: string): string {
+    const partes = nombre.trim().split(/\s+/).filter(Boolean);
+    if (partes.length <= 2) return nombre;
+    if (partes.length === 3) return `${partes[0]} ${partes[2]}`;
+    return `${partes[0]} ${partes[partes.length - 2]} ${partes[partes.length - 1][0]}.`;
+  }
   private cumplimiento(s: Sancion): string { return s.partidosSuspension > 0 ? `${s.partidosCumplidos ?? 0}/${s.partidosSuspension}` : s.fechaFinSuspension ? 'Por fecha' : 'Activa'; }
-  private partidosPendientes(s: Sancion): string { const pendientes = Math.max(0, (s.partidosSuspension ?? 0) - (s.partidosCumplidos ?? 0)); return `${pendientes} PARTIDO${pendientes === 1 ? '' : 'S'}`; }
+  private partidosPendientes(s: Sancion): string {
+    if ((s.partidosSuspension ?? 0) === 0 && s.fechaFinSuspension) return `HASTA ${this.formatearFecha(s.fechaFinSuspension)}`;
+    const pendientes = Math.max(0, (s.partidosSuspension ?? 0) - (s.partidosCumplidos ?? 0));
+    return `${pendientes} PARTIDO${pendientes === 1 ? '' : 'S'}`;
+  }
+  private formatearFecha(fecha: string): string {
+    const valor = fecha.includes('T') ? fecha.slice(0, 10) : fecha;
+    const [anio, mes, dia] = valor.split('-');
+    return anio && mes && dia ? `${dia}/${mes}/${anio}` : fecha;
+  }
   private avanceEquipo(s: Sancion, data: SancionesExportables): string { const regla = data.reglas.find(r => r.tipoSancionId === s.tipoSancionId && r.acumulacionActiva && r.acumulacionCantidad); const total = data.sanciones.filter(x => x.equipoId === s.equipoId && x.tipoSancionId === s.tipoSancionId && x.activo).length; return regla ? `${s.tipoSancion?.nombre ?? 'SANCIÓN'}: ${total}/${regla.acumulacionCantidad}` : (s.descripcion?.trim() || s.tipoSancion?.nombre || 'SANCIÓN'); }
   private estado(s: Sancion): string { return !s.activo ? 'Anulada' : s.suspensionActiva ? 'Suspensión activa' : 'Sin suspensión activa'; }
   private fecha(): string { return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date()); }
