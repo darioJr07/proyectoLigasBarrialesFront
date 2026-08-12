@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
-import { SancionesService } from '../sanciones.service';
+import { HistorialCumplimientoSancion, PropuestaReparacionSancion, SancionesService } from '../sanciones.service';
+import { SancionesExportService } from '../sanciones-export.service';
 import { Sancion, FiltrosSanciones, TipoSancion, ReglaSancion, ApelarSancionDto } from '../sancion.model';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -93,6 +94,16 @@ export class SancionesListComponent implements OnInit {
   cargando = false;
   error = '';
   exito = '';
+  propuestasReparacion: PropuestaReparacionSancion[] = [];
+  modalReparacionAbierto = false;
+  cargandoReparacion = false;
+  aplicandoReparacion = false;
+  errorReparacion = '';
+  historialCumplimiento: HistorialCumplimientoSancion | null = null;
+  sancionHistorial: Sancion | null = null;
+  modalHistorialAbierto = false;
+  cargandoHistorial = false;
+  errorHistorial = '';
 
   // ── Apelación ────────────────────────────────────────────────────────────────
   sancionApelando: Sancion | null = null;
@@ -197,9 +208,70 @@ export class SancionesListComponent implements OnInit {
     private readonly ligasService: LigasService,
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly sancionesExportService: SancionesExportService,
     public readonly permissions: PermissionsService,
   ) {
     this.user$ = this.authService.currentUser$;
+  }
+
+  get sancionesActivasExportables(): Sancion[] {
+    return this.sancionesFiltradas.filter(s => s.activo && (s.suspensionActiva || s.tipoSancion?.aplicaA === 'equipo'));
+  }
+
+  descargarPdf(): void { this.sancionesExportService.descargarPdf(this.datosExportacion()); }
+  descargarExcel(): void { this.sancionesExportService.descargarExcel(this.datosExportacion()); }
+  async descargarImagen(): Promise<void> {
+    try { await this.sancionesExportService.descargarImagen(this.datosExportacion()); }
+    catch { this.error = 'No se pudo generar la imagen de sanciones. Intenta nuevamente.'; }
+  }
+
+  private datosExportacion() {
+    const liga = this.ligas.find(item => item.id === this.filtroLigaId);
+    const campeonato = this.campeonatos.find(item => item.id === this.filtroCampeonatoId);
+    const tipo = this.tipos.find(item => item.id === this.filtroTipoId);
+    const usuario: any = this.authService.currentUserValue;
+    return {
+      ligaNombre: liga?.nombre ?? usuario?.liga?.nombre ?? 'Liga Barrial',
+      ligaImagen: liga?.imagen ?? usuario?.liga?.imagen,
+      campeonatoNombre: campeonato?.nombre ?? 'Todos los campeonatos',
+      tipoNombre: tipo?.nombre ?? 'Todos los tipos',
+      sanciones: this.sancionesFiltradas,
+      reglas: this.reglas,
+    };
+  }
+
+  abrirReparacion(): void {
+    if (!this.filtroCampeonatoId) { this.error = 'Selecciona un campeonato antes de revisar reparaciones.'; return; }
+    this.cargandoReparacion = true; this.errorReparacion = ''; this.propuestasReparacion = [];
+    this.sancionesService.previsualizarReparacion(this.filtroCampeonatoId).subscribe({
+      next: (respuesta) => { this.propuestasReparacion = respuesta.propuestas; this.modalReparacionAbierto = true; this.cargandoReparacion = false; },
+      error: () => { this.error = 'No se pudo generar la previsualización de reparación.'; this.cargandoReparacion = false; },
+    });
+  }
+
+  cerrarReparacion(): void { if (!this.aplicandoReparacion) this.modalReparacionAbierto = false; }
+
+  abrirHistorialCumplimiento(sancion: Sancion): void {
+    this.sancionHistorial = sancion;
+    this.historialCumplimiento = null;
+    this.errorHistorial = '';
+    this.cargandoHistorial = true;
+    this.modalHistorialAbierto = true;
+    this.sancionesService.obtenerHistorialCumplimiento(sancion.id).subscribe({
+      next: (historial) => { this.historialCumplimiento = historial; this.cargandoHistorial = false; },
+      error: () => { this.errorHistorial = 'No se pudo cargar el historial de esta sanción.'; this.cargandoHistorial = false; },
+    });
+  }
+
+  cerrarHistorialCumplimiento(): void { this.modalHistorialAbierto = false; }
+
+  aplicarReparacion(): void {
+    if (!this.propuestasReparacion.length) return;
+    this.aplicandoReparacion = true; this.errorReparacion = '';
+    this.sancionesService.aplicarReparacion(this.propuestasReparacion.map(p => ({ sancionId: p.sancionId, partidoId: p.partidoId }))).subscribe({
+      next: (respuesta) => { this.aplicandoReparacion = false; this.modalReparacionAbierto = false; this.exito = `Reparación completada: ${respuesta.totalAplicadas} aplicada(s), ${respuesta.totalOmitidas} omitida(s).`; this.aplicarFiltros(); },
+      error: () => { this.aplicandoReparacion = false; this.errorReparacion = 'No se pudo aplicar la reparación.'; },
+    });
   }
 
   logout(): void {

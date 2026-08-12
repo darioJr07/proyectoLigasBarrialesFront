@@ -14,6 +14,20 @@ import {
   ApelarSancionDto,
 } from './sancion.model';
 
+export interface PropuestaReparacionSancion {
+  sancionId: number; jugador: string; equipo: string; partidoId: number;
+  jornada: number; fechaPartido: string | null; estadoPlanilla: string;
+  partidosCumplidosActual: number; partidosSuspension: number;
+}
+
+export interface HistorialCumplimientoSancion {
+  sancionId: number;
+  partidosCumplidos: number;
+  partidosSuspension: number;
+  cumplidos: { partidoId: number; jornada: number | null; fechaPartido: string | null; equipos: string; estadoPlanilla: string | null; registradoEn: string }[];
+  excluidos: { partidoId: number; jornada: number | null; fechaPartido: string | null; equipos: string; motivo: string; registradoEn: string }[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -123,6 +137,18 @@ export class SancionesService {
    */
   apelarSancion(id: number, dto: ApelarSancionDto): Observable<Sancion> {
     return this.http.patch<Sancion>(`${this.apiUrl}/${id}/apelar`, dto);
+  }
+
+  previsualizarReparacion(campeonatoId: number): Observable<{ totalPropuestas: number; propuestas: PropuestaReparacionSancion[] }> {
+    return this.http.get<{ totalPropuestas: number; propuestas: PropuestaReparacionSancion[] }>(`${this.apiUrl}/reparacion/previsualizar`, { params: new HttpParams().set('campeonatoId', campeonatoId) });
+  }
+
+  aplicarReparacion(propuestas: { sancionId: number; partidoId: number }[]): Observable<{ totalAplicadas: number; totalOmitidas: number }> {
+    return this.http.post<{ totalAplicadas: number; totalOmitidas: number }>(`${this.apiUrl}/reparacion/aplicar`, { propuestas });
+  }
+
+  obtenerHistorialCumplimiento(sancionId: number): Observable<HistorialCumplimientoSancion> {
+    return this.http.get<HistorialCumplimientoSancion>(`${this.apiUrl}/${sancionId}/historial-cumplimiento`);
   }
 
   // ─── Cobro de multas en vocalía ───────────────────────────────────────────

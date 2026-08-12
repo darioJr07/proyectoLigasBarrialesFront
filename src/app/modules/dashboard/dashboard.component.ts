@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { AuthService } from '@core/services/auth.service';
 import { PermissionsService } from '@core/services/permissions.service';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,12 +12,16 @@ import { Router } from '@angular/router';
 })
 export class DashboardComponent {
   user$ = this.authService.currentUser$;
+  resumen: any = null;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    public permissions: PermissionsService
-  ) {}
+    public permissions: PermissionsService,
+    private http: HttpClient,
+  ) { this.cargarResumen(); }
+
+  private cargarResumen(): void { this.http.get<any>(`${environment.apiUrl}/dashboard/resumen`).subscribe({ next: r => this.resumen = r, error: () => this.resumen = null }); }
 
   logout(): void {
     this.authService.logout();

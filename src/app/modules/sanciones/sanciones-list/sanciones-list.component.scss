@@ -793,6 +793,19 @@
   font-size: 0.9rem;
 }
 
+.export-actions { display: flex; align-items: center; gap: 0.65rem; padding: 0.85rem 1.1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-bottom: 0; border-radius: 10px 10px 0 0; }
+.export-label { margin-right: auto; color: #5d6d7e; font-size: 0.85rem; font-weight: 600; }
+.btn-export { border-radius: 6px; padding: 0.45rem 0.8rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+.btn-social { background: #1d75b8; color: #fff; border: 1px solid #1d75b8; }
+.btn-outline { background: #fff; color: #2c3e50; border: 1px solid #cbd5e1; }
+
+.modal-reparacion { max-width: 900px; }
+.modal-historial { max-width: 850px; }
+.btn-historial { border: 1px solid #a0aec0; background: #fff; color: #4a5568; border-radius: 4px; padding: 0.35rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
+.resumen-historial { color: #2d3748; margin-bottom: 1.25rem; }
+.tabla-reparacion { width: 100%; border-collapse: collapse; font-size: 0.88rem; th, td { padding: 0.65rem; border-bottom: 1px solid #e2e8f0; text-align: left; } th { background: #edf2f7; color: #4a5568; } }
+.empty-reparacion { padding: 1rem; color: #718096; text-align: center; }
+
 @media (max-width: 600px) {
   .paginator-container { flex-direction: column; align-items: center; text-align: center; }
 }

@@ -197,6 +197,7 @@ export class GoleadoresListComponent implements OnInit {
     const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
     return {
       ligaNombre: this.ligaNombre || liga?.nombre || 'Liga Barrial',
+      ligaImagen: liga?.imagen,
       campeonatoNombre: this.campeonatoNombre,
       categoriaNombre: this.categoriaNombre,
       goleadores: this.goleadores,

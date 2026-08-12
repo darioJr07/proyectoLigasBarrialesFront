@@ -100,6 +100,15 @@
   margin-top: 2rem;
 }
 
+.dashboard-section { margin-top: 2rem; }
+.dashboard-section > h3 { margin: 0; color: #2c3e50; font-size: 1.25rem; }
+.dashboard-section > p { margin: 0.35rem 0 0; color: #718096; font-size: 0.9rem; }
+.indicadores { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: #f8fafc; }
+.indicadores h3 { margin: 0 0 0.8rem; color: #334155; font-size: 1rem; }
+.indicadores-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; }
+.indicador { padding: 1rem; border-radius: 7px; background: #fff; border: 1px solid #dbe5ef; text-decoration: none; color: #334155; display: flex; flex-direction: column; gap: 0.25rem; }
+.indicador strong { font-size: 1.7rem; color: #2563eb; }.indicador span { font-size: 0.85rem; }
+
 .action-card {
   background: white;
   border: 2px solid #ecf0f1;

@@ -97,6 +97,15 @@
 
   <!-- Contenido principal -->
   <div class="content-area">
+    <div class="export-actions" *ngIf="selectedCampeonatoId && partidosFiltrados.length">
+      <span>Descargar partidos filtrados</span><button (click)="exportarPdf()">PDF</button><button (click)="exportarExcel()">Excel</button><button *ngIf="puedeImagenJornada" (click)="exportarImagen()">Imagen de jornada</button>
+    </div>
+    <div class="filtros-rapidos" *ngIf="selectedCampeonatoId && !loading">
+      <button [class.active]="filtroRapidoEstado === 'todos'" (click)="seleccionarFiltroRapido('todos')">Todos ({{ partidos.length }})</button>
+      <button [class.active]="filtroRapidoEstado === 'pendientes'" (click)="seleccionarFiltroRapido('pendientes')">Pendientes ({{ contarEstado('pendientes') }})</button>
+      <button [class.active]="filtroRapidoEstado === 'jugado'" (click)="seleccionarFiltroRapido('jugado')">Jugados ({{ contarEstado('jugado') }})</button>
+      <button [class.active]="filtroRapidoEstado === 'suspendido'" (click)="seleccionarFiltroRapido('suspendido')">Suspendidos ({{ contarEstado('suspendido') }})</button>
+    </div>
 
     <!-- Cargando -->
     <div *ngIf="loading" class="loading-state">

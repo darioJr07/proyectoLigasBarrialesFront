@@ -1,88 +1,33 @@
 <div class="page-container">
-  <header class="page-header">
-    <h1>Sistema de Ligas Barriales</h1>
-    <div class="user-info" *ngIf="user$ | async as user">
-      <span>{{ user.nombre }}</span>
-      <span class="user-role">({{ user.rol.nombre }})</span>
-      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
-    </div>
-  </header>
-
+  <header class="page-header"><h1>Sistema de Ligas Barriales</h1><div class="user-info" *ngIf="user$ | async as user"><span>{{ user.nombre }}</span><span class="user-role">({{ user.rol.nombre }})</span><button class="btn-logout" (click)="logout()">Cerrar sesión</button></div></header>
   <app-main-nav></app-main-nav>
-
-  <main class="dashboard-content">
-    <div class="welcome-card">
-      <h2>¡Bienvenido al Sistema!</h2>
-      <p>Esta es la página principal del dashboard.</p>
-      <p>Gestiona las ligas barriales de tu ciudad.</p>
-      
-      <div class="dashboard-actions">
-        <a *ngIf="canAccessLigas()" routerLink="/ligas" class="action-card">
-          <span class="action-icon">🏆</span>
-          <h3>Gestión de Ligas</h3>
-          <p>Crear, editar y administrar ligas</p>
-        </a>
-        
-        <a *ngIf="canAccessEquipos()" routerLink="/equipos" class="action-card">
-          <span class="action-icon">⚽</span>
-          <h3>Equipos</h3>
-          <p>Administrar equipos de las ligas</p>
-        </a>
-        
-        <a *ngIf="canAccessJugadores()" routerLink="/jugadores" class="action-card">
-          <span class="action-icon">👥</span>
-          <h3>Jugadores</h3>
-          <p>Gestionar jugadores de los equipos</p>
-        </a>
-        
-        <a *ngIf="canAccessCampeonatos()" routerLink="/campeonatos" class="action-card">
-          <span class="action-icon">🏅</span>
-          <h3>Campeonatos</h3>
-          <p>Gestionar torneos y competiciones</p>
-        </a>
-        
-        <a *ngIf="canAccessInscripciones()" routerLink="/inscripciones" class="action-card">
-          <span class="action-icon">📝</span>
-          <h3>Inscripciones</h3>
-          <p>Administrar inscripciones de equipos</p>
-        </a>
-        
-        <a *ngIf="canAccessJugadorCampeonatos()" routerLink="/jugador-campeonatos" class="action-card">
-          <span class="action-icon">✅</span>
-          <h3>Habilitación de Jugadores</h3>
-          <p>Gestionar jugadores habilitados para campeonatos</p>
-        </a>
-        
-        <a *ngIf="canAccessTransferencias()" routerLink="/transferencias" class="action-card">
-          <span class="action-icon">🔄</span>
-          <h3>Transferencias</h3>
-          <p>Gestionar transferencias de jugadores entre equipos</p>
-        </a>
-
-        <a *ngIf="canAccessPartidos()" routerLink="/partidos" class="action-card">
-          <span class="action-icon">📅</span>
-          <h3>Partidos</h3>
-          <p>Ver fixture y registrar resultados de los partidos</p>
-        </a>
-
-        <a *ngIf="permissions.canAccessTablaPosiciones()" routerLink="/tabla-posiciones" class="action-card">
-          <span class="action-icon">🏆</span>
-          <h3>Tabla de Posiciones</h3>
-          <p>Clasificación de equipos por categoría y etapa</p>
-        </a>
-        
-        <a *ngIf="canAccessUsuarios()" routerLink="/usuarios" class="action-card">
-          <span class="action-icon">👤</span>
-          <h3>Usuarios</h3>
-          <p>Administrar usuarios del sistema</p>
-        </a>
-
-        <a *ngIf="canAccessTesoreria()" routerLink="/tesoreria" class="action-card">
-          <span class="action-icon">💰</span>
-          <h3>Tesorería</h3>
-          <p>Cobros de vocalía, movimientos e ingresos de la liga</p>
-        </a>
-      </div>
-    </div>
-  </main>
+  <main class="dashboard-content"><div class="welcome-card">
+    <h2>Bienvenido al Sistema</h2><p>Accesos rápidos organizados según las funciones disponibles para tu rol.</p>
+    <section class="indicadores" *ngIf="resumen?.campeonato"><h3>{{ resumen.campeonato.nombre }}</h3><div class="indicadores-grid">
+      <a *ngIf="canAccessPartidos()" routerLink="/partidos" class="indicador"><strong>{{ resumen.partidosPendientes }}</strong><span>Partidos pendientes</span></a>
+      <a *ngIf="permissions.canAccessSanciones()" routerLink="/sanciones" class="indicador"><strong>{{ resumen.sancionesActivas }}</strong><span>Sanciones activas</span></a>
+      <a *ngIf="permissions.canAccessTribunal()" routerLink="/tribunal-penas" class="indicador"><strong>{{ resumen.incidenciasPendientes }}</strong><span>Incidencias pendientes</span></a>
+      <a *ngIf="canAccessTesoreria()" routerLink="/tesoreria" class="indicador"><strong>{{ resumen.cobrosPendientes }}</strong><span>Cobros pendientes</span></a>
+    </div></section>
+    <section class="dashboard-section" *ngIf="canAccessPartidos() || permissions.canAccessSanciones()"><h3>Operación deportiva</h3><p>Partidos, disciplina y resultados.</p><div class="dashboard-actions">
+      <a *ngIf="canAccessPartidos()" routerLink="/partidos" class="action-card"><span class="action-icon">📅</span><h3>Partidos</h3><p>Fixture, actas y resultados</p></a>
+      <a *ngIf="permissions.canAccessSanciones()" routerLink="/sanciones" class="action-card"><span class="action-icon">⚖️</span><h3>Sanciones</h3><p>Disciplina e historial</p></a>
+      <a *ngIf="permissions.canAccessTribunal()" routerLink="/tribunal-penas" class="action-card"><span class="action-icon">🏛️</span><h3>Tribunal</h3><p>Resoluciones y apelaciones</p></a>
+      <a *ngIf="permissions.canAccessTablaPosiciones()" routerLink="/tabla-posiciones" class="action-card"><span class="action-icon">🏆</span><h3>Tabla de posiciones</h3><p>Clasificación de equipos</p></a>
+      <a *ngIf="permissions.canAccessGoleadores()" routerLink="/goleadores" class="action-card"><span class="action-icon">⚽</span><h3>Goleadores</h3><p>Estadísticas de jugadores</p></a>
+    </div></section>
+    <section class="dashboard-section" *ngIf="canAccessEquipos() || canAccessCampeonatos()"><h3>Gestión deportiva</h3><p>Equipos, jugadores y organización de campeonatos.</p><div class="dashboard-actions">
+      <a *ngIf="canAccessLigas()" routerLink="/ligas" class="action-card"><span class="action-icon">🏆</span><h3>Gestión de ligas</h3><p>Administrar ligas</p></a>
+      <a *ngIf="canAccessCampeonatos()" routerLink="/campeonatos" class="action-card"><span class="action-icon">🏅</span><h3>Campeonatos</h3><p>Torneos y competiciones</p></a>
+      <a *ngIf="canAccessEquipos()" routerLink="/equipos" class="action-card"><span class="action-icon">⚽</span><h3>Equipos</h3><p>Administrar equipos</p></a>
+      <a *ngIf="canAccessJugadores()" routerLink="/jugadores" class="action-card"><span class="action-icon">👥</span><h3>Jugadores</h3><p>Gestión de jugadores</p></a>
+      <a *ngIf="canAccessInscripciones()" routerLink="/inscripciones" class="action-card"><span class="action-icon">📝</span><h3>Inscripciones</h3><p>Inscripción de equipos</p></a>
+      <a *ngIf="canAccessJugadorCampeonatos()" routerLink="/jugador-campeonatos" class="action-card"><span class="action-icon">✅</span><h3>Habilitaciones</h3><p>Jugadores por campeonato</p></a>
+      <a *ngIf="canAccessTransferencias()" routerLink="/transferencias" class="action-card"><span class="action-icon">🔄</span><h3>Transferencias</h3><p>Movimientos entre equipos</p></a>
+    </div></section>
+    <section class="dashboard-section" *ngIf="canAccessTesoreria() || canAccessUsuarios()"><h3>Administración y control</h3><p>Finanzas, usuarios y configuración.</p><div class="dashboard-actions">
+      <a *ngIf="canAccessTesoreria()" routerLink="/tesoreria" class="action-card"><span class="action-icon">💰</span><h3>Tesorería</h3><p>Cobros y movimientos</p></a>
+      <a *ngIf="canAccessUsuarios()" routerLink="/usuarios" class="action-card"><span class="action-icon">👤</span><h3>Usuarios</h3><p>Administrar usuarios</p></a>
+    </div></section>
+  </div></main>
 </div>

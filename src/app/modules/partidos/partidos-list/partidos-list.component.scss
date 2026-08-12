@@ -4,6 +4,11 @@
   margin: 0;
 }
 
+.filtros-rapidos { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem; }
+.export-actions { display:flex; gap:.6rem; align-items:center; margin-bottom:1rem; padding:.8rem; background:#f8fafc; border:1px solid #dbe5ef; }.export-actions span{margin-right:auto;font-weight:600;color:#475569}.export-actions button{padding:.45rem .8rem;border:1px solid #cbd5e1;background:#fff;border-radius:5px;cursor:pointer}
+.filtros-rapidos button { background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 0.45rem 0.85rem; color: #475569; cursor: pointer; }
+.filtros-rapidos button.active { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+
 .page-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

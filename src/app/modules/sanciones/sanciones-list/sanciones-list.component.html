@@ -21,6 +21,7 @@
         <a routerLink="/sanciones/nueva" class="btn-primary-action">+ Registrar sanción</a>
         <a *ngIf="permissions.canConfigureSanciones()" routerLink="/sanciones/tipos" class="btn-secondary-action">⚙️ Tipos</a>
         <a *ngIf="permissions.canConfigureSanciones()" routerLink="/sanciones/reglas" class="btn-secondary-action">📋 Reglas</a>
+        <button *ngIf="permissions.canConfigureSanciones()" class="btn-secondary-action" (click)="abrirReparacion()" [disabled]="cargandoReparacion">{{ cargandoReparacion ? 'Revisando...' : '🛠️ Reparar contadores' }}</button>
       </div>
     </div>
 
@@ -171,6 +172,14 @@
       <p>🔍 No se encontraron sanciones con la búsqueda aplicada.</p>
     </div>
 
+    <!-- Exportaciones: PDF y Excel incluyen todas las sanciones filtradas; imagen solo activas -->
+    <div class="export-actions" *ngIf="!cargando && sancionesFiltradas.length > 0">
+      <span class="export-label">Descargar según los filtros actuales</span>
+      <button class="btn-export btn-social" *ngIf="sancionesActivasExportables.length" (click)="descargarImagen()">Imagen activas</button>
+      <button class="btn-export btn-outline" (click)="descargarPdf()">PDF</button>
+      <button class="btn-export btn-outline" (click)="descargarExcel()">Excel</button>
+    </div>
+
     <!-- Lista -->
     <div class="sanciones-grid" *ngIf="!cargando && sancionesFiltradas.length > 0">
       <div class="sancion-card" *ngFor="let s of sancionesFiltradasPaginadas"
@@ -231,6 +240,7 @@
                 [style.width.%]="(s.partidosCumplidos / s.partidosSuspension) * 100"></div>
             </div>
           </div>
+          <button class="btn-historial" *ngIf="s.jugador && s.partidosSuspension > 0" (click)="abrirHistorialCumplimiento(s)">Ver historial</button>
 
           <span class="fecha" *ngIf="s.fechaSancion">{{ s.fechaSancion | date:'dd/MM/yyyy':'UTC' }}</span>
 
@@ -283,6 +293,45 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Historial de solo lectura de una suspensión por partidos -->
+<div class="modal-overlay" *ngIf="modalHistorialAbierto" (click)="cerrarHistorialCumplimiento()">
+  <div class="modal-panel modal-historial" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h2>Historial de suspensión</h2><button class="modal-close" (click)="cerrarHistorialCumplimiento()">✕</button></div>
+    <div class="modal-body">
+      <p *ngIf="sancionHistorial"><strong>{{ sancionadoLabel(sancionHistorial) }}</strong><span *ngIf="sancionHistorial.equipo"> · {{ sancionHistorial.equipo.nombre }}</span></p>
+      <p *ngIf="cargandoHistorial">Cargando historial...</p>
+      <div class="alert alert-error" *ngIf="errorHistorial">{{ errorHistorial }}</div>
+      <ng-container *ngIf="historialCumplimiento">
+        <p class="resumen-historial"><strong>{{ historialCumplimiento.partidosCumplidos }}/{{ historialCumplimiento.partidosSuspension }}</strong> partidos cumplidos.</p>
+        <h3>Partidos que sí cuentan</h3>
+        <p *ngIf="!historialCumplimiento.cumplidos.length" class="empty-reparacion">Aún no hay partidos contabilizados.</p>
+        <table *ngIf="historialCumplimiento.cumplidos.length" class="tabla-reparacion"><thead><tr><th>Partido</th><th>Fecha</th><th>Plantilla</th></tr></thead><tbody><tr *ngFor="let p of historialCumplimiento.cumplidos"><td>J{{ p.jornada ?? '—' }} · {{ p.equipos }}</td><td>{{ p.fechaPartido | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ p.estadoPlanilla ?? 'No consta' }}</td></tr></tbody></table>
+        <h3>Partidos excluidos</h3>
+        <p *ngIf="!historialCumplimiento.excluidos.length" class="empty-reparacion">No hay partidos excluidos.</p>
+        <table *ngIf="historialCumplimiento.excluidos.length" class="tabla-reparacion"><thead><tr><th>Partido</th><th>Fecha</th><th>Motivo</th></tr></thead><tbody><tr *ngFor="let p of historialCumplimiento.excluidos"><td>J{{ p.jornada ?? '—' }} · {{ p.equipos }}</td><td>{{ p.fechaPartido | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ p.motivo }}</td></tr></tbody></table>
+      </ng-container>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" (click)="cerrarHistorialCumplimiento()">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- Previsualización de reparación: no modifica datos hasta confirmar -->
+<div class="modal-overlay" *ngIf="modalReparacionAbierto" (click)="cerrarReparacion()">
+  <div class="modal-panel modal-reparacion" (click)="$event.stopPropagation()">
+    <div class="modal-header"><h2>🛠️ Reparación de partidos cumplidos</h2><button class="modal-close" (click)="cerrarReparacion()">✕</button></div>
+    <div class="modal-body">
+      <p>Revisa las propuestas antes de aplicarlas. Solo se contarán partidos elegibles que no estén auditados ni excluidos.</p>
+      <div class="alert alert-error" *ngIf="errorReparacion">{{ errorReparacion }}</div>
+      <p *ngIf="propuestasReparacion.length === 0" class="empty-reparacion">No hay contadores pendientes de reparar.</p>
+      <table *ngIf="propuestasReparacion.length" class="tabla-reparacion">
+        <thead><tr><th>Jugador</th><th>Equipo</th><th>Partido</th><th>Plantilla</th><th>Actual</th></tr></thead>
+        <tbody><tr *ngFor="let p of propuestasReparacion"><td>{{ p.jugador }}</td><td>{{ p.equipo }}</td><td>Jornada {{ p.jornada }} · #{{ p.partidoId }}</td><td>{{ p.estadoPlanilla }}</td><td>{{ p.partidosCumplidosActual }}/{{ p.partidosSuspension }}</td></tr></tbody>
+      </table>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" (click)="cerrarReparacion()" [disabled]="aplicandoReparacion">Cancelar</button><button class="btn-primary" (click)="aplicarReparacion()" [disabled]="!propuestasReparacion.length || aplicandoReparacion">{{ aplicandoReparacion ? 'Aplicando...' : 'Confirmar reparación' }}</button></div>
   </div>
 </div>
 

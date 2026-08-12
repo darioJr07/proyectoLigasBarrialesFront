@@ -12,6 +12,7 @@ import { JugadorCampeonatosService } from '../../jugador-campeonatos/jugador-cam
 import { GoleadoresService } from '../../goleadores/goleadores.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 import { Partido, RegistrarResultadoDto, AutorGolDto } from '../partido.model';
+import { PartidosExportService } from '../partidos-export.service';
 
 @Component({
   selector: 'app-partidos-list',
@@ -39,6 +40,7 @@ export class PartidosListComponent implements OnInit {
   selectedCategoriaId: number | null = null;
   selectedEtapa = '';
   selectedJornada: number | null = null;
+  filtroRapidoEstado: 'todos' | 'pendientes' | 'jugado' | 'suspendido' = 'todos';
 
   // Paginación de jornadas
   currentJornadaPage = 1;
@@ -66,8 +68,15 @@ export class PartidosListComponent implements OnInit {
     public permissions: PermissionsService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private exportService: PartidosExportService,
   ) {}
+
+  get puedeImagenJornada(): boolean { return !!(this.selectedCampeonatoId && this.selectedCategoriaId && this.selectedEtapa && this.selectedJornada); }
+  exportarPdf(): void { this.exportService.pdf(this.datosExport()); }
+  exportarExcel(): void { this.exportService.excel(this.datosExport()); }
+  async exportarImagen(): Promise<void> { try { await this.exportService.imagen(this.datosExport()); } catch { this.errorMessage = 'No se pudo generar la imagen.'; } }
+  private datosExport() { return { liga: this.ligas.find(l => l.id === this.selectedLigaId)?.nombre ?? 'Liga Barrial', campeonato: this.campeonatos.find(c => c.id === this.selectedCampeonatoId)?.nombre ?? '', categoria: this.categorias.find(c => c.id === this.selectedCategoriaId)?.nombre ?? 'Todas', etapa: this.selectedEtapa || 'Todas', jornada: this.selectedJornada, partidos: this.partidosFiltrados }; }
 
   ngOnInit(): void {
     this.loadLigas();
@@ -168,9 +177,14 @@ export class PartidosListComponent implements OnInit {
     return this.partidos.filter((p) => {
       if (this.selectedEtapa && p.etapa !== this.selectedEtapa) return false;
       if (this.selectedJornada && p.jornada !== this.selectedJornada) return false;
+      if (this.filtroRapidoEstado === 'pendientes' && !['programado', 'suspendido'].includes(p.estado)) return false;
+      if (this.filtroRapidoEstado === 'jugado' && p.estado !== 'jugado') return false;
+      if (this.filtroRapidoEstado === 'suspendido' && p.estado !== 'suspendido') return false;
       return true;
     });
   }
+  contarEstado(estado: 'pendientes' | 'jugado' | 'suspendido'): number { return this.partidos.filter(p => estado === 'pendientes' ? ['programado', 'suspendido'].includes(p.estado) : p.estado === estado).length; }
+  seleccionarFiltroRapido(filtro: 'todos' | 'pendientes' | 'jugado' | 'suspendido'): void { this.filtroRapidoEstado = filtro; this.currentJornadaPage = 1; }
 
   get partidosPorJornada(): Map<number, Partido[]> {
     const mapa = new Map<number, Partido[]>();
