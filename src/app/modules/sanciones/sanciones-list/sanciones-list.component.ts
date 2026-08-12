@@ -215,7 +215,7 @@ export class SancionesListComponent implements OnInit {
   }
 
   get sancionesActivasExportables(): Sancion[] {
-    return this.sancionesFiltradas.filter(s => s.activo && (s.suspensionActiva || s.tipoSancion?.aplicaA === 'equipo'));
+    return this.sancionesFiltradas.filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? '')));
   }
 
   descargarPdf(): void { this.sancionesExportService.descargarPdf(this.datosExportacion()); }
@@ -226,7 +226,7 @@ export class SancionesListComponent implements OnInit {
   }
 
   private datosExportacion() {
-    const liga = this.ligas.find(item => item.id === this.filtroLigaId);
+    const liga = this.ligas.find(item => item.id === (this.filtroLigaId ?? this.ligaIdEfectivo));
     const campeonato = this.campeonatos.find(item => item.id === this.filtroCampeonatoId);
     const tipo = this.tipos.find(item => item.id === this.filtroTipoId);
     const usuario: any = this.authService.currentUserValue;
@@ -283,6 +283,8 @@ export class SancionesListComponent implements OnInit {
     if (this.isMaster) {
       this.ligasService.getAll().subscribe({ next: (l) => (this.ligas = l) });
     } else {
+      const ligaId = this.ligaIdEfectivo;
+      if (ligaId) this.ligasService.getById(ligaId).subscribe({ next: (liga) => (this.ligas = [liga]) });
       this.cargarTipos();
       this.cargarCampeonatos();
       this.cargarSanciones();

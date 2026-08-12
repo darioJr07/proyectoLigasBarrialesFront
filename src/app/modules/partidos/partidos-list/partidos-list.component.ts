@@ -72,11 +72,11 @@ export class PartidosListComponent implements OnInit {
     private exportService: PartidosExportService,
   ) {}
 
-  get puedeImagenJornada(): boolean { return !!(this.selectedCampeonatoId && this.selectedCategoriaId && this.selectedEtapa && this.selectedJornada); }
+  get puedeImagenJornada(): boolean { return !!(this.selectedCampeonatoId && this.selectedEtapa && this.selectedJornada); }
   exportarPdf(): void { this.exportService.pdf(this.datosExport()); }
   exportarExcel(): void { this.exportService.excel(this.datosExport()); }
   async exportarImagen(): Promise<void> { try { await this.exportService.imagen(this.datosExport()); } catch { this.errorMessage = 'No se pudo generar la imagen.'; } }
-  private datosExport() { return { liga: this.ligas.find(l => l.id === this.selectedLigaId)?.nombre ?? 'Liga Barrial', campeonato: this.campeonatos.find(c => c.id === this.selectedCampeonatoId)?.nombre ?? '', categoria: this.categorias.find(c => c.id === this.selectedCategoriaId)?.nombre ?? 'Todas', etapa: this.selectedEtapa || 'Todas', jornada: this.selectedJornada, partidos: this.partidosFiltrados }; }
+  private datosExport() { const liga = this.ligas.find(l => l.id === this.selectedLigaId); return { liga: liga?.nombre ?? 'Liga Barrial', ligaImagen: liga?.imagen, campeonato: this.campeonatos.find(c => c.id === this.selectedCampeonatoId)?.nombre ?? '', categoria: this.categorias.find(c => c.id === this.selectedCategoriaId)?.nombre ?? 'Todas', etapa: this.selectedEtapa || 'Todas', jornada: this.selectedJornada, partidos: this.partidosFiltrados }; }
 
   ngOnInit(): void {
     this.loadLigas();

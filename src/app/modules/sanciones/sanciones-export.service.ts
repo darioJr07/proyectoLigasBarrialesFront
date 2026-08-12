@@ -22,7 +22,7 @@ export class SancionesExportService {
   async descargarImagen(data: SancionesExportables): Promise<void> {
     const logo = data.ligaImagen ? await this.urlADataUrl(data.ligaImagen) : undefined;
     const activas = data.sanciones
-      .filter(s => s.activo && (s.suspensionActiva || s.tipoSancion?.aplicaA === 'equipo'))
+      .filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? '')))
       .sort((a, b) => Number(!b.jugador) - Number(!a.jugador));
     const url = URL.createObjectURL(new Blob([this.svg(data, logo, activas.slice(0, 36))], { type: 'image/svg+xml;charset=utf-8' }));
     try { const imagen = await new Promise<HTMLImageElement>((resolve, reject) => { const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(); el.src = url; }); const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext('2d'); if (!ctx) throw new Error(); ctx.drawImage(imagen, 0, 0); const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png')); if (!png) throw new Error(); const enlace = document.createElement('a'); enlace.href = URL.createObjectURL(png); enlace.download = `${this.nombre(data)}_ACTIVAS.png`; enlace.click(); URL.revokeObjectURL(enlace.href); } finally { URL.revokeObjectURL(url); }
