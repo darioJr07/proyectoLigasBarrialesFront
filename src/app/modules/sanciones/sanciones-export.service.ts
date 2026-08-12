@@ -87,7 +87,8 @@ export class SancionesExportService {
     const [anio, mes, dia] = valor.split('-');
     return anio && mes && dia ? `${dia}/${mes}/${anio}` : fecha;
   }
-  private avanceEquipo(s: Sancion, data: SancionesExportables): string { const regla = data.reglas.find(r => r.tipoSancionId === s.tipoSancionId && r.acumulacionActiva && r.acumulacionCantidad); const total = data.sanciones.filter(x => x.equipoId === s.equipoId && x.tipoSancionId === s.tipoSancionId && x.activo).length; return regla ? `${s.tipoSancion?.nombre ?? 'SANCIÓN'}: ${total}/${regla.acumulacionCantidad}` : (s.descripcion?.trim() || s.tipoSancion?.nombre || 'SANCIÓN'); }
+  private avanceEquipo(s: Sancion, data: SancionesExportables): string { const regla = data.reglas.find(r => r.tipoSancionId === s.tipoSancionId && r.acumulacionActiva && r.acumulacionCantidad); const total = data.sanciones.filter(x => x.equipoId === s.equipoId && x.tipoSancionId === s.tipoSancionId && x.activo).length; return regla ? `${this.nombreReglaParaImagen(s.tipoSancion?.nombre ?? 'SANCIÓN')} · ${total}/${regla.acumulacionCantidad}` : (s.descripcion?.trim() || s.tipoSancion?.nombre || 'SANCIÓN'); }
+  private nombreReglaParaImagen(nombre: string): string { return nombre.replace(/^FALTA\s+UN\s+ENCUENTRO\s*-?\s*/i, '').trim() || nombre; }
   private estado(s: Sancion): string { return !s.activo ? 'Anulada' : s.suspensionActiva ? 'Suspensión activa' : 'Sin suspensión activa'; }
   private fecha(): string { return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date()); }
   private cortar(valor: string, limite: number): string { return valor.length > limite ? `${valor.slice(0, limite - 1)}…` : valor; }
