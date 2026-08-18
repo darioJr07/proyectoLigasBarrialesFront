@@ -228,6 +228,7 @@
 
   &:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.09); }
   &.estado-jugado   { border-left: 4px solid #27ae60; }
+  &.estado-en-juego { border-left: 4px solid #e74c3c; }
   &.estado-suspendido { border-left: 4px solid #f39c12; opacity: 0.85; }
   &.estado-cancelado  { border-left: 4px solid #e74c3c; opacity: 0.7; }
 }
@@ -247,12 +248,24 @@
   text-transform: capitalize;
 
   &.estado-programado  { background: #ecf0f1; color: #7f8c8d; }
+  &.estado-en-juego    { background: #fdecea; color: #c0392b; }
   &.estado-jugado      { background: #d5f5e3; color: #1e8449; }
   &.estado-suspendido  { background: #fef9e7; color: #b7950b; }
   &.estado-cancelado   { background: #fadbd8; color: #922b21; }
 }
 
 .partido-fecha { font-size: 0.8rem; color: #95a5a6; }
+
+.plantilla-indicador {
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+
+  &.guardada { background: #d5f5e3; color: #1e8449; }
+  &.pendiente { background: #fef3cd; color: #8a6500; }
+}
 
 .partido-equipos {
   display: flex;
@@ -322,6 +335,26 @@
 .partido-cancha { font-size: 0.82rem; color: #7f8c8d; text-align: center; }
 .partido-bonus  { font-size: 0.82rem; color: #f39c12; text-align: center; }
 .partido-sancion { font-size: 0.82rem; color: #e74c3c; text-align: center; margin-top: 0.2rem; }
+
+.alerta-planilla-pendiente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.9rem 0;
+  padding: 0.75rem;
+  border: 1px solid #f3d48b;
+  border-radius: 6px;
+  background: #fff8e6;
+  color: #74520b;
+  font-size: 0.84rem;
+
+  a {
+    flex: 0 0 auto;
+    color: #8a6500;
+    font-weight: 700;
+  }
+}
 
 .partido-acciones {
   display: flex;

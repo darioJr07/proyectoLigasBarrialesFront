@@ -36,6 +36,7 @@ export class PartidoFormComponent implements OnInit {
 
   estadosOpciones = [
     { value: 'programado', label: 'Programado' },
+    { value: 'en_juego', label: 'En juego' },
     { value: 'jugado', label: 'Jugado' },
     { value: 'suspendido', label: 'Suspendido' },
     { value: 'cancelado', label: 'Cancelado' },

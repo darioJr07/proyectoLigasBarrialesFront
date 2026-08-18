@@ -40,7 +40,7 @@ export class PartidosListComponent implements OnInit {
   selectedCategoriaId: number | null = null;
   selectedEtapa = '';
   selectedJornada: number | null = null;
-  filtroRapidoEstado: 'todos' | 'pendientes' | 'jugado' | 'suspendido' = 'todos';
+  filtroRapidoEstado: 'todos' | 'pendientes' | 'en_juego' | 'jugado' | 'suspendido' = 'todos';
 
   // Paginación de jornadas
   currentJornadaPage = 1;
@@ -178,13 +178,14 @@ export class PartidosListComponent implements OnInit {
       if (this.selectedEtapa && p.etapa !== this.selectedEtapa) return false;
       if (this.selectedJornada && p.jornada !== this.selectedJornada) return false;
       if (this.filtroRapidoEstado === 'pendientes' && !['programado', 'suspendido'].includes(p.estado)) return false;
+      if (this.filtroRapidoEstado === 'en_juego' && p.estado !== 'en_juego') return false;
       if (this.filtroRapidoEstado === 'jugado' && p.estado !== 'jugado') return false;
       if (this.filtroRapidoEstado === 'suspendido' && p.estado !== 'suspendido') return false;
       return true;
     });
   }
-  contarEstado(estado: 'pendientes' | 'jugado' | 'suspendido'): number { return this.partidos.filter(p => estado === 'pendientes' ? ['programado', 'suspendido'].includes(p.estado) : p.estado === estado).length; }
-  seleccionarFiltroRapido(filtro: 'todos' | 'pendientes' | 'jugado' | 'suspendido'): void { this.filtroRapidoEstado = filtro; this.currentJornadaPage = 1; }
+  contarEstado(estado: 'pendientes' | 'en_juego' | 'jugado' | 'suspendido'): number { return this.partidos.filter(p => estado === 'pendientes' ? ['programado', 'suspendido'].includes(p.estado) : p.estado === estado).length; }
+  seleccionarFiltroRapido(filtro: 'todos' | 'pendientes' | 'en_juego' | 'jugado' | 'suspendido'): void { this.filtroRapidoEstado = filtro; this.currentJornadaPage = 1; }
 
   get partidosPorJornada(): Map<number, Partido[]> {
     const mapa = new Map<number, Partido[]>();

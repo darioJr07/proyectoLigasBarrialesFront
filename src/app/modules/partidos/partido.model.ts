@@ -15,7 +15,7 @@ export interface Partido {
   fechaPartido?: string;
   horaPartido?: string;
   cancha?: string;
-  estado: 'programado' | 'jugado' | 'suspendido' | 'cancelado';
+  estado: 'programado' | 'en_juego' | 'jugado' | 'suspendido' | 'cancelado';
   golesLocal?: number;
   golesVisitante?: number;
   bonificacionLocal?: number;
@@ -24,6 +24,8 @@ export interface Partido {
   observaciones?: string;
   activo: boolean;
   creadoEn: string;
+  /** Indica si existe una planilla/acta de alineación guardada para el partido. */
+  plantillaGuardada?: boolean;
 }
 
 export interface CreatePartidoDto {
@@ -40,7 +42,7 @@ export interface CreatePartidoDto {
 }
 
 export interface UpdatePartidoDto extends Partial<CreatePartidoDto> {
-  estado?: 'programado' | 'jugado' | 'suspendido' | 'cancelado';
+  estado?: 'programado' | 'en_juego' | 'jugado' | 'suspendido' | 'cancelado';
 }
 
 export interface AutorGolDto {

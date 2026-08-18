@@ -25,6 +25,9 @@
           <span *ngIf="partido.horaPartido">&nbsp;{{ partido.horaPartido }}</span>
           <span *ngIf="partido.cancha">&nbsp;— {{ partido.cancha }}</span>
         </p>
+        <span class="plantilla-estado" [class.guardada]="plantillaGuardada" [class.pendiente]="!plantillaGuardada">
+          {{ plantillaGuardada ? '✓ Plantilla guardada' : '○ Plantilla pendiente de guardar' }}
+        </span>
       </div>
       <a class="btn-imprimir-acta" [routerLink]="['/partidos', partidoId, 'acta', 'imprimir']" title="Generar PDF para imprimir y llenar a mano">
         🖨️ Imprimir Acta

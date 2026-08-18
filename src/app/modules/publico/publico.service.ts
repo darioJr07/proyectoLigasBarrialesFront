@@ -25,10 +25,11 @@ export interface FilaPosicionPublica {
 }
 export interface PartidoPublico {
   id: number; jornada: number; fechaPartido?: string | null; horaPartido?: string | null; cancha?: string | null;
-  estado: 'programado' | 'jugado' | 'suspendido'; golesLocal?: number | null; golesVisitante?: number | null;
+  estado: 'programado' | 'en_juego' | 'jugado' | 'suspendido'; golesLocal?: number | null; golesVisitante?: number | null;
   equipoLocal: { id: number; nombre: string; imagen?: string | null } | null;
   equipoVisitante: { id: number; nombre: string; imagen?: string | null } | null;
 }
+export interface PartidoDestacadoPublico extends PartidoPublico { categoriaNombre: string; campeonatoNombre: string; }
 export interface GoleadorPublico { posicion: number; jugadorNombre: string; jugadorImagen?: string | null; numeroCancha?: number | null; equipoNombre: string; equipoImagen?: string | null; total: number; }
 export interface SancionPublica {
   id: number; destino: 'jugador' | 'equipo' | 'barra' | 'directivo'; sancionado: string;
@@ -50,6 +51,10 @@ export class PublicoService {
 
   listarCampeonatos(ligaId: number): Observable<CampeonatoPublico[]> {
     return this.http.get<CampeonatoPublico[]>(`${this.apiUrl}/ligas/${ligaId}/campeonatos`);
+  }
+
+  listarPartidosDestacados(ligaId: number): Observable<PartidoDestacadoPublico[]> {
+    return this.http.get<PartidoDestacadoPublico[]>(`${this.apiUrl}/ligas/${ligaId}/partidos-destacados`);
   }
 
   listarCategorias(campeonatoId: number): Observable<CategoriaPublica[]> {

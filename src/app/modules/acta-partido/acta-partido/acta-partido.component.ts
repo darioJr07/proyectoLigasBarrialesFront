@@ -42,6 +42,7 @@ export class ActaPartidoComponent implements OnInit {
   loading = false;
   guardando = false;
   guardado = false;
+  plantillaGuardada = false;
   error = '';
 
   // ── Informe del Vocal ──────────────────────────────────────────────────────
@@ -128,6 +129,7 @@ export class ActaPartidoComponent implements OnInit {
     this.actaService.obtenerAlineacion(this.partidoId).subscribe({
       next: (res) => {
         this.partido = res.partido;
+        this.plantillaGuardada = res.jugadoresLocal.length > 0 || res.jugadoresVisitante.length > 0;
         this.cargarEquiposVocal();
 
         if (res.jugadoresLocal.length > 0 || res.jugadoresVisitante.length > 0) {
@@ -199,6 +201,7 @@ export class ActaPartidoComponent implements OnInit {
       next: () => {
         this.guardando = false;
         this.guardado = true;
+        this.plantillaGuardada = true;
         setTimeout(() => (this.guardado = false), 3000);
       },
       error: (err) => {

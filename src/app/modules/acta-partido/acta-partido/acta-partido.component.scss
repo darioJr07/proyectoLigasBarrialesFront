@@ -101,6 +101,25 @@ $bg-light:      #f8f9fa;
   }
 }
 
+.plantilla-estado {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  &.guardada {
+    background: #d5f5e3;
+    color: #1e8449;
+  }
+
+  &.pendiente {
+    background: #fef3cd;
+    color: #8a6500;
+  }
+}
+
 // ── Loading ───────────────────────────────────────────────────────────────────
 .loading-box {
   display: flex;
