@@ -1,0 +1,17 @@
+<main class="portal-publico">
+  <section class="publico-hero liga-hero" *ngIf="liga">
+    <img *ngIf="liga.imagen" [src]="liga.imagen" [alt]="'Logo de ' + liga.nombre">
+    <div><a class="volver-hero" routerLink="/publico">← Todas las ligas</a><span class="publico-eyebrow">PORTAL DEPORTIVO</span><h1>{{ liga.nombre }}</h1><p>{{ liga.ubicacion }}</p></div>
+  </section>
+
+  <section class="publico-contenido">
+    <p *ngIf="cargando" class="publico-mensaje">Cargando campeonato...</p>
+    <p *ngIf="error" class="publico-error">{{ error }}</p>
+    <div *ngIf="!cargando && liga && !campeonatos.length" class="publico-mensaje">No hay campeonatos en curso para esta liga.</div>
+    <div *ngFor="let campeonato of campeonatos" class="campeonato-card">
+      <span>CAMPEONATO EN CURSO</span><h2>{{ campeonato.nombre }}</h2>
+      <p>Consulta la información deportiva actualizada del campeonato.</p>
+      <div class="acciones-campeonato"><a class="boton-publico" [routerLink]="['/publico', liga?.id, 'campeonato', campeonato.id, 'posiciones']">Posiciones</a><a class="boton-publico secundario" [routerLink]="['/publico', liga?.id, 'campeonato', campeonato.id, 'resultados']">Resultados</a><a class="boton-publico secundario" [routerLink]="['/publico', liga?.id, 'campeonato', campeonato.id, 'goleadores']">Goleadores</a><a class="boton-publico secundario" [routerLink]="['/publico', liga?.id, 'campeonato', campeonato.id, 'sanciones']">Sanciones</a></div>
+    </div>
+  </section>
+</main>

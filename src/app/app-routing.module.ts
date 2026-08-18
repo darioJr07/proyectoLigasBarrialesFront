@@ -16,6 +16,11 @@ export const routes: Routes = [
     component: LoginComponent,
   },
   {
+    path: 'publico',
+    loadChildren: () =>
+      import('./modules/publico/publico.module').then((m) => m.PublicoModule),
+  },
+  {
     path: 'dashboard',
     canActivate: [AuthGuard],
     loadChildren: () =>

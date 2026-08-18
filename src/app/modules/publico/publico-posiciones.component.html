@@ -1,0 +1,12 @@
+<main class="portal-publico">
+  <section class="publico-hero compacto"><a class="volver-hero" [routerLink]="['/publico', ligaId]">← Volver al campeonato</a><span class="publico-eyebrow">CLASIFICACIÓN</span><h1>Tabla de posiciones</h1><p>Información actualizada según los resultados registrados.</p></section>
+  <section class="publico-contenido">
+    <div class="filtros-publicos" *ngIf="categorias.length">
+      <label>Categoría<select [value]="categoriaId" (change)="cambiarCategoria($any($event.target).value)"><option *ngFor="let categoria of categorias" [value]="categoria.id">{{ categoria.nombre }}</option></select></label>
+      <label>Etapa<select [value]="etapa" (change)="cambiarEtapa($any($event.target).value)"><option *ngFor="let item of etapas" [value]="item">{{ item }}</option></select></label>
+    </div>
+    <p *ngIf="cargando" class="publico-mensaje">Cargando clasificación...</p><p *ngIf="error" class="publico-error">{{ error }}</p>
+    <p *ngIf="!cargando && !error && !tabla.length" class="publico-mensaje">Aún no existen resultados para esta categoría y etapa.</p>
+    <div class="tabla-scroll" *ngIf="!cargando && tabla.length"><table class="tabla-publica"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>PTS</th></tr></thead><tbody><tr *ngFor="let fila of tabla"><td><span class="posicion">{{ fila.posicion }}</span></td><td class="equipo"><img *ngIf="fila.equipoImagen" [src]="fila.equipoImagen" [alt]="fila.equipoNombre"><span>{{ fila.equipoNombre }}</span></td><td>{{ fila.pj }}</td><td>{{ fila.pg }}</td><td>{{ fila.pe }}</td><td>{{ fila.pp }}</td><td>{{ fila.gf }}</td><td>{{ fila.gc }}</td><td>{{ fila.dg }}</td><td class="puntos">{{ fila.puntos }}</td></tr></tbody></table></div>
+  </section>
+</main>

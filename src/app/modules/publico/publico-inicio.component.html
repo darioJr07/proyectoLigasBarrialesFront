@@ -1,0 +1,21 @@
+<main class="portal-publico">
+  <section class="publico-hero inicio-hero">
+    <div><span class="publico-eyebrow">SISTEMA DE LIGAS BARRIALES</span><h1>Resultados y estadísticas</h1><p>Consulta información deportiva de las ligas y campeonatos en curso.</p></div>
+    <div class="logo-empresa-contenedor"><img class="logo-empresa-publico" src="https://res.cloudinary.com/dqmc8b9j5/image/upload/v1771648339/ligas-barriales/liga-1/aba75f2d-bb75-496d-b430-6ad1dc9f0298_wobk07.png" alt="OF1 Solutions"></div>
+  </section>
+
+  <section class="publico-contenido">
+    <h2>Ligas disponibles</h2>
+    <p *ngIf="cargando" class="publico-mensaje">Cargando ligas...</p>
+    <p *ngIf="error" class="publico-error">{{ error }}</p>
+    <p *ngIf="!cargando && !error && !ligas.length" class="publico-mensaje">No hay ligas públicas disponibles por el momento.</p>
+
+    <div class="ligas-grid" *ngIf="!cargando && ligas.length">
+      <a *ngFor="let liga of ligas" class="liga-card" [routerLink]="['/publico', liga.id]">
+        <img *ngIf="liga.imagen" [src]="liga.imagen" [alt]="'Logo de ' + liga.nombre">
+        <div *ngIf="!liga.imagen" class="liga-sin-logo">{{ liga.nombre.charAt(0) }}</div>
+        <div><h3>{{ liga.nombre }}</h3><p>{{ liga.ubicacion }}</p><span>Ver campeonato actual →</span></div>
+      </a>
+    </div>
+  </section>
+</main>
