@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { CampeonatoPublico, CategoriaPublica, FilaPosicionPublica, GoleadorPublico, LigaPublica, PartidoDestacadoPublico, PartidoPublico, PublicoService, SancionPublica } from './publico.service';
@@ -8,7 +8,8 @@ import { CampeonatoPublico, CategoriaPublica, FilaPosicionPublica, GoleadorPubli
   templateUrl: './publico-liga.component.html',
   styleUrls: ['./publico.component.scss'],
 })
-export class PublicoLigaComponent implements OnInit {
+export class PublicoLigaComponent implements OnInit, OnDestroy {
+  @ViewChild('listaDestacados') listaDestacados?: ElementRef<HTMLElement>;
   liga?: LigaPublica;
   campeonatos: CampeonatoPublico[] = [];
   campeonatoSeleccionado?: CampeonatoPublico;
@@ -22,6 +23,7 @@ export class PublicoLigaComponent implements OnInit {
   sanciones: SancionPublica[] = [];
   resultados: PartidoPublico[] = [];
   partidosDestacados: PartidoDestacadoPublico[] = [];
+  private desplazamientoAutomatico?: ReturnType<typeof setInterval>;
   resultadosGenerales: (PartidoPublico & { categoriaNombre: string })[] = [];
   jornadaResultados = 0;
   cargando = true;
@@ -38,7 +40,7 @@ export class PublicoLigaComponent implements OnInit {
       next: ligas => {
         this.liga = ligas.find(liga => liga.id === ligaId);
         if (!this.liga) { this.error = 'Liga pública no encontrada.'; this.cargando = false; return; }
-        this.publicoService.listarPartidosDestacados(ligaId).subscribe({ next: partidos => this.partidosDestacados = partidos });
+        this.publicoService.listarPartidosDestacados(ligaId).subscribe({ next: partidos => { this.partidosDestacados = partidos; setTimeout(() => this.iniciarDesplazamientoAutomatico()); } });
         this.publicoService.listarCampeonatos(ligaId).subscribe({
           next: campeonatos => {
             this.campeonatos = campeonatos;
@@ -77,6 +79,22 @@ export class PublicoLigaComponent implements OnInit {
     return partido.estado === 'jugado' ? `${partido.golesLocal ?? 0} - ${partido.golesVisitante ?? 0}` : partido.estado === 'suspendido' ? 'SUSP.' : 'VS';
   }
   etiquetaDestacado(partido: PartidoDestacadoPublico): string { return partido.estado === 'en_juego' ? 'EN JUEGO' : 'PRÓXIMO'; }
+  moverDestacados(direccion: number): void { this.listaDestacados?.nativeElement.scrollBy({ left: direccion * 540, behavior: 'smooth' }); }
+  pausarDestacados(): void { if (this.desplazamientoAutomatico) clearInterval(this.desplazamientoAutomatico); this.desplazamientoAutomatico = undefined; }
+  reanudarDestacados(): void { this.iniciarDesplazamientoAutomatico(); }
+  ngOnDestroy(): void { this.pausarDestacados(); }
+
+  private iniciarDesplazamientoAutomatico(): void {
+    this.pausarDestacados();
+    if (!this.listaDestacados || this.partidosDestacados.length < 2) return;
+    this.desplazamientoAutomatico = setInterval(() => {
+      const lista = this.listaDestacados?.nativeElement;
+      if (!lista) return;
+      const llegoAlFinal = lista.scrollLeft + lista.clientWidth >= lista.scrollWidth - 8;
+      if (llegoAlFinal) lista.scrollTo({ left: 0, behavior: 'smooth' });
+      else lista.scrollBy({ left: 262, behavior: 'smooth' });
+    }, 4000);
+  }
 
   cumplimiento(sancion: SancionPublica): string {
     if (sancion.partidosPendientes != null) return `${sancion.partidosPendientes} partido${sancion.partidosPendientes === 1 ? '' : 's'} pendiente${sancion.partidosPendientes === 1 ? '' : 's'}`;
@@ -86,7 +104,10 @@ export class PublicoLigaComponent implements OnInit {
   nombreCorto(nombreCompleto: string): string {
     const partes = nombreCompleto.trim().split(/\s+/).filter(Boolean);
     if (partes.length <= 2) return nombreCompleto;
-    return `${partes[0]} ${partes[partes.length - 1]}`;
+    // Convención habitual: nombres + apellido paterno + apellido materno.
+    // Con cuatro o más palabras, el penúltimo corresponde al primer apellido.
+    const primerApellido = partes.length >= 4 ? partes[partes.length - 2] : partes[partes.length - 1];
+    return `${partes[0]} ${primerApellido}`;
   }
 
   private cargarResumenCategoria(): void {
