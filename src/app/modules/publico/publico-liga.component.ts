@@ -128,7 +128,7 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
           next: resumen => {
             this.tabla = resumen.tabla;
             this.goleadores = resumen.goleadores.slice(0, 15);
-            this.sanciones = resumen.sanciones.slice(0, 6);
+            this.sanciones = this.ordenarSanciones(resumen.sanciones).slice(0, 6);
             this.obtenerUltimaJornadaConResultados(campeonatoId, categoriaId, this.etapa, resumen.jornadas).subscribe({
               next: resultado => { this.jornadaResultados = resultado.jornada; this.resultados = resultado.partidos.slice(0, 6); this.cargandoResumen = false; },
               error: () => this.fallar('No se pudieron cargar los resultados recientes.'),
@@ -158,7 +158,7 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
             forkJoin(categoriasConEtapa.map(item => this.publicoService.listarGoleadores(campeonatoId, item.categoria.id))).subscribe({
               next: goleadores => { this.goleadoresGenerales = categoriasConEtapa.map((item, indice) => ({ categoria: item.categoria, goleadores: goleadores[indice].slice(0, 15) })); },
             });
-            this.publicoService.listarSanciones(campeonatoId).subscribe({ next: sanciones => this.sanciones = sanciones.slice(0, 12) });
+            this.publicoService.listarSanciones(campeonatoId).subscribe({ next: sanciones => this.sanciones = this.ordenarSanciones(sanciones).slice(0, 12) });
             forkJoin(categoriasConEtapa.map(item =>
               this.publicoService.listarJornadas(campeonatoId, item.categoria.id, item.etapa).pipe(
                 switchMap(jornadas => this.obtenerUltimaJornadaConResultados(campeonatoId, item.categoria.id, item.etapa, jornadas)),
@@ -193,6 +193,10 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
 
   private fechaHoraPartido(partido: PartidoPublico): string {
     return `${partido.fechaPartido ?? '0000-00-00'}T${partido.horaPartido ?? '00:00'}`;
+  }
+
+  private ordenarSanciones(sanciones: SancionPublica[]): SancionPublica[] {
+    return [...sanciones].sort((a, b) => Number(b.destino === 'jugador') - Number(a.destino === 'jugador'));
   }
 
   private fallar(mensaje: string): void { this.error = mensaje; this.cargandoResumen = false; }
