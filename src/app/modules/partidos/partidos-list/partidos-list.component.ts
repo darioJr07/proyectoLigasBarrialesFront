@@ -50,6 +50,8 @@ export class PartidosListComponent implements OnInit {
   resultadoModal: { visible: boolean; partido: Partido | null } = { visible: false, partido: null };
   resultadoForm: RegistrarResultadoDto = { golesLocal: 0, golesVisitante: 0, sancionado: 'ninguno' };
   savingResultado = false;
+  /** Protección visual temporal; se restablece al recargar el listado. */
+  private partidosDesbloqueados = new Set<number>();
 
   // Autores de goles
   jugadoresLocal: any[] = [];
@@ -75,8 +77,20 @@ export class PartidosListComponent implements OnInit {
   get puedeImagenJornada(): boolean { return !!(this.selectedCampeonatoId && this.selectedEtapa && this.selectedJornada); }
   exportarPdf(): void { this.exportService.pdf(this.datosExport()); }
   exportarExcel(): void { this.exportService.excel(this.datosExport()); }
-  async exportarImagen(): Promise<void> { try { await this.exportService.imagen(this.datosExport()); } catch { this.errorMessage = 'No se pudo generar la imagen.'; } }
+  async exportarImagen(): Promise<void> {
+    try {
+      await this.exportService.imagen({ ...this.datosExport(), partidos: this.partidosOrdenadosParaImagen() });
+    } catch { this.errorMessage = 'No se pudo generar la imagen.'; }
+  }
   private datosExport() { const liga = this.ligas.find(l => l.id === this.selectedLigaId); return { liga: liga?.nombre ?? 'Liga Barrial', ligaImagen: liga?.imagen, campeonato: this.campeonatos.find(c => c.id === this.selectedCampeonatoId)?.nombre ?? '', categoria: this.categorias.find(c => c.id === this.selectedCategoriaId)?.nombre ?? 'Todas', etapa: this.selectedEtapa || 'Todas', jornada: this.selectedJornada, partidos: this.partidosFiltrados }; }
+  private partidosOrdenadosParaImagen(): Partido[] {
+    return [...this.partidosFiltrados].sort((a, b) => {
+      const fechaHora = (partido: Partido) => partido.fechaPartido
+        ? `${partido.fechaPartido}T${partido.horaPartido ?? '23:59'}`
+        : '9999-12-31T23:59';
+      return fechaHora(a).localeCompare(fechaHora(b));
+    });
+  }
 
   ngOnInit(): void {
     this.loadLigas();
@@ -236,6 +250,21 @@ export class PartidosListComponent implements OnInit {
   }
 
   // ===== Resultado =====
+  partidoEstaBloqueado(partido: Partido): boolean {
+    return partido.estado === 'jugado' && !this.partidosDesbloqueados.has(partido.id);
+  }
+
+  desbloquearCorreccion(partido: Partido): void {
+    const confirmar = window.confirm(
+      'Este partido ya está finalizado. Corregirlo puede actualizar resultados, tablas, goleadores y sanciones. ¿Desea habilitar su corrección?',
+    );
+    if (confirmar) this.partidosDesbloqueados.add(partido.id);
+  }
+
+  bloquearCorreccion(partido: Partido): void {
+    this.partidosDesbloqueados.delete(partido.id);
+  }
+
   abrirModalResultado(partido: Partido): void {
     this.resultadoModal = { visible: true, partido };
     this.resultadoForm = {

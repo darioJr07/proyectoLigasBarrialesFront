@@ -154,7 +154,9 @@
           >
             <!-- Estado + fecha -->
             <div class="partido-meta">
-              <span class="estado-badge estado-{{ partido.estado }}">{{ partido.estado }}</span>
+              <span class="estado-badge estado-{{ partido.estado }}">
+                {{ partido.estado === 'jugado' ? '🔒 Jugado' : partido.estado }}
+              </span>
               <span class="partido-fecha">
                 {{ partido.fechaPartido ? (partido.fechaPartido | date:'dd/MM/yyyy':'UTC') : 'Sin fecha' }}
                 {{ partido.horaPartido ? ' · ' + partido.horaPartido : '' }}
@@ -215,16 +217,34 @@
             <!-- Acciones -->
             <div class="partido-acciones" *ngIf="permissions.canEditPartido() || permissions.canImprimirActa()">
               <button
-                *ngIf="permissions.canEditPartido() && partido.equipoLocalId && partido.equipoVisitanteId"
+                *ngIf="permissions.canEditPartido() && partido.equipoLocalId && partido.equipoVisitanteId && !partidoEstaBloqueado(partido)"
                 class="btn-accion btn-resultado"
                 (click)="abrirModalResultado(partido)"
               >
                 ⚽ Resultado
               </button>
+              <button
+                *ngIf="permissions.canEditPartido() && partidoEstaBloqueado(partido)"
+                class="btn-accion btn-desbloquear"
+                (click)="desbloquearCorreccion(partido)"
+                title="Habilitar temporalmente la corrección del partido"
+                aria-label="Desbloquear corrección"
+              >
+                🔓
+              </button>
+              <button
+                *ngIf="permissions.canEditPartido() && partido.estado === 'jugado' && !partidoEstaBloqueado(partido)"
+                class="btn-accion btn-bloquear"
+                (click)="bloquearCorreccion(partido)"
+                title="Volver a proteger el partido contra cambios accidentales"
+                aria-label="Bloquear nuevamente"
+              >
+                🔒
+              </button>
               <a *ngIf="permissions.canImprimirActa()" [routerLink]="['/partidos', partido.id, 'acta']" class="btn-accion btn-acta">
                 📋 Acta
               </a>
-              <a *ngIf="permissions.canEditPartido()" [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
+              <a *ngIf="permissions.canEditPartido() && !partidoEstaBloqueado(partido)" [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
                 ✏️ Editar
               </a>
             </div>

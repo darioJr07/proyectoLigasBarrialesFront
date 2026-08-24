@@ -73,6 +73,7 @@ export interface FilaAlineacion {
 
 /** DTO para enviar al backend */
 export interface GuardarAlineacionDto {
+  permitirCorreccion?: boolean;
   jugadores: {
     jugadorId: number;
     equipoId: number;
@@ -94,6 +95,8 @@ export interface ActaIncidencia {
   equipo?: any;
   jugadorId?: number | null;
   jugador?: any | null;
+  /** Dorsal de la inscripción activa en este campeonato/categoría/equipo. */
+  numeroCancha?: number | null;
   partido?: any;
   tipoIncidencia: TipoIncidencia;
   minuto?: number | null;

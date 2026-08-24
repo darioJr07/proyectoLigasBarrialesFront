@@ -36,6 +36,7 @@ export interface SancionPublica {
   jugadorImagen?: string | null;
   equipo: { id: number; nombre: string; imagen?: string | null } | null; tipo: string;
   partidosPendientes?: number | null; fechaFinSuspension?: string | null;
+  contadorActual?: number | null; contadorLimite?: number | null;
 }
 
 /** Servicio exclusivo del portal público; solo consume rutas de lectura abiertas. */

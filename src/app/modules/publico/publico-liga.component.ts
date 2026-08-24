@@ -167,7 +167,7 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
             )).subscribe({
               next: grupos => {
                 this.resultadosGenerales = grupos.reduce((acumulado, grupo) => acumulado.concat(grupo), [] as (PartidoPublico & { categoriaNombre: string })[])
-                  .sort((a, b) => this.fechaHoraPartido(b).localeCompare(this.fechaHoraPartido(a)));
+                  .sort((a, b) => this.fechaHoraPartido(a).localeCompare(this.fechaHoraPartido(b)));
                 this.cargandoResumen = false;
               },
               error: () => this.fallar('No se pudieron cargar los resultados generales.'),

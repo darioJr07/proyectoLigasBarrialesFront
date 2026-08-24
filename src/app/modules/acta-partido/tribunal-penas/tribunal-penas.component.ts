@@ -51,6 +51,7 @@ export class TribunalPenasComponent implements OnInit {
   selectedCategoriaId: number | null = null;
   selectedEtapa = '';
   selectedJornada: number | null = null;
+  selectedPartidoId: number | null = null;
 
   // ── Datos ──────────────────────────────────────────────────────────────────
   incidencias: ActaIncidencia[] = [];
@@ -148,6 +149,7 @@ export class TribunalPenasComponent implements OnInit {
     this.selectedCategoriaId = null;
     this.selectedEtapa = '';
     this.selectedJornada = null;
+    this.selectedPartidoId = null;
     if (!this.ligaIdSeleccionada) return;
     this.cargarCampeonatos(this.ligaIdSeleccionada);
     this.cargarTiposSancion(this.ligaIdSeleccionada);
@@ -177,12 +179,21 @@ export class TribunalPenasComponent implements OnInit {
     this.selectedCategoriaId = null;
     this.selectedEtapa = '';
     this.selectedJornada = null;
+    this.selectedPartidoId = null;
     if (!this.campeonatoIdSeleccionado) return;
     this.cargarIncidencias();
     this.cargarCategorias(this.campeonatoIdSeleccionado);
   }
 
-  onFiltroChange(): void { /* filtrado client-side mediante getters */ }
+  onFiltroChange(): void {
+    // Un partido seleccionado puede no pertenecer al nuevo filtro superior.
+    this.selectedPartidoId = null;
+    this.currentGrupoPage = 1;
+  }
+
+  onPartidoChange(): void {
+    this.currentGrupoPage = 1;
+  }
 
   cargarIncidencias(): void {
     if (!this.campeonatoIdSeleccionado) return;
@@ -225,8 +236,35 @@ export class TribunalPenasComponent implements OnInit {
       if (this.selectedCategoriaId && i.categoriaId !== this.selectedCategoriaId) return false;
       if (this.selectedEtapa && i.partido?.etapa !== this.selectedEtapa) return false;
       if (this.selectedJornada && i.partido?.jornada !== this.selectedJornada) return false;
+      if (this.selectedPartidoId && i.partidoId !== this.selectedPartidoId) return false;
       return true;
     });
+  }
+
+  /** Partidos que aún tienen incidencias pendientes según los filtros superiores. */
+  get partidosDisponibles(): any[] {
+    const porId = new Map<number, any>();
+    for (const incidencia of this.incidencias) {
+      if (this.selectedCategoriaId && incidencia.categoriaId !== this.selectedCategoriaId) continue;
+      if (this.selectedEtapa && incidencia.partido?.etapa !== this.selectedEtapa) continue;
+      if (this.selectedJornada && incidencia.partido?.jornada !== this.selectedJornada) continue;
+      if (incidencia.partidoId && incidencia.partido) porId.set(incidencia.partidoId, incidencia.partido);
+    }
+    return [...porId.entries()]
+      .sort(([, a], [, b]) => this.ordenPartido(a).localeCompare(this.ordenPartido(b)))
+      .map(([id, partido]) => ({ id, ...partido }));
+  }
+
+  etiquetaPartido(partido: any): string {
+    const local = partido?.equipoLocal?.nombre ?? 'Local';
+    const visitante = partido?.equipoVisitante?.nombre ?? 'Visitante';
+    return `Jornada ${partido?.jornada ?? '—'} · ${local} vs ${visitante}`;
+  }
+
+  private ordenPartido(partido: any): string {
+    return partido?.fechaPartido
+      ? `${partido.fechaPartido}T${partido.horaPartido ?? '23:59'}`
+      : '9999-12-31T23:59';
   }
 
   get incidenciasAgrupadasPorPartido(): { partido: any; incidencias: ActaIncidencia[] }[] {

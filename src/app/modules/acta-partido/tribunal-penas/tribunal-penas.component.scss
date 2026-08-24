@@ -298,6 +298,19 @@ $bg-light:    #f8f9fa;
   gap: 0.1rem;
 
   .jugador-nombre { font-weight: 500; }
+  .numero-cancha {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.7rem;
+    margin-right: 0.3rem;
+    padding: 0.08rem 0.3rem;
+    border-radius: 4px;
+    background: #e8f3fb;
+    color: #1674b8;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
   .equipo-nombre  { font-size: 0.78rem; color: $text-gray; }
   .colectivo      { font-size: 0.82rem; color: $text-gray; font-style: italic; }
 }

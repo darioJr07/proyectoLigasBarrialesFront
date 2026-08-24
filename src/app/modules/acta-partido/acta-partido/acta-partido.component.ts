@@ -43,6 +43,8 @@ export class ActaPartidoComponent implements OnInit {
   guardando = false;
   guardado = false;
   plantillaGuardada = false;
+  /** Solo habilita una corrección durante la visita actual al acta. */
+  plantillaCorreccionDesbloqueada = false;
   error = '';
 
   // ── Informe del Vocal ──────────────────────────────────────────────────────
@@ -103,6 +105,21 @@ export class ActaPartidoComponent implements OnInit {
 
   get soloLectura(): boolean {
     return this.permissions.hasRole(['tribuna_penas', 'tesoreria']);
+  }
+
+  get planillaEstaBloqueada(): boolean {
+    return this.partido?.estado === 'jugado' && !this.plantillaCorreccionDesbloqueada;
+  }
+
+  desbloquearCorreccionPlanilla(): void {
+    const confirmar = window.confirm(
+      'Este partido ya fue jugado. Corregir la plantilla puede afectar la trazabilidad y las sanciones. ¿Desea habilitar su corrección?',
+    );
+    if (confirmar) this.plantillaCorreccionDesbloqueada = true;
+  }
+
+  bloquearCorreccionPlanilla(): void {
+    this.plantillaCorreccionDesbloqueada = false;
   }
 
   logout(): void {
@@ -197,7 +214,10 @@ export class ActaPartidoComponent implements OnInit {
       observaciones: f.observaciones || undefined,
     }));
 
-    this.actaService.guardarAlineacion(this.partidoId, { jugadores }).subscribe({
+    this.actaService.guardarAlineacion(this.partidoId, {
+      jugadores,
+      permitirCorreccion: this.plantillaCorreccionDesbloqueada,
+    }).subscribe({
       next: () => {
         this.guardando = false;
         this.guardado = true;

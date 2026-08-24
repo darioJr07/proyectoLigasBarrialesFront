@@ -28,6 +28,21 @@
         <span class="plantilla-estado" [class.guardada]="plantillaGuardada" [class.pendiente]="!plantillaGuardada">
           {{ plantillaGuardada ? '✓ Plantilla guardada' : '○ Plantilla pendiente de guardar' }}
         </span>
+        <span *ngIf="planillaEstaBloqueada" class="plantilla-bloqueada">🔒 Planilla cerrada por partido jugado</span>
+        <button
+          *ngIf="!soloLectura && planillaEstaBloqueada"
+          class="btn-candado-planilla desbloquear"
+          (click)="desbloquearCorreccionPlanilla()"
+          title="Desbloquear temporalmente la corrección de la plantilla"
+          aria-label="Desbloquear corrección de plantilla"
+        >🔓</button>
+        <button
+          *ngIf="!soloLectura && partido?.estado === 'jugado' && !planillaEstaBloqueada"
+          class="btn-candado-planilla bloquear"
+          (click)="bloquearCorreccionPlanilla()"
+          title="Volver a bloquear la plantilla"
+          aria-label="Bloquear plantilla"
+        >🔒</button>
       </div>
       <a class="btn-imprimir-acta" [routerLink]="['/partidos', partidoId, 'acta', 'imprimir']" title="Generar PDF para imprimir y llenar a mano">
         🖨️ Imprimir Acta
@@ -83,11 +98,11 @@
                 <div class="jugador-controles">
                   <select [(ngModel)]="fila.estadoSeleccionado"
                     [class]="'estado-select ' + getEstadoClass(fila.estadoSeleccionado)"
-                    [disabled]="!!fila.sancionActiva || soloLectura"
+                    [disabled]="!!fila.sancionActiva || soloLectura || planillaEstaBloqueada"
                     [title]="fila.sancionActiva ? 'Jugador suspendido, no puede participar' : ''">
                     <option *ngFor="let e of estados" [value]="e">{{ estadoLabels[e] }}</option>
                   </select>
-                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura" />
+                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura || planillaEstaBloqueada" />
                 </div>
               </div>
             </div>
@@ -109,11 +124,11 @@
                 <div class="jugador-controles">
                   <select [(ngModel)]="fila.estadoSeleccionado"
                     [class]="'estado-select ' + getEstadoClass(fila.estadoSeleccionado)"
-                    [disabled]="!!fila.sancionActiva || soloLectura"
+                    [disabled]="!!fila.sancionActiva || soloLectura || planillaEstaBloqueada"
                     [title]="fila.sancionActiva ? 'Jugador suspendido, no puede participar' : ''">
                     <option *ngFor="let e of estados" [value]="e">{{ estadoLabels[e] }}</option>
                   </select>
-                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura" />
+                  <input type="text" class="obs-input" placeholder="Observación..." [(ngModel)]="fila.observaciones" maxlength="300" [disabled]="!!fila.sancionActiva || soloLectura || planillaEstaBloqueada" />
                 </div>
               </div>
             </div>
@@ -128,7 +143,7 @@
           </div>
           <div class="acciones">
             <button class="btn-secondary" (click)="volver()">Cancelar</button>
-            <button class="btn-primary" (click)="guardar()" [disabled]="guardando">
+            <button class="btn-primary" (click)="guardar()" [disabled]="guardando || planillaEstaBloqueada">
               <span *ngIf="!guardando">💾 Guardar planilla</span>
               <span *ngIf="guardando">Guardando...</span>
             </button>

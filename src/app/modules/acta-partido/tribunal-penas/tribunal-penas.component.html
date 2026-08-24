@@ -70,6 +70,18 @@
           </select>
         </div>
 
+        <!-- Partido: se alimenta únicamente con encuentros que tienen incidencias pendientes -->
+        <div class="filter-item">
+          <label>Partido</label>
+          <select class="filter-select" [(ngModel)]="selectedPartidoId" (change)="onPartidoChange()"
+            [disabled]="!campeonatoIdSeleccionado || partidosDisponibles.length === 0">
+            <option [ngValue]="null">— Todos los partidos —</option>
+            <option *ngFor="let partido of partidosDisponibles" [ngValue]="partido.id">
+              {{ etiquetaPartido(partido) }}
+            </option>
+          </select>
+        </div>
+
       </div>
     </div>
 
@@ -135,7 +147,10 @@
               <span class="minuto" *ngIf="inc.minuto"> min.{{ inc.minuto }}</span>
             </div>
             <div class="col-jugador">
-              <span class="jugador-nombre" *ngIf="inc.jugador">{{ inc.jugador?.nombre }}</span>
+              <span class="jugador-nombre" *ngIf="inc.jugador">
+                <span *ngIf="inc.numeroCancha != null" class="numero-cancha">#{{ inc.numeroCancha }}</span>
+                {{ inc.jugador?.nombre }}
+              </span>
               <span class="colectivo" *ngIf="!inc.jugador">Equipo colectivo</span>
               <span class="equipo-nombre">{{ inc.equipo?.nombre }}</span>
             </div>

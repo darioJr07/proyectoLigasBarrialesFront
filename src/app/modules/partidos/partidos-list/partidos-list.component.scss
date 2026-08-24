@@ -394,6 +394,22 @@
     border-color: #bdc3c7;
     &:hover { background: #ecf0f1; }
   }
+  &.btn-desbloquear {
+    min-width: 2.4rem;
+    padding-inline: 0.45rem;
+    background: #fffaf0;
+    color: #a16207;
+    border-color: #d97706;
+    &:hover { background: #d97706; color: white; }
+  }
+  &.btn-bloquear {
+    min-width: 2.4rem;
+    padding-inline: 0.45rem;
+    background: #f8fafc;
+    color: #475569;
+    border-color: #94a3b8;
+    &:hover { background: #475569; color: white; }
+  }
 }
 
 // ─── Modal ───

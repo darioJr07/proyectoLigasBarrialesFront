@@ -120,6 +120,29 @@ $bg-light:      #f8f9fa;
   }
 }
 
+.plantilla-bloqueada {
+  display: inline-flex;
+  margin: 0.45rem 0 0 0.45rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #8a6500;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.btn-candado-planilla {
+  margin-left: 0.35rem;
+  min-width: 2.2rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+
+  &.desbloquear { background: #fffaf0; color: #a16207; border: 1px solid #d97706; }
+  &.bloquear { background: #f8fafc; color: #475569; border: 1px solid #94a3b8; }
+}
+
 // ── Loading ───────────────────────────────────────────────────────────────────
 .loading-box {
   display: flex;
