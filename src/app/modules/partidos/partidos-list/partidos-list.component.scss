@@ -568,6 +568,16 @@
   border-left: 3px solid #3498db;
 }
 
+.autores-error {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #dc3545;
+  border-radius: 5px;
+  background: #fdf0f1;
+  color: #9b1c25;
+  font-size: 0.82rem;
+}
+
 .autores-lista {
   display: flex;
   flex-direction: column;

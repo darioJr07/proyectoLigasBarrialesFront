@@ -20,6 +20,7 @@ export class ActaImprimirComponent implements OnInit {
   readonly equiposVocalia: Array<'local' | 'visitante'> = ['local', 'visitante'];
   partidoId!: number;
   partido: any = null;
+  private parametrosRetorno: Record<string, string | number> = {};
   jugadoresLocal: any[] = [];
   jugadoresVisitante: any[] = [];
 
@@ -83,6 +84,7 @@ export class ActaImprimirComponent implements OnInit {
 
   ngOnInit(): void {
     this.partidoId = Number(this.route.snapshot.paramMap.get('partidoId'));
+    this.parametrosRetorno = { ...this.route.snapshot.queryParams };
     this.cargarPlantilla();
     this.cargarVocal();
   }
@@ -440,6 +442,6 @@ export class ActaImprimirComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/partidos', this.partidoId, 'acta']);
+    this.router.navigate(['/partidos', this.partidoId, 'acta'], { queryParams: this.parametrosRetorno });
   }
 }

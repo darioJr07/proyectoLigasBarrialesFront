@@ -185,7 +185,11 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
     const ordenadas = [...jornadas].sort((a, b) => b - a);
     return forkJoin(ordenadas.map(jornada => this.publicoService.listarPartidos(campeonatoId, categoriaId, etapa, jornada))).pipe(
       map(grupos => {
-        const indice = grupos.findIndex(partidos => partidos.some(partido => partido.estado === 'jugado'));
+        // Solo se publica una jornada cerrada: todos sus encuentros deben
+        // tener resultado. Una jornada parcial conserva visible la anterior.
+        const indice = grupos.findIndex(partidos => partidos.length > 0 && partidos.every(partido =>
+          partido.estado === 'jugado' && partido.golesLocal != null && partido.golesVisitante != null,
+        ));
         return { jornada: indice >= 0 ? ordenadas[indice] : 0, partidos: indice >= 0 ? grupos[indice] : [] };
       }),
     );

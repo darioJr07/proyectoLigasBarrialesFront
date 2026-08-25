@@ -241,7 +241,7 @@
               >
                 🔒
               </button>
-              <a *ngIf="permissions.canImprimirActa()" [routerLink]="['/partidos', partido.id, 'acta']" class="btn-accion btn-acta">
+              <a *ngIf="permissions.canImprimirActa()" [routerLink]="['/partidos', partido.id, 'acta']" [queryParams]="parametrosRetornoActa()" class="btn-accion btn-acta">
                 📋 Acta
               </a>
               <a *ngIf="permissions.canEditPartido() && !partidoEstaBloqueado(partido)" [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
@@ -302,7 +302,11 @@
       </div>
       <div class="alerta-planilla-pendiente" *ngIf="!resultadoModal.partido.plantillaGuardada">
         <span>⚠️ Aún no hay una plantilla guardada para este partido. Registrar el resultado es posible, pero verifica primero los jugadores y sus estados.</span>
-        <a [routerLink]="['/partidos', resultadoModal.partido.id, 'acta']" (click)="cerrarModalResultado()">Ir al acta</a>
+        <a
+          [routerLink]="['/partidos', resultadoModal.partido.id, 'acta']"
+          [queryParams]="parametrosRetornoActa()"
+          (click)="cerrarModalResultado()"
+        >Ir al acta</a>
       </div>
       <div class="form-grid">
         <div class="form-item">
@@ -356,6 +360,9 @@
             <div class="autores-info">
               Si registras los autores, se actualizará la tabla de goleadores.
               La suma debe coincidir con el marcador.
+            </div>
+            <div class="autores-error" *ngIf="hayDescuadreAutores || errorResultado">
+              {{ errorResultado || mensajeDescuadreAutores }}
             </div>
 
             <!-- Goles ya registrados -->
@@ -416,7 +423,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cerrarModalResultado()">Cancelar</button>
-      <button class="btn btn-primary" (click)="guardarResultado()" [disabled]="savingResultado">
+      <button class="btn btn-primary" (click)="guardarResultado()" [disabled]="savingResultado || hayDescuadreAutores">
         <span *ngIf="savingResultado" class="spinner-sm"></span>
         Guardar Resultado
       </button>

@@ -44,7 +44,12 @@
           aria-label="Bloquear plantilla"
         >🔒</button>
       </div>
-      <a class="btn-imprimir-acta" [routerLink]="['/partidos', partidoId, 'acta', 'imprimir']" title="Generar PDF para imprimir y llenar a mano">
+      <a
+        class="btn-imprimir-acta"
+        [routerLink]="['/partidos', partidoId, 'acta', 'imprimir']"
+        [queryParams]="parametrosRetorno"
+        title="Generar PDF para imprimir y llenar a mano"
+      >
         🖨️ Imprimir Acta
       </a>
     </div>

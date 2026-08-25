@@ -64,9 +64,9 @@ $bg-light:      #f8f9fa;
 }
 
 .btn-back {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #eef6fc;
+  color: #1d679c;
+  border: 1px solid #83b9dc;
   border-radius: 6px;
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
@@ -75,7 +75,8 @@ $bg-light:      #f8f9fa;
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: #3498db;
+    color: #fff;
   }
 }
 

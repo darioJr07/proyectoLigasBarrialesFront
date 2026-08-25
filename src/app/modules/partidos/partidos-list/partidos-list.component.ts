@@ -45,6 +45,7 @@ export class PartidosListComponent implements OnInit {
   // Paginación de jornadas
   currentJornadaPage = 1;
   jornadasPerPage = 3;
+  private paginaRetornoPendiente: number | null = null;
 
   // Modal resultado
   resultadoModal: { visible: boolean; partido: Partido | null } = { visible: false, partido: null };
@@ -59,6 +60,7 @@ export class PartidosListComponent implements OnInit {
   /** Filas internas del formulario (incluye campo 'cantidad' para goles múltiples) */
   autoresGoles: (AutorGolDto & { cantidad: number })[] = [];
   mostrarAutores = false; // Desplegable para el usuario
+  errorResultado = '';
 
   constructor(
     private partidosService: PartidosService,
@@ -94,10 +96,21 @@ export class PartidosListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadLigas();
-    // Leer campeonatoId de queryParams si viene desde generar-fixture
+    // Restaurar el contexto al volver desde el acta. Mantiene compatibilidad
+    // con campeonatoId, que sigue siendo usado desde generar-fixture.
     this.route.queryParams.subscribe((params) => {
-      if (params['campeonatoId']) {
-        this.selectedCampeonatoId = +params['campeonatoId'];
+      const campeonatoId = params['volverCampeonatoId'] ?? params['campeonatoId'];
+      if (params['volverLigaId']) this.selectedLigaId = +params['volverLigaId'];
+      if (params['volverCategoriaId']) this.selectedCategoriaId = +params['volverCategoriaId'];
+      if (params['volverEtapa']) this.selectedEtapa = params['volverEtapa'];
+      if (params['volverJornada']) this.selectedJornada = +params['volverJornada'];
+      if (params['volverEstado']) this.filtroRapidoEstado = params['volverEstado'];
+      if (params['volverJornadasPorPagina']) this.jornadasPerPage = +params['volverJornadasPorPagina'];
+      this.paginaRetornoPendiente = params['volverPagina'] ? +params['volverPagina'] : null;
+
+      if (campeonatoId) {
+        this.selectedCampeonatoId = +campeonatoId;
+        if (this.selectedLigaId) this.loadCampeonatos(this.selectedLigaId);
         this.loadCategorias(this.selectedCampeonatoId!);
         this.cargarPartidos();
       }
@@ -169,7 +182,11 @@ export class PartidosListComponent implements OnInit {
         next: (data) => {
           this.partidos = data;
           this.calcularEtapasYJornadas();
-          this.currentJornadaPage = 1;
+          const paginaMaxima = Math.max(1, Math.ceil(this.jornadasOrdenadas.length / this.jornadasPerPage));
+          this.currentJornadaPage = this.paginaRetornoPendiente
+            ? Math.min(this.paginaRetornoPendiente, paginaMaxima)
+            : 1;
+          this.paginaRetornoPendiente = null;
           this.loading = false;
         },
         error: (err) => {
@@ -249,6 +266,19 @@ export class PartidosListComponent implements OnInit {
     this.currentJornadaPage = 1;
   }
 
+  parametrosRetornoActa(): Record<string, string | number | null> {
+    return {
+      volverLigaId: this.selectedLigaId,
+      volverCampeonatoId: this.selectedCampeonatoId,
+      volverCategoriaId: this.selectedCategoriaId,
+      volverEtapa: this.selectedEtapa || null,
+      volverJornada: this.selectedJornada,
+      volverEstado: this.filtroRapidoEstado === 'todos' ? null : this.filtroRapidoEstado,
+      volverPagina: this.currentJornadaPage,
+      volverJornadasPorPagina: this.jornadasPerPage,
+    };
+  }
+
   // ===== Resultado =====
   partidoEstaBloqueado(partido: Partido): boolean {
     return partido.estado === 'jugado' && !this.partidosDesbloqueados.has(partido.id);
@@ -267,6 +297,7 @@ export class PartidosListComponent implements OnInit {
 
   abrirModalResultado(partido: Partido): void {
     this.resultadoModal = { visible: true, partido };
+    this.errorResultado = '';
     this.resultadoForm = {
       golesLocal: partido.golesLocal ?? 0,
       golesVisitante: partido.golesVisitante ?? 0,
@@ -324,6 +355,7 @@ export class PartidosListComponent implements OnInit {
 
   cerrarModalResultado(): void {
     this.resultadoModal = { visible: false, partido: null };
+    this.errorResultado = '';
     this.autoresGoles = [];
     this.mostrarAutores = false;
     this.jugadoresLocal = [];
@@ -332,6 +364,14 @@ export class PartidosListComponent implements OnInit {
 
   guardarResultado(): void {
     if (!this.resultadoModal.partido) return;
+    this.errorResultado = '';
+    this.errorMessage = '';
+
+    if (this.hayDescuadreAutores) {
+      this.errorResultado = this.mensajeDescuadreAutores;
+      return;
+    }
+
     this.savingResultado = true;
     // Expandir filas con cantidad > 1 en registros individuales antes de enviar
     const autoresExpandidos: AutorGolDto[] = [];
@@ -356,13 +396,14 @@ export class PartidosListComponent implements OnInit {
         next: (partidoActualizado) => {
           const idx = this.partidos.findIndex((p) => p.id === partidoActualizado.id);
           if (idx !== -1) this.partidos[idx] = partidoActualizado;
+          this.errorMessage = '';
           this.successMessage = 'Resultado registrado correctamente.';
           this.cerrarModalResultado();
           this.savingResultado = false;
           setTimeout(() => (this.successMessage = ''), 4000);
         },
         error: (err) => {
-          this.errorMessage = err?.error?.message || 'Error al registrar resultado';
+          this.errorResultado = err?.error?.message || 'Error al registrar resultado';
           this.savingResultado = false;
         },
       });
@@ -376,6 +417,40 @@ export class PartidosListComponent implements OnInit {
 
   eliminarGol(index: number): void {
     this.autoresGoles.splice(index, 1);
+  }
+
+  /**
+   * Solo se comprueban los autores cuando el usuario decidió registrarlos.
+   * Los autogoles suman al rival, igual que en la validación del backend.
+   */
+  get hayDescuadreAutores(): boolean {
+    if (!this.mostrarAutores || !this.resultadoModal.partido) return false;
+
+    const { local, visitante } = this.contarAutoresPorMarcador();
+    return local !== Number(this.resultadoForm.golesLocal ?? 0)
+      || visitante !== Number(this.resultadoForm.golesVisitante ?? 0);
+  }
+
+  get mensajeDescuadreAutores(): string {
+    const { local, visitante } = this.contarAutoresPorMarcador();
+    return `La suma de autores no coincide con el marcador. Marcador: ${this.resultadoForm.golesLocal ?? 0}-${this.resultadoForm.golesVisitante ?? 0}. Autores: local=${local}, visitante=${visitante}.`;
+  }
+
+  private contarAutoresPorMarcador(): { local: number; visitante: number } {
+    const partido = this.resultadoModal.partido;
+    if (!partido) return { local: 0, visitante: 0 };
+
+    return this.autoresGoles.reduce(
+      (totales, gol) => {
+        const cantidad = Math.max(0, Number(gol.cantidad) || 0);
+        const beneficiaLocal = (gol.tipo !== 'autogol' && gol.equipoDelJugadorId === partido.equipoLocalId)
+          || (gol.tipo === 'autogol' && gol.equipoDelJugadorId === partido.equipoVisitanteId);
+        if (beneficiaLocal) totales.local += cantidad;
+        else totales.visitante += cantidad;
+        return totales;
+      },
+      { local: 0, visitante: 0 },
+    );
   }
 
   /** Jugadores del equipo para un gol en el array autoresGoles */

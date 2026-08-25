@@ -34,6 +34,7 @@ export class ActaPartidoComponent implements OnInit {
 
   partidoId!: number;
   partido: any = null;
+  parametrosRetorno: Record<string, string | number> = {};
 
   // ── Planilla ──────────────────────────────────────────────────────────────
   filasLocal: FilaAlineacion[] = [];
@@ -132,6 +133,7 @@ export class ActaPartidoComponent implements OnInit {
 
   ngOnInit(): void {
     this.partidoId = Number(this.route.snapshot.paramMap.get('partidoId'));
+    this.parametrosRetorno = { ...this.route.snapshot.queryParams };
     this.cargarAlineacion();
     this.cargarInforme();
     // cargarEquiposVocal se llama desde cargarAlineacion una vez que 'partido' está disponible
@@ -356,7 +358,7 @@ export class ActaPartidoComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/partidos']);
+    this.router.navigate(['/partidos'], { queryParams: this.parametrosRetorno });
   }
 
   // ── Helpers planilla ───────────────────────────────────────────────────────
