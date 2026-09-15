@@ -180,9 +180,20 @@
       <button class="btn-export btn-outline" (click)="descargarExcel()">Excel</button>
     </div>
 
-    <!-- Lista -->
-    <div class="sanciones-grid" *ngIf="!cargando && sancionesFiltradas.length > 0">
-      <div class="sancion-card" *ngFor="let s of sancionesFiltradasPaginadas"
+    <!-- Pestañas de destino de la sanción -->
+    <div class="sanciones-tabs" *ngIf="!cargando && sancionesFiltradas.length > 0">
+      <button type="button" [class.activa]="pestanaActiva === 'general'" (click)="seleccionarPestana('general')">General</button>
+      <button type="button" [class.activa]="pestanaActiva === 'jugadores'" (click)="seleccionarPestana('jugadores')">Jugadores</button>
+      <button type="button" [class.activa]="pestanaActiva === 'colectivas'" (click)="seleccionarPestana('colectivas')">Equipos, barras y directivos</button>
+    </div>
+
+    <!-- Lista de la pestaña seleccionada -->
+    <div class="sanciones-grid" *ngIf="!cargando && sancionesParaVista.length > 0">
+      <ng-container *ngFor="let s of sancionesFiltradasPaginadas" [ngTemplateOutlet]="tarjetaSancion" [ngTemplateOutletContext]="{ $implicit: s }"></ng-container>
+    </div>
+
+    <ng-template #tarjetaSancion let-s>
+      <div class="sancion-card"
         [class.inactiva]="!s.activo"
         [style.borderLeftColor]="colorTipo(s.tipoSancion?.aplicaA ?? '')">
 
@@ -261,7 +272,7 @@
         </div>
 
       </div>
-    </div>
+    </ng-template>
 
     <!-- Paginador -->
     <div *ngIf="!cargando && totalPages > 1" class="paginator-container">
@@ -289,7 +300,7 @@
         <button class="page-btn" (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages" title="Última página">»</button>
       </div>
       <div class="paginator-right">
-        Mostrando {{ Math.min(currentPage * pageSize, sancionesFiltradas.length) }} de {{ sancionesFiltradas.length }} sanción(es)
+        Mostrando {{ Math.min(currentPage * pageSize, sancionesParaVista.length) }} de {{ sancionesParaVista.length }} sanción(es)
       </div>
     </div>
 

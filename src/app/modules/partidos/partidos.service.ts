@@ -9,6 +9,8 @@ import {
   RegistrarResultadoDto,
   GenerarFixtureDto,
   GenerarFixtureResponse,
+  CrearProgramacionSemanalDto,
+  ProgramacionSemanal,
 } from './partido.model';
 
 @Injectable({
@@ -95,5 +97,32 @@ export class PartidosService {
       .set('categoriaId', categoriaId.toString())
       .set('etapa', etapa);
     return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/fixture`, { params });
+  }
+
+  crearProgramacionSemanal(data: CrearProgramacionSemanalDto): Observable<ProgramacionSemanal> {
+    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal`, data);
+  }
+  obtenerProgramacionSemanal(id: number): Observable<ProgramacionSemanal> {
+    return this.http.get<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}`);
+  }
+  obtenerProgramacionSemanalPendiente(campeonatoId: number, categoriaId: number | undefined, etapa: string, jornada: number): Observable<ProgramacionSemanal | null> {
+    let params = new HttpParams().set('campeonatoId', campeonatoId).set('etapa', etapa).set('jornada', jornada);
+    if (categoriaId) params = params.set('categoriaId', categoriaId);
+    return this.http.get<ProgramacionSemanal | null>(`${this.apiUrl}/programacion-semanal/pendiente`, { params });
+  }
+  sacarBolilla(id: number, partidoId: number): Observable<{ bolilla: any; partido: Partido }> {
+    return this.http.post<{ bolilla: any; partido: Partido }>(`${this.apiUrl}/programacion-semanal/${id}/sacar-bolilla/${partidoId}`, {});
+  }
+  confirmarProgramacionSemanal(id: number): Observable<ProgramacionSemanal> {
+    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/confirmar`, {});
+  }
+  cancelarProgramacionSemanal(id: number): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${this.apiUrl}/programacion-semanal/${id}/cancelar`, {});
+  }
+  liberarBolillaProgramacion(id: number, bolillaId: number): Observable<ProgramacionSemanal> {
+    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/bolillas/${bolillaId}/liberar`, {});
+  }
+  asignarBolillaManual(id: number, partidoId: number, bolillaId: number): Observable<ProgramacionSemanal> {
+    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/asignar-manual`, { partidoId, bolillaId });
   }
 }

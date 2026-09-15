@@ -302,6 +302,27 @@
 }
 
 /* Grid de sanciones */
+.sanciones-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  button {
+    border: 1px solid #b9cee2;
+    border-radius: 7px;
+    background: #fff;
+    color: #31506e;
+    padding: 0.48rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: #edf5fc; }
+    &.activa { background: #1677c7; border-color: #1677c7; color: #fff; }
+  }
+}
+
 .sanciones-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

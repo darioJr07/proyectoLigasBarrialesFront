@@ -21,9 +21,9 @@ export class SancionesExportService {
   }
   async descargarImagen(data: SancionesExportables): Promise<void> {
     const logo = data.ligaImagen ? await this.urlADataUrl(data.ligaImagen) : undefined;
-    const activas = this.ordenarParaImagen(data.sanciones
-      .filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? '')))
-    );
+    const activas = this.ordenarParaImagen(this.agruparSancionesColectivasParaImagen(
+      data.sanciones.filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? ''))),
+    ));
     const url = URL.createObjectURL(new Blob([this.svg(data, logo, activas.slice(0, 36))], { type: 'image/svg+xml;charset=utf-8' }));
     try { const imagen = await new Promise<HTMLImageElement>((resolve, reject) => { const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(); el.src = url; }); const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext('2d'); if (!ctx) throw new Error(); ctx.drawImage(imagen, 0, 0); const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png')); if (!png) throw new Error(); const enlace = document.createElement('a'); enlace.href = URL.createObjectURL(png); enlace.download = `${this.nombre(data)}_ACTIVAS.png`; enlace.click(); URL.revokeObjectURL(enlace.href); } finally { URL.revokeObjectURL(url); }
   }
@@ -44,6 +44,37 @@ export class SancionesExportService {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#02102f"/><stop offset=".55" stop-color="#06447f"/><stop offset="1" stop-color="#02102f"/></linearGradient></defs><style>.a{font:700 42px Arial;fill:#75a6d5}.b{font:700 50px Arial;fill:#cda412}.m{font:700 20px Arial;fill:white}.h{font:700 18px Arial;fill:white}.r{font:500 18px Arial;fill:white}.general{font:700 16px Arial;fill:white}.foot{font:700 14px Arial;fill:white}</style><rect width="1080" height="1920" fill="url(#g)"/><text x="55" y="150" class="a">JUGADORES Y EQUIPOS</text><text x="55" y="215" class="b">SANCIONADOS</text><text x="55" y="285" class="m">${this.xml(data.campeonatoNombre)} · ${this.fecha()}</text>${cabecera}<path d="M45 405H1035L1005 440H75Z" fill="#cda412"/><text x="70" y="430" class="h">NOMBRE</text><text x="380" y="430" class="h">CLUB</text><text x="700" y="430" class="h" text-anchor="middle">NÚMERO</text><text x="1010" y="430" class="h" text-anchor="end">SANCIÓN</text>${watermark}${rows}<text x="55" y="1860" class="foot">COMISION TECNICA LMLT 2026-2028</text></svg>`;
   }
   private persona(s: Sancion): string { return s.jugador?.nombre ?? s.equipo?.nombre ?? 'Sanción general'; }
+
+  /**
+   * Las sanciones de equipo, barra o directivo son registros de historial que
+   * aumentan el contador de la regla. La imagen muestra una sola fila por
+   * equipo, campeonato y tipo; las sanciones de jugadores siguen individuales.
+   */
+  private agruparSancionesColectivasParaImagen(sanciones: Sancion[]): Sancion[] {
+    const agrupadas = new Map<string, Sancion>();
+
+    for (const sancion of sanciones) {
+      if (sancion.tipoSancion?.aplicaA === 'jugador') {
+        agrupadas.set(`jugador:${sancion.id}`, sancion);
+        continue;
+      }
+
+      // Sin equipo no existe un contador colectivo comparable; se conserva la fila.
+      if (!sancion.equipoId) {
+        agrupadas.set(`sin-equipo:${sancion.id}`, sancion);
+        continue;
+      }
+
+      const clave = `colectiva:${sancion.campeonatoId}:${sancion.equipoId}:${sancion.tipoSancionId}`;
+      const existente = agrupadas.get(clave);
+      if (!existente || this.valorFecha(sancion.fechaSancion ?? sancion.creadoEn) > this.valorFecha(existente.fechaSancion ?? existente.creadoEn)) {
+        agrupadas.set(clave, sancion);
+      }
+    }
+
+    return [...agrupadas.values()];
+  }
+
   private ordenarParaImagen(sanciones: Sancion[]): Sancion[] {
     return [...sanciones].sort((a, b) => {
       const bloqueA = this.bloqueImagen(a), bloqueB = this.bloqueImagen(b);

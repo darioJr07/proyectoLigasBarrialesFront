@@ -30,6 +30,14 @@
       </button>
       <button
         type="button"
+        class="btn btn-outline"
+        routerLink="/partidos/programacion-semanal"
+        *ngIf="permissions.canEditPartido()"
+      >
+        🎱 Programación semanal
+      </button>
+      <button
+        type="button"
         class="btn btn-primary"
         routerLink="/partidos/nuevo"
         *ngIf="permissions.canEditPartido()"

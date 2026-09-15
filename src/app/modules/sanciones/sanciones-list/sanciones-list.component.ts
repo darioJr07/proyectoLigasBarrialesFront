@@ -41,16 +41,33 @@ export class SancionesListComponent implements OnInit {
   // Paginación
   Math = Math;
   currentPage = 1;
-  pageSize = 10;
-  pageSizeOptions = [10, 20, 50];
+  pageSize = 12;
+  pageSizeOptions = [12, 24, 48];
+  pestanaActiva: 'general' | 'jugadores' | 'colectivas' = 'general';
+
+  get sancionesParaVista(): Sancion[] {
+    switch (this.pestanaActiva) {
+      case 'jugadores':
+        return this.sancionesFiltradas.filter(s => this.esSancionJugador(s));
+      case 'colectivas':
+        return this.sancionesFiltradas.filter(s => !this.esSancionJugador(s));
+      default:
+        // General conserva el orden original de la lista, como antes de las pestañas.
+        return this.sancionesFiltradas;
+    }
+  }
 
   get sancionesFiltradasPaginadas(): Sancion[] {
     const start = (this.currentPage - 1) * this.pageSize;
-    return this.sancionesFiltradas.slice(start, start + this.pageSize);
+    return this.sancionesParaVista.slice(start, start + this.pageSize);
+  }
+
+  esSancionJugador(sancion: Sancion): boolean {
+    return sancion.tipoSancion?.aplicaA === 'jugador' || !!sancion.jugador;
   }
 
   get totalPages(): number {
-    return Math.ceil(this.sancionesFiltradas.length / this.pageSize);
+    return Math.ceil(this.sancionesParaVista.length / this.pageSize);
   }
 
   get totalPagesArray(): number[] {
@@ -63,6 +80,11 @@ export class SancionesListComponent implements OnInit {
   }
 
   onPageSizeChange(): void {
+    this.currentPage = 1;
+  }
+
+  seleccionarPestana(pestana: 'general' | 'jugadores' | 'colectivas'): void {
+    this.pestanaActiva = pestana;
     this.currentPage = 1;
   }
 

@@ -76,3 +76,17 @@ export interface GenerarFixtureResponse {
   totalJornadas: number;
   partidos: Partido[];
 }
+
+export interface BolillaHorario {
+  id?: number; numero?: number; fecha: string; hora: string; cancha: string;
+  estado?: 'disponible' | 'asignada' | 'no_utilizada'; partidoId?: number | null; ordenSorteo?: number | null; asignacionManual?: boolean; partido?: Partido | null;
+}
+
+export interface ProgramacionSemanal {
+  id: number; ligaId: number; campeonatoId: number; categoriaId?: number | null; etapa: string; jornada: number;
+  totalPartidos: number; estado: 'borrador' | 'en_sorteo' | 'confirmada' | 'cancelada'; bolillas: BolillaHorario[]; partidos: Partido[];
+}
+
+export interface CrearProgramacionSemanalDto {
+  campeonatoId: number; categoriaId?: number; etapa: string; jornada: number; bolillas: BolillaHorario[];
+}

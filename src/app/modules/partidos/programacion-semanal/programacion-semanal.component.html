@@ -1,0 +1,42 @@
+<header class="page-header">
+  <h1>Sistema de Ligas Barriales</h1>
+  <div class="user-info" *ngIf="user$ | async as user">
+    <span>{{ user.nombre }}</span><span class="user-role">({{ user.rol.nombre }})</span>
+    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+  </div>
+</header>
+<app-main-nav></app-main-nav>
+
+<main class="programacion">
+  <a routerLink="/partidos" class="btn-back">← Volver a partidos</a>
+  <h1>🎱 Programación semanal</h1>
+  <p>Configura las bolillas y realiza el sorteo presencial antes de confirmar los horarios.</p>
+  <p class="error" *ngIf="error">{{ error }}</p><p class="exito" *ngIf="exito">{{ exito }}</p>
+
+  <section *ngIf="!sesion" class="panel">
+    <h2>1. Filtros y bolillero</h2>
+    <div class="form">
+      <select *ngIf="esMaster" [(ngModel)]="ligaId" (change)="cambiarLiga()"><option [ngValue]="null">Liga</option><option *ngFor="let l of ligas" [ngValue]="l.id">{{ l.nombre }}</option></select>
+      <select [(ngModel)]="campeonatoId" (change)="cambiarCampeonato()"><option [ngValue]="null">Campeonato</option><option *ngFor="let c of campeonatos" [ngValue]="c.id">{{ c.nombre }}</option></select>
+      <select [(ngModel)]="categoriaId" (change)="cambiarCategoria()"><option [ngValue]="null">Todas las categorías</option><option *ngFor="let c of categorias" [ngValue]="c.id">{{ c.nombre }}</option></select>
+      <select [(ngModel)]="etapa" (change)="cambiarEtapa()" [disabled]="!etapasDisponibles.length"><option value="">Etapa / fase</option><option *ngFor="let item of etapasDisponibles" [value]="item">{{ item }}</option></select>
+      <select [(ngModel)]="jornada" [disabled]="!jornadasDisponibles.length"><option [ngValue]="null">Jornada</option><option *ngFor="let item of jornadasDisponibles" [ngValue]="item">Jornada {{ item }}</option></select>
+    </div>
+    <p class="hint" *ngIf="campeonatoId">Solo se muestran etapas y jornadas con partidos programados que todavía no tienen fecha u hora.</p>
+    <h3>Agregar horarios al bolillero</h3>
+    <p class="hint">Agrega primero los horarios de un día. Luego cambia la fecha —por ejemplo, a domingo— y agrégalos nuevamente: todas las bolillas quedarán disponibles en el mismo sorteo.</p>
+    <div class="form"><input type="date" [(ngModel)]="fecha" aria-label="Fecha de juego"><span *ngIf="canchasDetectadas.length" class="canchas-detectadas">🏟️ {{ canchasDetectadas.join(' · ') }}</span><input *ngIf="!canchasDetectadas.length" [(ngModel)]="cancha" placeholder="Cancha"><input type="time" [(ngModel)]="horaInicio" aria-label="Hora inicial"><input type="time" [(ngModel)]="horaFin" aria-label="Hora final"><input id="intervalo" type="number" [(ngModel)]="intervalo" min="1" title="Intervalo entre partidos en minutos" aria-label="Intervalo entre partidos en minutos"><small class="intervalo-ayuda">Cada {{ intervalo }} min.</small><button (click)="generarBolillas()">Agregar horarios de este día</button></div>
+    <p class="hint" *ngIf="canchasDetectadas.length">Las canchas fueron tomadas de los partidos seleccionados. Se crearán horarios para cada una.</p>
+    <div class="bolillas"><span *ngFor="let b of bolillas; let i=index">{{ i + 1 }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }} <button (click)="quitarBolilla(i)">×</button></span></div>
+    <button class="principal" [disabled]="cargando" (click)="iniciar()">{{ cargando ? 'Validando…' : 'Iniciar sorteo' }}</button>
+  </section>
+
+  <section *ngIf="sesion" class="panel">
+    <h2>2. Bolillero — Jornada {{ sesion.jornada }}</h2><p>{{ pendientes.length }} partido(s) pendientes · {{ sesion.bolillas.length - pendientes.length }} bolilla(s) disponible(s)</p>
+    <div class="sorteo"><div><h3>Partido a sortear</h3><select [(ngModel)]="partidoSeleccionadoId"><option [ngValue]="null">Selecciona el partido mencionado</option><option *ngFor="let p of pendientes" [ngValue]="p.id">{{ p.categoria?.nombre || 'Categoría' }} · {{ p.equipoLocal?.nombre }} vs {{ p.equipoVisitante?.nombre }}{{ p.cancha ? ' · ' + p.cancha : '' }}</option></select><button class="principal" [disabled]="!partidoSeleccionadoId || sorteando" (click)="sacar()">{{ sorteando ? 'Sacando…' : '🎱 Sacar bolilla' }}</button></div><div class="resultado" *ngIf="ultimaBolilla"><strong>Bolilla {{ ultimaBolilla.numero }}</strong><span>{{ ultimaBolilla.fecha }} · {{ ultimaBolilla.hora }}</span><span>{{ ultimaBolilla.cancha }}</span></div></div>
+    <section *ngIf="sesion.estado === 'en_sorteo'" class="correccion"><h3>Horario solicitado o corrección manual</h3><p>Si un equipo tiene una solicitud reglamentaria, selecciona su partido y reserva una bolilla compatible antes de sortear los demás. También puedes liberar una asignación para corregirla. Las bolillas incompatibles con la cancha del partido no se muestran.</p><div class="form"><select [(ngModel)]="partidoSeleccionadoId"><option [ngValue]="null">Partido pendiente</option><option *ngFor="let p of pendientes" [ngValue]="p.id">{{ p.equipoLocal?.nombre }} vs {{ p.equipoVisitante?.nombre }}</option></select><select [(ngModel)]="bolillaManualId" [disabled]="!partidoSeleccionadoId"><option [ngValue]="null">Bolilla disponible</option><option *ngFor="let b of bolillasManualesDisponibles" [ngValue]="b.id">#{{ b.numero }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }}</option></select><button [disabled]="!partidoSeleccionadoId || !bolillaManualId" (click)="asignarManual()">Reservar horario solicitado</button></div></section>
+    <h3>Asignaciones</h3><ul><li *ngFor="let b of sesion.bolillas"><span>Bolilla {{ b.numero }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }}</span><strong *ngIf="b.partido">{{ b.partido.equipoLocal?.nombre }} vs {{ b.partido.equipoVisitante?.nombre }}{{ b.asignacionManual ? ' · Reservado manualmente' : '' }}</strong><em *ngIf="!b.partido">Disponible</em><button *ngIf="b.partido && sesion.estado === 'en_sorteo'" class="liberar" (click)="liberar(b)">Liberar</button></li></ul>
+    <div class="exportar"><span>Descargar programación{{ sesion.estado === 'en_sorteo' ? ' (borrador)' : '' }}</span><button (click)="exportarPdf()">PDF</button><button (click)="exportarExcel()">Excel</button><button (click)="exportarImagenes()">Imágenes por fecha</button></div>
+    <div class="acciones-finales"><button class="principal" [disabled]="pendientes.length > 0 || confirmando || sesion.estado === 'confirmada'" (click)="confirmar()">{{ sesion.estado === 'confirmada' ? '✓ Programación confirmada' : confirmando ? 'Confirmando…' : 'Confirmar programación' }}</button><button *ngIf="sesion.estado === 'en_sorteo'" class="cancelar" (click)="cancelar()">Cancelar sorteo</button></div>
+  </section>
+</main>

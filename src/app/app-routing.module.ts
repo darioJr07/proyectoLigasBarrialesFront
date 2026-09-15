@@ -63,6 +63,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
         loadComponent: () =>
           import('./modules/campeonatos/campeonatos-list/campeonatos-list.component').then(
             (m) => m.CampeonatosListComponent
@@ -231,6 +232,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
         loadComponent: () =>
           import('./modules/partidos/partidos-list/partidos-list.component').then(
             (m) => m.PartidosListComponent
@@ -243,6 +245,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./modules/partidos/generar-fixture/generar-fixture.component').then(
             (m) => m.GenerarFixtureComponent
+          ),
+      },
+      {
+        path: 'programacion-semanal',
+        canActivate: [RolesGuard],
+        data: { roles: ['master', 'directivo_liga'] },
+        loadComponent: () =>
+          import('./modules/partidos/programacion-semanal/programacion-semanal.component').then(
+            (m) => m.ProgramacionSemanalComponent
           ),
       },
       {
