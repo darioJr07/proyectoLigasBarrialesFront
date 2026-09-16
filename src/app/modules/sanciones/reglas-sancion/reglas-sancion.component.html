@@ -61,18 +61,17 @@
             <!-- Aviso informativo para tipos no-jugador -->
             <div class="form-item wide" *ngIf="aplicaADelTipo && !esParaJugador">
               <div class="field-hint" style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:0.6rem 0.9rem;color:#856404;">
-                ℹ️ Las reglas para <strong>{{ aplicaADelTipo }}</strong> no generan suspensión de partidos.
-                Solo se configura la acumulación para generar alertas cuando el equipo llega al límite.
+                ℹ️ Las reglas para <strong>{{ aplicaADelTipo }}</strong> no generan suspensión por partidos.
+                Puedes dejarlas como registro/acumulación o aplicar una suspensión por tiempo.
               </div>
             </div>
 
-            <!-- Modo de castigo — solo visible para jugadores -->
-            <div class="form-item" *ngIf="esParaJugador">
+            <div class="form-item" *ngIf="aplicaADelTipo">
               <label>Tipo de castigo</label>
               <div class="radio-group">
                 <label class="radio-option">
                   <input type="radio" formControlName="modoCastigo" value="partidos">
-                  <span>Por partidos</span>
+                  <span>{{ esParaJugador ? 'Por partidos' : 'Sin período (registro o acumulación)' }}</span>
                 </label>
                 <label class="radio-option">
                   <input type="radio" formControlName="modoCastigo" value="tiempo">
@@ -89,8 +88,7 @@
               <span class="field-hint">Partidos que cumple al ser sancionado con este tipo</span>
             </div>
 
-            <!-- Duración en meses (modo tiempo) — solo visible para jugadores -->
-            <div class="form-item" *ngIf="esParaJugador && form.get('modoCastigo')?.value === 'tiempo'">
+            <div class="form-item" *ngIf="form.get('modoCastigo')?.value === 'tiempo'">
               <label>Duración de la suspensión (meses) *</label>
               <input class="form-input" type="number" formControlName="duracionMeses" min="1"
                 placeholder="Ej: 6">
@@ -100,8 +98,9 @@
             </div>
 
             <div class="form-item">
-              <label>Descuento de puntos</label>
+              <label>Descuento sugerido de puntos</label>
               <input class="form-input" type="number" formControlName="puntosDescuento" min="0" placeholder="0">
+              <span class="field-hint">Solo se propone al Tribunal; no modifica la tabla por sí solo.</span>
             </div>
 
             <div class="form-item">

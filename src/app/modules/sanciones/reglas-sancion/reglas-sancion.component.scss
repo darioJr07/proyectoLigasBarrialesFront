@@ -184,6 +184,30 @@
   }
 }
 
+/* Las modalidades de castigo son opciones excluyentes, una por línea. */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-weight: 400 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  cursor: pointer;
+
+  input {
+    margin: 0;
+    flex: 0 0 auto;
+  }
+}
+
 .form-input,
 .form-select {
   border: 1.5px solid #e2e8f0;

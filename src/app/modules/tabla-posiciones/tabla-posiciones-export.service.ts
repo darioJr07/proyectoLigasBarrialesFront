@@ -18,16 +18,16 @@ export interface TablaExportable {
 @Injectable({ providedIn: 'root' })
 export class TablaPosicionesExportService {
   descargarPdf(data: TablaExportable): void {
-    const encabezado = ['#', 'EQUIPO', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DG', 'PTS']
+    const encabezado = ['#', 'EQUIPO', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DG', 'DESC.', 'PTS']
       .map((text, index) => ({ text, style: 'tableHeader', alignment: index === 1 ? 'left' : 'center' }));
-    const filas = data.tabla.map(f => [String(f.posicion), f.equipoNombre, String(f.pj), String(f.pg), String(f.pe), String(f.pp), String(f.gf), String(f.gc), this.dg(f.dg), String(f.puntos)]);
+    const filas = data.tabla.map(f => [String(f.posicion), f.equipoNombre, String(f.pj), String(f.pg), String(f.pe), String(f.pp), String(f.gf), String(f.gc), this.dg(f.dg), f.puntosDescuento > 0 ? `-${f.puntosDescuento}` : '—', String(f.puntos)]);
     const documento: any = {
       pageOrientation: 'landscape', pageMargins: [28, 32, 28, 32],
       content: [
         { text: 'TABLA DE POSICIONES', style: 'title', alignment: 'center' },
         { text: data.ligaNombre, style: 'league', alignment: 'center', margin: [0, 3, 0, 0] },
         { text: `${data.campeonatoNombre} — ${data.categoriaNombre} | ${data.etapa}`, style: 'subtitle', alignment: 'center', margin: [0, 2, 0, 14] },
-        { table: { headerRows: 1, widths: [30, '*', 35, 35, 35, 35, 35, 35, 38, 38], body: [encabezado, ...filas] }, layout: { fillColor: (r: number) => r === 0 ? '#1A252F' : r % 2 === 0 ? '#F5F7FA' : null, hLineColor: () => '#DDE3EA', vLineColor: () => '#DDE3EA' } },
+        { table: { headerRows: 1, widths: [30, '*', 35, 35, 35, 35, 35, 35, 38, 42, 38], body: [encabezado, ...filas] }, layout: { fillColor: (r: number) => r === 0 ? '#1A252F' : r % 2 === 0 ? '#F5F7FA' : null, hLineColor: () => '#DDE3EA', vLineColor: () => '#DDE3EA' } },
         { text: `Generado el ${this.fecha()}`, style: 'footer', alignment: 'right', margin: [0, 14, 0, 0] },
       ],
       styles: { title: { fontSize: 17, bold: true, color: '#1A252F' }, league: { fontSize: 11, bold: true, color: '#3498DB' }, subtitle: { fontSize: 10, color: '#52616B' }, footer: { fontSize: 8, color: '#7F8C8D' }, tableHeader: { bold: true, color: '#FFFFFF', fontSize: 9 } },
@@ -39,11 +39,11 @@ export class TablaPosicionesExportService {
   descargarExcel(data: TablaExportable): void {
     const hoja = XLSX.utils.aoa_to_sheet([
       ['TABLA DE POSICIONES'], ['Liga', data.ligaNombre], ['Campeonato', data.campeonatoNombre], ['Categoría', data.categoriaNombre], ['Etapa', data.etapa], ['Generado el', this.fecha()], [],
-      ['Posición', 'Equipo', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DG', 'Puntos'],
-      ...data.tabla.map(f => [f.posicion, f.equipoNombre, f.pj, f.pg, f.pe, f.pp, f.gf, f.gc, f.dg, f.puntos]),
+      ['Posición', 'Equipo', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DG', 'Descuento disciplinario', 'Puntos'],
+      ...data.tabla.map(f => [f.posicion, f.equipoNombre, f.pj, f.pg, f.pe, f.pp, f.gf, f.gc, f.dg, f.puntosDescuento > 0 ? -f.puntosDescuento : 0, f.puntos]),
     ]);
-    hoja['!cols'] = [{ wch: 11 }, { wch: 32 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
-    hoja['!merges'] = [XLSX.utils.decode_range('A1:J1')];
+    hoja['!cols'] = [{ wch: 11 }, { wch: 32 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 24 }, { wch: 10 }];
+    hoja['!merges'] = [XLSX.utils.decode_range('A1:K1')];
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Posiciones');
     XLSX.writeFile(libro, `${this.nombre(data)}.xlsx`);

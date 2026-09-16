@@ -262,6 +262,13 @@ $color-primary: #3498db;
       font-size: 1.05rem;
       strong { color: #1a252f; }
     }
+
+    td.col-descuento {
+      color: #94a3b8;
+      font-weight: 600;
+
+      &.con-descuento { color: #c0392b; font-weight: 800; }
+    }
   }
 }
 

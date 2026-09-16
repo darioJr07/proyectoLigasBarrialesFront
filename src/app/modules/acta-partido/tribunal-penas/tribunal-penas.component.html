@@ -262,8 +262,21 @@
           <!-- Aviso para sanciones a equipo/barra/directivo -->
           <div class="form-row" *ngIf="!esParaJugador">
             <small class="form-hint" style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:0.4rem 0.7rem;color:#856404;display:block">
-              ℹ️ Las sanciones a este tipo no generan suspensión de partidos.
+              ℹ️ Las sanciones a este tipo no generan suspensión por partidos. Una regla por tiempo mantiene la sanción visible hasta su vencimiento.
             </small>
+          </div>
+
+          <div class="form-row" *ngIf="!esParaJugador && !incidenciaAbierta.jugadorId">
+            <label>Descuento definitivo de puntos</label>
+            <input
+              type="number"
+              [(ngModel)]="form.puntosDescuentoAplicado"
+              min="0"
+              step="1"
+              placeholder="0"
+              class="form-control input-short"
+            />
+            <small class="form-hint">La regla puede sugerir un valor; Tribunal confirma, modifica o deja 0. Se aplicará a esta etapa.</small>
           </div>
 
           <!-- Por partidos (modo default) — solo jugadores -->
@@ -273,8 +286,7 @@
             <small class="form-hint">0 = amonestación sin suspensión</small>
           </div>
 
-          <!-- Por tiempo (modo 'tiempo') — solo jugadores -->
-          <ng-container *ngIf="esParaJugador && esPorTiempo">
+          <ng-container *ngIf="esPorTiempo">
             <div class="form-row">
               <label>Inicio suspensión</label>
               <input type="date" [(ngModel)]="form.fechaInicioSuspension" class="form-control input-medium" />

@@ -37,6 +37,7 @@ export class SancionesListComponent implements OnInit {
   // Filtros client-side
   busqueda = '';
   filtroEquipoId: number | null = null;
+  filtroCumplimiento: 'todos' | 'contador' | 'fecha' | 'registro' = 'todos';
 
   // Paginación
   Math = Math;
@@ -104,6 +105,9 @@ export class SancionesListComponent implements OnInit {
     const termino = this.busqueda.trim().toLowerCase();
     return this.sanciones.filter(s => {
       if (this.filtroEquipoId && s.equipo?.id !== this.filtroEquipoId) return false;
+      if (this.filtroCumplimiento === 'fecha' && !s.fechaFinSuspension) return false;
+      if (this.filtroCumplimiento === 'contador' && (s.fechaFinSuspension || (s.partidosSuspension ?? 0) <= 0)) return false;
+      if (this.filtroCumplimiento === 'registro' && (s.fechaFinSuspension || (s.partidosSuspension ?? 0) > 0)) return false;
       if (termino) {
         const enJugador = s.jugador?.nombre?.toLowerCase().includes(termino);
         const enEquipo  = s.equipo?.nombre?.toLowerCase().includes(termino);
@@ -237,17 +241,29 @@ export class SancionesListComponent implements OnInit {
   }
 
   get sancionesActivasExportables(): Sancion[] {
-    return this.sancionesFiltradas.filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? '')));
+    return this.sancionesParaVista.filter(s => this.estaVigenteParaPublicacion(s));
+  }
+
+  /** Las sanciones por tiempo se muestran hasta la fecha de vencimiento. */
+  private estaVigenteParaPublicacion(sancion: Sancion): boolean {
+    if (!sancion.activo) return false;
+    if (sancion.fechaFinSuspension) {
+      const fin = new Date(`${sancion.fechaFinSuspension.slice(0, 10)}T00:00:00`);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      return fin >= hoy;
+    }
+    return sancion.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(sancion.tipoSancion?.aplicaA ?? '');
   }
 
   descargarPdf(): void { this.sancionesExportService.descargarPdf(this.datosExportacion()); }
   descargarExcel(): void { this.sancionesExportService.descargarExcel(this.datosExportacion()); }
   async descargarImagen(): Promise<void> {
-    try { await this.sancionesExportService.descargarImagen(this.datosExportacion()); }
+    try { await this.sancionesExportService.descargarImagen(this.datosExportacion(this.sancionesParaVista)); }
     catch { this.error = 'No se pudo generar la imagen de sanciones. Intenta nuevamente.'; }
   }
 
-  private datosExportacion() {
+  private datosExportacion(sanciones: Sancion[] = this.sancionesFiltradas) {
     const liga = this.ligas.find(item => item.id === (this.filtroLigaId ?? this.ligaIdEfectivo));
     const campeonato = this.campeonatos.find(item => item.id === this.filtroCampeonatoId);
     const tipo = this.tipos.find(item => item.id === this.filtroTipoId);
@@ -257,7 +273,7 @@ export class SancionesListComponent implements OnInit {
       ligaImagen: liga?.imagen ?? usuario?.liga?.imagen,
       campeonatoNombre: campeonato?.nombre ?? 'Todos los campeonatos',
       tipoNombre: tipo?.nombre ?? 'Todos los tipos',
-      sanciones: this.sancionesFiltradas,
+      sanciones,
       reglas: this.reglas,
     };
   }
@@ -391,6 +407,7 @@ export class SancionesListComponent implements OnInit {
     this.incluirAnuladas = false;
     this.busqueda = '';
     this.filtroEquipoId = null;
+    this.filtroCumplimiento = 'todos';
     this.currentPage = 1;
     this.reglas = []; // Al limpiar sin campeonato, las alertas ya no aplican
     this.cargarSanciones();

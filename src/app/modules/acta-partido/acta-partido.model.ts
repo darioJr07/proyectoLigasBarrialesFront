@@ -163,6 +163,7 @@ export interface ResolverIncidenciaDto {
   observacionesTribunal?: string;
   fechaSancion?: string;
   montoMulta?: number | null;
+  puntosDescuentoAplicado?: number;
 }
 
 // ─── LABELS ───────────────────────────────────────────────────────────────────

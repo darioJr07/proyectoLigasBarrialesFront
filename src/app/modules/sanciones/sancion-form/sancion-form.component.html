@@ -115,8 +115,8 @@
             <!-- Aviso informativo: tipos de equipo/barra/directivo no suspenden partidos -->
             <div class="form-item wide" *ngIf="!aplicaAJugador">
               <div class="field-hint" style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:0.6rem 0.9rem;color:#856404;">
-                ℹ️ Las sanciones a <strong>{{ aplicaASeleccionado }}</strong> no generan suspensión de partidos.
-                Solo se registra la sanción como historial y para el conteo de acumulación.
+                ℹ️ Las sanciones a <strong>{{ aplicaASeleccionado }}</strong> no generan suspensión por partidos.
+                Si la regla es por tiempo, la vigencia se controla mediante sus fechas.
               </div>
             </div>
 
@@ -127,8 +127,7 @@
               <span class="field-hint">0 = sin suspensión (solo registro)</span>
             </div>
 
-            <!-- Por tiempo (mode = 'tiempo') — solo aplica a jugadores -->
-            <ng-container *ngIf="esPorTiempo && aplicaAJugador">
+            <ng-container *ngIf="esPorTiempo">
               <div class="form-item">
                 <label>Inicio suspensión</label>
                 <input class="form-input" type="date" formControlName="fechaInicioSuspension">

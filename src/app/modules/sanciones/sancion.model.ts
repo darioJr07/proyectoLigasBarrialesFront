@@ -48,6 +48,7 @@ export interface Sancion {
   descripcion?: string;
   partidosSuspension: number;
   partidosCumplidos: number;
+  puntosDescuentoAplicado?: number;
   suspensionActiva: boolean;
   fechaSancion?: string;
   fechaInicioSuspension?: string;

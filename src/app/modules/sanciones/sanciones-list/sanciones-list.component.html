@@ -54,6 +54,16 @@
           </select>
         </div>
 
+        <div class="filtro-item">
+          <label>Cumplimiento</label>
+          <select class="form-select" [(ngModel)]="filtroCumplimiento" (ngModelChange)="currentPage = 1">
+            <option value="todos">Todas</option>
+            <option value="contador">Por contador de partidos</option>
+            <option value="fecha">Por fecha de vencimiento</option>
+            <option value="registro">Sin suspensión / registro</option>
+          </select>
+        </div>
+
         <div class="filtro-item checkbox-item">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="soloActivas">
@@ -172,7 +182,7 @@
       <p>🔍 No se encontraron sanciones con la búsqueda aplicada.</p>
     </div>
 
-    <!-- Exportaciones: PDF y Excel incluyen todas las sanciones filtradas; imagen solo activas -->
+    <!-- PDF y Excel incluyen todas las sanciones filtradas; la imagen respeta la pestaña activa. -->
     <div class="export-actions" *ngIf="!cargando && sancionesFiltradas.length > 0">
       <span class="export-label">Descargar según los filtros actuales</span>
       <button class="btn-export btn-social" *ngIf="sancionesActivasExportables.length" (click)="descargarImagen()">Imagen activas</button>
@@ -235,6 +245,9 @@
             📋 {{ s.reglaSancion!.descripcion }}
           </p>
           <p class="descripcion" *ngIf="s.descripcion">{{ s.descripcion }}</p>
+          <p class="descripcion descuento-disciplinario" *ngIf="(s.puntosDescuentoAplicado ?? 0) > 0">
+            Descuento aplicado: -{{ s.puntosDescuentoAplicado }} punto(s)
+          </p>
         </div>
 
           <div class="sancion-footer">

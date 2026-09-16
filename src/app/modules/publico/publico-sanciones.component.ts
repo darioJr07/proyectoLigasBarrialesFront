@@ -19,6 +19,9 @@ export class PublicoSancionesComponent implements OnInit {
   etiqueta(destino: SancionPublica['destino']): string { return ({ jugador: 'Jugador', equipo: 'Equipo', barra: 'Barra', directivo: 'Directivo' })[destino]; }
   cumplimiento(sancion: SancionPublica): string { if (sancion.fechaFinSuspension) return `Hasta ${new Intl.DateTimeFormat('es-EC').format(new Date(sancion.fechaFinSuspension))}`; if (sancion.partidosPendientes !== null && sancion.partidosPendientes !== undefined) return `${sancion.partidosPendientes} partido${sancion.partidosPendientes === 1 ? '' : 's'} pendiente${sancion.partidosPendientes === 1 ? '' : 's'}`; if (sancion.contadorLimite) return `${sancion.contadorActual ?? 0}/${sancion.contadorLimite}`; return 'Sanción activa'; }
   get sancionesJugadores(): SancionPublica[] { return this.sanciones.filter(sancion => sancion.destino === 'jugador'); }
+  descuento(sancion: SancionPublica): string {
+    return sancion.puntosDescuentoAplicado > 0 ? `Descuento: -${sancion.puntosDescuentoAplicado} pts` : '';
+  }
   /**
    * Las sanciones colectivas son registros históricos que alimentan un mismo
    * contador. El portal publica una sola tarjeta por equipo, destino y tipo.

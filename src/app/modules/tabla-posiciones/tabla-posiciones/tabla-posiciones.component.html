@@ -122,6 +122,7 @@
             <th class="col-stat" title="Goles a Favor">GF</th>
             <th class="col-stat" title="Goles en Contra">GC</th>
             <th class="col-stat" title="Diferencia de Goles">DG</th>
+            <th class="col-descuento" title="Descuento disciplinario aplicado por el Tribunal">Desc.</th>
             <th class="col-pts" title="Puntos">Pts</th>
           </tr>
         </thead>
@@ -148,6 +149,9 @@
             <td class="col-stat">{{ fila.gc }}</td>
             <td class="col-stat" [class]="getDgClass(fila.dg)">
               {{ fila.dg > 0 ? '+' + fila.dg : fila.dg }}
+            </td>
+            <td class="col-descuento" [class.con-descuento]="fila.puntosDescuento > 0">
+              {{ fila.puntosDescuento > 0 ? '-' + fila.puntosDescuento : '—' }}
             </td>
             <td class="col-pts">
               <strong>{{ fila.puntos }}</strong>

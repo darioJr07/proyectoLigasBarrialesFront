@@ -85,14 +85,11 @@ export class SancionFormComponent implements OnInit {
       this.reglas = [];
       if (tipoId) this.cargarReglas(Number(tipoId));
 
-      // Si el tipo no aplica a jugador, limpiar campos de suspensión
-      // para que el formulario no muestre valores residuos de una selección anterior.
+      // Los tipos colectivos no cumplen partidos, pero pueden usar una regla por tiempo.
       const tipo = this.tipos.find((t) => t.id === Number(tipoId));
       if (tipo && tipo.aplicaA !== 'jugador') {
         this.form.patchValue({
-          partidosSuspension:    0,
-          fechaInicioSuspension: null,
-          fechaFinSuspension:    null,
+          partidosSuspension: 0,
         });
       }
     });
@@ -222,11 +219,10 @@ export class SancionFormComponent implements OnInit {
       reglaSancionId: val.reglaSancionId ? Number(val.reglaSancionId) : undefined,
       descripcion: val.descripcion || undefined,
       fechaSancion: val.fechaSancion || undefined,
-      // Si el tipo no aplica a jugador, forzar suspensión en cero.
-      // Doble seguridad: el HTML ya oculta el campo, pero el DTO también lo garantiza.
+      // Los tipos colectivos nunca cumplen partidos; una regla por tiempo sí conserva fechas.
       partidosSuspension: (!this.aplicaAJugador || this.esPorTiempo) ? 0 : (val.partidosSuspension ?? 0),
-      fechaInicioSuspension: (this.esPorTiempo && this.aplicaAJugador) ? (val.fechaInicioSuspension || undefined) : undefined,
-      fechaFinSuspension:    (this.esPorTiempo && this.aplicaAJugador) ? (val.fechaFinSuspension    || undefined) : undefined,
+      fechaInicioSuspension: this.esPorTiempo ? (val.fechaInicioSuspension || undefined) : undefined,
+      fechaFinSuspension:    this.esPorTiempo ? (val.fechaFinSuspension    || undefined) : undefined,
     };
 
     this.sancionesService.createSancion(dto).subscribe({

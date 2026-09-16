@@ -313,6 +313,7 @@ export class TribunalPenasComponent implements OnInit {
       observacionesTribunal:'',
       fechaSancion:         new Date().toLocaleDateString('en-CA'),
       montoMulta:           undefined,
+      puntosDescuentoAplicado: 0,
     };
     this.errorResolucion = '';
     this.mensajeOk       = '';
@@ -321,6 +322,7 @@ export class TribunalPenasComponent implements OnInit {
   onTipoSancionChange(): void {
     this.reglas = [];
     this.form.reglaSancionId = undefined;
+    this.form.puntosDescuentoAplicado = 0;
     if (!this.form.tipoSancionId) return;
     const ligaId = (this.authService.currentUserValue as any)?.ligaId;
     this.sancionesService.getReglas(ligaId, this.campeonatoIdSeleccionado ?? undefined).subscribe({
@@ -341,6 +343,10 @@ export class TribunalPenasComponent implements OnInit {
     if (regla?.montoMulta != null) {
       this.form.montoMulta = Number(regla.montoMulta);
     }
+    // La regla sugiere el valor; el Tribunal siempre puede modificarlo.
+    this.form.puntosDescuentoAplicado = !this.esParaJugador
+      ? Number(regla?.puntosDescuento ?? 0)
+      : 0;
     if (regla?.modoCastigo === 'tiempo' && regla.duracionMeses) {
       const fechaInicio = this.form.fechaSancion || new Date().toLocaleDateString('en-CA');
       const inicio = new Date(fechaInicio);
@@ -390,14 +396,17 @@ export class TribunalPenasComponent implements OnInit {
       tipoSancionId:         this.form.decision === 'sancionar' ? this.form.tipoSancionId   : undefined,
       reglaSancionId:        this.form.decision === 'sancionar' ? this.form.reglaSancionId  : undefined,
       partidosSuspension:    this.form.decision === 'sancionar' && this.esParaJugador && !this.esPorTiempo ? (this.form.partidosSuspension ?? 0) : 0,
-      fechaInicioSuspension: this.form.decision === 'sancionar' && this.esParaJugador && this.esPorTiempo ? this.form.fechaInicioSuspension : undefined,
-      fechaFinSuspension:    this.form.decision === 'sancionar' && this.esParaJugador && this.esPorTiempo ? this.form.fechaFinSuspension    : undefined,
+      fechaInicioSuspension: this.form.decision === 'sancionar' && this.esPorTiempo ? this.form.fechaInicioSuspension : undefined,
+      fechaFinSuspension:    this.form.decision === 'sancionar' && this.esPorTiempo ? this.form.fechaFinSuspension    : undefined,
       descripcion:           this.form.descripcion              || undefined,
       observacionesTribunal: this.form.observacionesTribunal    || undefined,
       fechaSancion:          this.form.fechaSancion             || undefined,
       montoMulta:            this.form.decision === 'sancionar' && (this.form.montoMulta ?? 0) > 0
                                ? this.form.montoMulta
                                : undefined,
+      puntosDescuentoAplicado: this.form.decision === 'sancionar' && !this.esParaJugador && !this.incidenciaAbierta.jugadorId
+        ? Math.max(0, Number(this.form.puntosDescuentoAplicado ?? 0))
+        : 0,
     };
 
     this.actaService.resolverIncidencia(this.incidenciaAbierta.id!, dto).subscribe({

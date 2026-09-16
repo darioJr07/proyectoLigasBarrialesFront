@@ -75,13 +75,7 @@ export class ReglasSancionComponent implements OnInit {
       if (tipo) {
         // Auto-llenar monto desde el tipo (editable por el admin)
         this.form.patchValue({ montoMulta: tipo.montoMulta ?? null }, { emitEvent: false });
-        if (tipo.aplicaA !== 'jugador') {
-          this.form.patchValue({
-            modoCastigo:        'partidos',
-            partidosSuspension: null,
-            duracionMeses:      null,
-          });
-        }
+        if (tipo.aplicaA !== 'jugador') this.form.patchValue({ partidosSuspension: null });
       }
     });
 
@@ -223,12 +217,11 @@ export class ReglasSancionComponent implements OnInit {
       // ── Modo edición ──────────────────────────────────────────────────────
       const dto: UpdateReglaSancionDto = {
         descripcion: val.descripcion || undefined,
-        // Para tipos no-jugador no tiene sentido guardar modo/partidos/meses
-        modoCastigo: this.esParaJugador ? (val.modoCastigo ?? 'partidos') : 'partidos',
+        modoCastigo: val.modoCastigo ?? 'partidos',
         acumulacionActiva: val.acumulacionActiva ?? false,
         acumulacionCantidad: val.acumulacionCantidad ?? undefined,
         partidosSuspension: (this.esParaJugador && val.modoCastigo !== 'tiempo') ? (val.partidosSuspension ?? undefined) : undefined,
-        duracionMeses: (this.esParaJugador && val.modoCastigo === 'tiempo') ? (val.duracionMeses ?? undefined) : undefined,
+        duracionMeses: val.modoCastigo === 'tiempo' ? (val.duracionMeses ?? undefined) : undefined,
         puntosDescuento: val.puntosDescuento ?? 0,
         montoMulta: val.montoMulta ?? null,
       };
@@ -250,12 +243,11 @@ export class ReglasSancionComponent implements OnInit {
         ligaId: this.ligaId!,
         tipoSancionId: Number(val.tipoSancionId),
         descripcion: val.descripcion || undefined,
-        // Para tipos no-jugador no tiene sentido guardar modo/partidos/meses
-        modoCastigo: this.esParaJugador ? (val.modoCastigo ?? 'partidos') : 'partidos',
+        modoCastigo: val.modoCastigo ?? 'partidos',
         acumulacionActiva: val.acumulacionActiva ?? false,
         acumulacionCantidad: val.acumulacionCantidad ?? undefined,
         partidosSuspension: (this.esParaJugador && val.modoCastigo !== 'tiempo') ? (val.partidosSuspension ?? undefined) : undefined,
-        duracionMeses: (this.esParaJugador && val.modoCastigo === 'tiempo') ? (val.duracionMeses ?? undefined) : undefined,
+        duracionMeses: val.modoCastigo === 'tiempo' ? (val.duracionMeses ?? undefined) : undefined,
         puntosDescuento: val.puntosDescuento ?? 0,
         montoMulta: val.montoMulta ?? undefined,
       };
@@ -289,7 +281,7 @@ export class ReglasSancionComponent implements OnInit {
   descripcionRegla(regla: ReglaSancion): string {
     const castigo = regla.modoCastigo === 'tiempo'
       ? `${regla.duracionMeses ?? '?'} mes(es) de suspensión`
-      : `${regla.partidosSuspension ?? '?'} partido(s) de suspensión`;
+      : regla.tipoSancion?.aplicaA !== 'jugador' ? 'Registro o acumulación informativa' : `${regla.partidosSuspension ?? '?'} partido(s) de suspensión`;
     if (!regla.acumulacionActiva) return castigo || 'Sin acumulación automática';
     return `${regla.acumulacionCantidad ?? '?'} ${regla.tipoSancion?.nombre ?? 'tarjetas'} → ${castigo}`;
   }

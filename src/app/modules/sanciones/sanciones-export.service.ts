@@ -22,7 +22,7 @@ export class SancionesExportService {
   async descargarImagen(data: SancionesExportables): Promise<void> {
     const logo = data.ligaImagen ? await this.urlADataUrl(data.ligaImagen) : undefined;
     const activas = this.ordenarParaImagen(this.agruparSancionesColectivasParaImagen(
-      data.sanciones.filter(s => s.activo && (s.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(s.tipoSancion?.aplicaA ?? ''))),
+      data.sanciones.filter(s => this.estaVigenteParaPublicacion(s)),
     ));
     const url = URL.createObjectURL(new Blob([this.svg(data, logo, activas.slice(0, 36))], { type: 'image/svg+xml;charset=utf-8' }));
     try { const imagen = await new Promise<HTMLImageElement>((resolve, reject) => { const el = new Image(); el.onload = () => resolve(el); el.onerror = () => reject(); el.src = url; }); const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; const ctx = canvas.getContext('2d'); if (!ctx) throw new Error(); ctx.drawImage(imagen, 0, 0); const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png')); if (!png) throw new Error(); const enlace = document.createElement('a'); enlace.href = URL.createObjectURL(png); enlace.download = `${this.nombre(data)}_ACTIVAS.png`; enlace.click(); URL.revokeObjectURL(enlace.href); } finally { URL.revokeObjectURL(url); }
@@ -36,7 +36,10 @@ export class SancionesExportService {
   }
   private svgLista(data: SancionesExportables, logo: string | undefined, filas: Sancion[]): string {
     const rows = filas.map((s, i) => {
-      const y = 510 + i * 35, esSancionGeneral = !s.jugador, texto = esSancionGeneral ? this.avanceEquipo(s, data) : this.partidosPendientes(s);
+      const y = 510 + i * 35, esSancionGeneral = !s.jugador,
+        texto = esSancionGeneral
+          ? (s.fechaFinSuspension ? `HASTA ${this.formatearFecha(s.fechaFinSuspension)}` : this.avanceEquipo(s, data))
+          : this.partidosPendientes(s);
       if (esSancionGeneral) return `<text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="1010" y="${y}" class="general" text-anchor="end">${this.xml(this.cortar(texto, 42))}</text>`;
       return `<text x="70" y="${y}" class="r">${this.xml(this.cortar(this.nombreParaImagen(this.persona(s)), 24))}</text><text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="700" y="${y}" class="r" text-anchor="middle">${s.numeroCanchaCalificacion ?? ''}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 24))}</text>`;
     }).join('');
@@ -120,6 +123,16 @@ export class SancionesExportService {
   }
   private avanceEquipo(s: Sancion, data: SancionesExportables): string { const regla = data.reglas.find(r => r.tipoSancionId === s.tipoSancionId && r.acumulacionActiva && r.acumulacionCantidad); const total = data.sanciones.filter(x => x.equipoId === s.equipoId && x.tipoSancionId === s.tipoSancionId && x.activo).length; return regla ? `${this.nombreReglaParaImagen(s.tipoSancion?.nombre ?? 'SANCIÓN')} · ${total}/${regla.acumulacionCantidad}` : this.nombreReglaParaImagen(s.descripcion?.trim() || s.tipoSancion?.nombre || 'SANCIÓN'); }
   private nombreReglaParaImagen(nombre: string): string { return nombre.replace(/^FALTA\s+(?:A\s+)?UN\s+ENCUENTRO\s*-?\s*/i, '').trim() || nombre; }
+  private estaVigenteParaPublicacion(sancion: Sancion): boolean {
+    if (!sancion.activo) return false;
+    if (sancion.fechaFinSuspension) {
+      const fin = new Date(`${sancion.fechaFinSuspension.slice(0, 10)}T00:00:00`);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      return fin >= hoy;
+    }
+    return sancion.suspensionActiva || ['equipo', 'barra', 'directivo'].includes(sancion.tipoSancion?.aplicaA ?? '');
+  }
   private estado(s: Sancion): string { return !s.activo ? 'Anulada' : s.suspensionActiva ? 'Suspensión activa' : 'Sin suspensión activa'; }
   private fecha(): string { return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date()); }
   private cortar(valor: string, limite: number): string { return valor.length > limite ? `${valor.slice(0, limite - 1)}…` : valor; }

@@ -21,7 +21,7 @@ export interface CampeonatoPublico {
 export interface CategoriaPublica { id: number; nombre: string; orden: number; }
 export interface FilaPosicionPublica {
   posicion: number; equipoId: number; equipoNombre: string; equipoImagen?: string | null;
-  pj: number; pg: number; pe: number; pp: number; gf: number; gc: number; dg: number; puntos: number; tieneSancion: boolean;
+  pj: number; pg: number; pe: number; pp: number; gf: number; gc: number; dg: number; puntos: number; puntosDescuento: number; tieneSancion: boolean;
 }
 export interface PartidoPublico {
   id: number; jornada: number; fechaPartido?: string | null; horaPartido?: string | null; cancha?: string | null;
@@ -35,6 +35,7 @@ export interface SancionPublica {
   id: number; destino: 'jugador' | 'equipo' | 'barra' | 'directivo'; sancionado: string;
   jugadorImagen?: string | null;
   equipo: { id: number; nombre: string; imagen?: string | null } | null; tipo: string;
+  puntosDescuentoAplicado: number;
   partidosPendientes?: number | null; fechaFinSuspension?: string | null;
   contadorActual?: number | null; contadorLimite?: number | null;
 }
