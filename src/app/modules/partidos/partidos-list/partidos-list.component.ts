@@ -305,6 +305,7 @@ export class PartidosListComponent implements OnInit {
       bonificacionVisitante: partido.bonificacionVisitante ?? 0,
       observaciones: partido.observaciones ?? '',
       sancionado: partido.sancionado ?? 'ninguno',
+      resultadoAdministrativoPorExpulsion: partido.resultadoAdministrativoPorExpulsion ?? false,
     };
     // Resetear autores de goles
     this.autoresGoles = [];
@@ -388,6 +389,8 @@ export class PartidosListComponent implements OnInit {
     }
     const dto: RegistrarResultadoDto = {
       ...this.resultadoForm,
+      resultadoAdministrativoPorExpulsion:
+        this.resultadoForm.sancionado !== 'ninguno' && !!this.resultadoForm.resultadoAdministrativoPorExpulsion,
       autoresGoles: autoresExpandidos.length > 0 ? autoresExpandidos : undefined,
     };
     this.partidosService

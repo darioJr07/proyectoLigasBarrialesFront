@@ -12,7 +12,7 @@
 
   <div class="page-title">
     <div class="title-with-back">
-      <a routerLink="/partidos" class="btn-back">← Volver</a>
+      <button type="button" (click)="volverAPartidos()" class="btn-back">← Volver</button>
       <div>
         <h2>{{ isEditMode ? '✏️ Editar Partido' : '➕ Nuevo Partido' }}</h2>
         <p class="subtitle">{{ isEditMode ? 'Modifica los datos del partido.' : 'Registra un nuevo partido en el sistema.' }}</p>
@@ -119,7 +119,7 @@
               <span *ngIf="loading" class="spinner-sm"></span>
               {{ isEditMode ? 'Guardar Cambios' : 'Crear Partido' }}
             </button>
-            <a routerLink="/partidos" class="btn-cancel">Cancelar</a>
+            <button type="button" (click)="volverAPartidos()" class="btn-cancel">Cancelar</button>
           </div>
         </form>
       </div>

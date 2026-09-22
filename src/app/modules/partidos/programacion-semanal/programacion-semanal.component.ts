@@ -70,6 +70,7 @@ export class ProgramacionSemanalComponent implements OnInit {
     });
   }
   get pendientes(): any[] { if (!this.sesion) return []; const asignados = new Set(this.sesion.bolillas.filter(b => b.partidoId).map(b => b.partidoId)); return this.sesion.partidos.filter(p => !asignados.has(p.id)); }
+  get bolillasDisponibles(): number { return this.sesion?.bolillas.filter(b => b.estado === 'disponible').length ?? 0; }
   sacar(): void { if (!this.sesion || !this.partidoSeleccionadoId) return; this.sorteando = true; this.error = ''; this.partidosService.sacarBolilla(this.sesion.id, this.partidoSeleccionadoId).subscribe({ next: r => { this.ultimaBolilla = r.bolilla; this.partidoSeleccionadoId = null; this.refrescar(); this.sorteando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo sacar la bolilla.'; this.sorteando = false; } }); }
   confirmar(): void { if (!this.sesion || this.pendientes.length) return; this.confirmando = true; this.partidosService.confirmarProgramacionSemanal(this.sesion.id).subscribe({ next: s => { this.sesion = s; this.exito = 'Programación confirmada. Los horarios fueron guardados en los partidos.'; this.confirmando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo confirmar la programación.'; this.confirmando = false; } }); }
   cancelar(): void {

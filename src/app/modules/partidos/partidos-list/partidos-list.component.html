@@ -220,6 +220,7 @@
               🚫 Sancionado:
               <strong *ngIf="partido.sancionado === 'local'">{{ partido.equipoLocal?.nombre ?? 'Local' }}</strong>
               <strong *ngIf="partido.sancionado === 'visitante'">{{ partido.equipoVisitante?.nombre ?? 'Visitante' }}</strong>
+              <span *ngIf="partido.resultadoAdministrativoPorExpulsion"> · Equipo expulsado</span>
             </div>
 
             <!-- Acciones -->
@@ -252,7 +253,7 @@
               <a *ngIf="permissions.canImprimirActa()" [routerLink]="['/partidos', partido.id, 'acta']" [queryParams]="parametrosRetornoActa()" class="btn-accion btn-acta">
                 📋 Acta
               </a>
-              <a *ngIf="permissions.canEditPartido() && !partidoEstaBloqueado(partido)" [routerLink]="['/partidos/editar', partido.id]" class="btn-accion btn-editar">
+              <a *ngIf="permissions.canEditPartido() && !partidoEstaBloqueado(partido)" [routerLink]="['/partidos/editar', partido.id]" [queryParams]="parametrosRetornoActa()" class="btn-accion btn-editar">
                 ✏️ Editar
               </a>
             </div>
@@ -353,6 +354,16 @@
               Sancionar al visitante
             </label>
           </div>
+          <label
+            class="resultado-expulsion-option"
+            *ngIf="resultadoForm.sancionado === 'local' || resultadoForm.sancionado === 'visitante'"
+          >
+            <input type="checkbox" [(ngModel)]="resultadoForm.resultadoAdministrativoPorExpulsion" />
+            <span>
+              <strong>Resultado por equipo expulsado</strong>
+              <small>Solo avanzarán las suspensiones por partidos de jugadores del rival.</small>
+            </span>
+          </label>
         </div>
 
         <!-- ─── Autores de goles (opcional) ─────────────────────────── -->

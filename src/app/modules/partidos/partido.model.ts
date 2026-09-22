@@ -21,6 +21,7 @@ export interface Partido {
   bonificacionLocal?: number;
   bonificacionVisitante?: number;
   sancionado?: 'ninguno' | 'local' | 'visitante';
+  resultadoAdministrativoPorExpulsion?: boolean;
   observaciones?: string;
   activo: boolean;
   creadoEn: string;
@@ -59,6 +60,7 @@ export interface RegistrarResultadoDto {
   bonificacionVisitante?: number;
   observaciones?: string;
   sancionado?: 'ninguno' | 'local' | 'visitante';
+  resultadoAdministrativoPorExpulsion?: boolean;
   /** Lista de autores de goles. Opcional: si no se envía, el marcador se guarda sin detalle. */
   autoresGoles?: AutorGolDto[];
 }

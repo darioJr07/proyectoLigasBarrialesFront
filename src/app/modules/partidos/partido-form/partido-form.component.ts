@@ -26,6 +26,7 @@ export class PartidoFormComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  private parametrosRetorno: Record<string, string | number | null> = {};
   user$ = this.authService.currentUser$;
   private suppressCascade = false;
 
@@ -71,8 +72,11 @@ export class PartidoFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Conserva filtros, estado rápido y página cuando se llegó desde el
+    // listado de partidos. Si se abre la URL directamente, queda vacío.
+    this.parametrosRetorno = this.route.snapshot.queryParams;
     if (!this.permissions.canEditPartido()) {
-      this.router.navigate(['/partidos']);
+      this.volverAPartidos();
       return;
     }
     this.loadLigas();
@@ -237,7 +241,17 @@ export class PartidoFormComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     const formValue = this.partidoForm.getRawValue();
-    const { ligaId, ...payload } = formValue;
+    const { ligaId, ...payloadBase } = formValue;
+    // Fecha y hora son opcionales: un partido puede permanecer en el fixture
+    // sin programación (incluidos los que se resolverán administrativamente).
+    // Enviar cadena vacía hacía que la validación del DTO la interpretara como
+    // una fecha inválida, aunque el campo no sea obligatorio.
+    const payload = {
+      ...payloadBase,
+      fechaPartido: payloadBase.fechaPartido || null,
+      horaPartido: payloadBase.horaPartido || null,
+      cancha: payloadBase.cancha?.trim() || null,
+    };
 
     const operacion = this.isEditMode
       ? this.partidosService.update(this.partidoId!, payload)
@@ -247,7 +261,7 @@ export class PartidoFormComponent implements OnInit {
       next: () => {
         this.successMessage = this.isEditMode ? 'Partido actualizado.' : 'Partido creado.';
         this.loading = false;
-        setTimeout(() => this.router.navigate(['/partidos']), 1500);
+        setTimeout(() => this.volverAPartidos(), 1500);
       },
       error: (err) => {
         this.errorMessage = err?.error?.message || 'Error al guardar el partido';
@@ -258,5 +272,9 @@ export class PartidoFormComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  volverAPartidos(): void {
+    this.router.navigate(['/partidos'], { queryParams: this.parametrosRetorno });
   }
 }
