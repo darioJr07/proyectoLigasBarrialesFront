@@ -1,0 +1,19 @@
+<nav class="tesoreria-nav" aria-label="Secciones de Tesorería">
+  <a
+    routerLink="/tesoreria"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >📊 Resumen</a>
+  <a routerLink="/tesoreria/cobros-partido" routerLinkActive="active">📋 Cobros por Partido</a>
+  <a routerLink="/tesoreria/movimientos" routerLinkActive="active">📒 Movimientos</a>
+  <a routerLink="/tesoreria/libro-caja" routerLinkActive="active">📖 Libro de Caja</a>
+  <a routerLink="/tesoreria/cierres" routerLinkActive="active">🧾 Cierres</a>
+  <a routerLink="/tesoreria/garantias" routerLinkActive="active">🔒 Garantías</a>
+  <a routerLink="/tesoreria/derramas" routerLinkActive="active">📦 Derramas</a>
+  <a routerLink="/tesoreria/deudas" routerLinkActive="active">⚠️ Deudas</a>
+  <a
+    *ngIf="permissions.canConfigurTesoreria()"
+    routerLink="/tesoreria/config"
+    routerLinkActive="active"
+  >⚙️ Config. Vocalía</a>
+</nav>

@@ -10,11 +10,14 @@ import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
+import { ReciboTesoreria } from '../../../core/services/recibos-tesoreria.service';
+import { ReciboTesoreriaPdfService } from '../../../core/services/recibo-tesoreria-pdf.service';
 
 @Component({
   selector: 'app-tesoreria-derramas',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-derramas.component.html',
   styleUrl: './tesoreria-derramas.component.scss',
 })
@@ -33,6 +36,7 @@ export class TesoreriaDerrmasComponent implements OnInit {
   loading   = false;
   error     = '';
   exito     = '';
+  ultimoRecibo: ReciboTesoreria | null = null;
 
   // ── Modal nueva derrama ──────────────────────────────────────────────────
   modalNueva   = false;
@@ -69,6 +73,7 @@ export class TesoreriaDerrmasComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private ligasService: LigasService,
     private equiposService: EquiposService,
+    private reciboPdfService: ReciboTesoreriaPdfService,
   ) {
     this.user$ = this.authService.currentUser$;
   }
@@ -295,18 +300,25 @@ export class TesoreriaDerrmasComponent implements OnInit {
       this.campeonatoId ?? undefined,
       this.observacionesPago || undefined,
     ).subscribe({
-      next: () => {
+      next: (pago) => {
         this.guardandoPago = false;
         this.modalPago     = false;
-        this.exito         = `Pago registrado para ${this.pagoEquipo!.equipo?.nombre ?? 'equipo'}.`;
+        this.ultimoRecibo  = pago.recibo ?? null;
+        this.exito         = pago.recibo
+          ? `Pago registrado. Se emitió el recibo ${pago.recibo.numero}.`
+          : `Pago registrado para ${this.pagoEquipo!.equipo?.nombre ?? 'equipo'}.`;
         this.cargarDerramas();
-        setTimeout(() => { this.exito = ''; }, 4000);
+        setTimeout(() => { this.exito = ''; }, 7000);
       },
       error: (err) => {
         this.error         = err?.error?.message ?? 'Error al registrar el pago.';
         this.guardandoPago = false;
       },
     });
+  }
+
+  descargarUltimoRecibo(): void {
+    if (this.ultimoRecibo) this.reciboPdfService.descargar(this.ultimoRecibo);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

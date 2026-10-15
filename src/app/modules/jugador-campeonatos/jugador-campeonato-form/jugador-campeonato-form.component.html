@@ -102,7 +102,7 @@
               [class.is-invalid]="form.get('jugadorId')?.invalid && form.get('jugadorId')?.touched"
               placeholder="Buscar por nombre o cédula..."
               [value]="jugadorSearchText"
-              (input)="jugadorSearchText = $any($event.target).value; showJugadorDropdown = true"
+              (input)="onJugadorSearchInput($any($event.target).value)"
               (focus)="showJugadorDropdown = jugadores.length > 0"
               (blur)="onJugadorBlur()"
               [disabled]="isEditMode"
@@ -172,18 +172,23 @@
         </div>
 
         <div class="form-group">
-          <label for="numeroCancha">Número de Cancha</label>
+          <label for="numeroCancha">Número de Cancha *</label>
           <input
-            type="text"
+            type="number"
             id="numeroCancha"
             formControlName="numeroCancha"
             class="form-control"
+            min="1"
+            max="99"
             placeholder="Ej: 10"
           />
+          <small class="error-message" *ngIf="form.get('numeroCancha')?.invalid && form.get('numeroCancha')?.touched">
+            Ingresa un número entre 1 y 99
+          </small>
         </div>
 
         <div class="form-group">
-          <label for="posicion">Posición</label>
+          <label for="posicion">Posición *</label>
           <input
             type="text"
             id="posicion"
@@ -191,6 +196,9 @@
             class="form-control"
             placeholder="Ej: Delantero"
           />
+          <small class="error-message" *ngIf="form.get('posicion')?.invalid && form.get('posicion')?.touched">
+            La posición es obligatoria
+          </small>
         </div>
       </div>
 
@@ -214,7 +222,7 @@
         >
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
           {{ loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear' }}
         </button>
       </div>

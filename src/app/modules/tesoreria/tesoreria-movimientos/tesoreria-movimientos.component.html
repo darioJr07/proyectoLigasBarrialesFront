@@ -14,20 +14,25 @@
 
     <div class="section-title">
       <h2>📒 Movimientos de Tesorería</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria" class="btn-secondary-action">📊 Resumen</a>
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
-        <button *ngIf="permissions.canGestionarTesoreria()"
-                class="btn-primary-action"
-                (click)="toggleFormulario()">
-          {{ mostrarFormulario ? '✕ Cancelar' : '+ Nuevo Movimiento' }}
-        </button>
-      </div>
+      <button *ngIf="permissions.canGestionarTesoreria()"
+              class="btn-primary-action"
+              (click)="toggleFormulario()">
+        {{ mostrarFormulario ? '✕ Cancelar' : '+ Nuevo Movimiento' }}
+      </button>
     </div>
 
+    <app-tesoreria-nav></app-tesoreria-nav>
+
     <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
-    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+    <div class="alert alert-success" *ngIf="exito">
+      {{ exito }}
+      <button
+        *ngIf="ultimoRecibo && exito.includes(ultimoRecibo.numero)"
+        class="btn-accion btn-pagar"
+        (click)="descargarUltimoRecibo()">
+        Descargar recibo
+      </button>
+    </div>
 
     <!-- Formulario nuevo movimiento -->
     <div class="form-card" *ngIf="mostrarFormulario">
@@ -168,10 +173,13 @@
               </td>
               <td *ngIf="permissions.canGestionarTesoreria()">
                 <div class="acciones-celda">
+                  <button *ngIf="mov.recibo"
+                          class="btn-accion btn-recibo"
+                          (click)="descargarReciboMovimiento(mov)">🧾 Recibo</button>
                   <button *ngIf="mov.estado === 'pendiente' && mov.tipo === 'ingreso'"
                           class="btn-accion btn-pagar"
                           (click)="marcarPagado(mov)">✔ Cobrado</button>
-                  <button *ngIf="mov.estado !== 'anulado'"
+                  <button *ngIf="mov.estado === 'pendiente'"
                           class="btn-accion btn-anular"
                           (click)="anularMovimiento(mov)">✕ Anular</button>
                 </div>

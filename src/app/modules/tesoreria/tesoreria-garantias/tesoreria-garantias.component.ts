@@ -10,12 +10,15 @@ import { EquiposService } from '../../../core/services/equipos.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
 import { Router } from '@angular/router';
+import { ReciboTesoreria } from '../../../core/services/recibos-tesoreria.service';
+import { ReciboTesoreriaPdfService } from '../../../core/services/recibo-tesoreria-pdf.service';
 
 @Component({
   selector: 'app-tesoreria-garantias',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-garantias.component.html',
   styleUrl: './tesoreria-garantias.component.scss',
 })
@@ -38,6 +41,7 @@ export class TesoreriaGarantiasComponent implements OnInit {
   loading        = false;
   error          = '';
   exito          = '';
+  ultimoRecibo: ReciboTesoreria | null = null;
 
   // ── Modal: nueva garantía ──────────────────────────────────────────────
   modalNuevaGarantia  = false;
@@ -76,6 +80,7 @@ export class TesoreriaGarantiasComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private ligasService: LigasService,
     private router: Router,
+    private reciboPdfService: ReciboTesoreriaPdfService,
   ) {
     this.user$ = this.authService.currentUser$;
   }
@@ -197,15 +202,22 @@ export class TesoreriaGarantiasComponent implements OnInit {
   // ── Acción rápida: marcar pagada ────────────────────────────────────────
   marcarPagada(garantia: GarantiaEquipo): void {
     this.garantiasService.marcarPagada(garantia.id).subscribe({
-      next: () => {
-        this.exito = `Garantía de ${garantia.equipo.nombre} marcada como pagada.`;
+      next: (actualizada) => {
+        this.ultimoRecibo = actualizada.recibo ?? null;
+        this.exito = actualizada.recibo
+          ? `Garantía pagada. Se emitió el recibo ${actualizada.recibo.numero}.`
+          : `Garantía de ${garantia.equipo.nombre} marcada como pagada.`;
         this.cargarDatos();
-        setTimeout(() => { this.exito = ''; }, 4000);
+        setTimeout(() => { this.exito = ''; }, 7000);
       },
       error: (err) => {
         this.error = err?.error?.message ?? 'Error al actualizar la garantía.';
       },
     });
+  }
+
+  descargarUltimoRecibo(): void {
+    if (this.ultimoRecibo) this.reciboPdfService.descargar(this.ultimoRecibo);
   }
 
   // ── MODAL: Resolver garantía ────────────────────────────────────────────

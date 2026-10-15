@@ -67,6 +67,7 @@
 
 .acciones-celda { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .btn-accion { border: none; padding: 0.28rem 0.7rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-weight: 500;
+  &.btn-recibo { background: #1673b1; color: white; &:hover { opacity: 0.85; } }
   &.btn-pagar  { background: #27ae60; color: white; &:hover { opacity: 0.85; } }
   &.btn-anular { background: #e74c3c; color: white; &:hover { opacity: 0.85; } }
 }

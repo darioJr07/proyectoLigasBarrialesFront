@@ -2,7 +2,7 @@
 
 Aplicacion web construida con Angular, TypeScript, RxJS y SCSS.
 
-**Estado de documentacion:** actualizado el 30/07/2026.  
+**Estado de documentacion:** actualizado el 15/10/2026.
 Para el estado funcional completo del sistema, revisar [../ESTADO_ACTUAL_PROYECTO.md](../ESTADO_ACTUAL_PROYECTO.md).
 
 ## Tecnologias
@@ -26,7 +26,7 @@ Para el estado funcional completo del sistema, revisar [../ESTADO_ACTUAL_PROYECT
 - Campeonatos.
 - Categorias.
 - Inscripciones.
-- Habilitaciones de jugadores.
+- Habilitaciones de jugadores y descarga de carnets PDF individual, por equipo o mediante selección múltiple entre equipos.
 - Transferencias.
 - Partidos y fixture.
 - Tabla de posiciones.
@@ -98,7 +98,12 @@ npm run lint
 - Carga y previsualizacion de imagenes.
 - Vistas responsive.
 - Acta impresa equivalente al formato fisico.
-- Libro de caja y pantallas de tesoreria.
+- Navegación unificada de Tesorería en todas sus pantallas.
+- Cuenta consolidada de deudas por equipo.
+- Libro de caja con rango de fechas y exportación PDF/Excel.
+- Recibos persistentes disponibles para reimpresión.
+- Conciliaciones periódicas y cierre definitivo con historial y comprobante PDF.
+- Inicio operativo de caja, traslado trazable de saldo y consulta protegida de cobros históricos.
 
 ## Testing
 
@@ -119,5 +124,5 @@ Ver:
 - [Mejoras UI y filtros](../MEJORAS_UI_FILTROS.md)
 - [Acta de impresion](./ACTA_IMPRIMIR_IMPLEMENTACION.md)
 - [Acta digital](../ACTA_DIGITAL_IMPLEMENTACION.md)
+- [Modulo de Tesoreria](../MODULO_TESORERIA_RESUMEN.md)
 - [Upload de imagenes](../UPLOAD_SYSTEM.md)
-

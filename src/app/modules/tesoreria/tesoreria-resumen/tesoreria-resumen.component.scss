@@ -140,6 +140,34 @@
   font-size: 0.95rem;
 }
 
+.inicio-pendiente,
+.inicio-activo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.inicio-pendiente {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #78350f;
+
+  strong { display: block; margin-bottom: 0.3rem; }
+  p { margin: 0; font-size: 0.88rem; line-height: 1.45; max-width: 700px; }
+}
+
+.inicio-activo {
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  color: #166534;
+  font-size: 0.88rem;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
@@ -181,6 +209,7 @@
   &.ingreso { border-left-color: #27ae60; .card-valor { color: #1e8449; } }
   &.pendiente { border-left-color: #f39c12; .card-valor { color: #b7770d; } }
   &.egreso { border-left-color: #e74c3c; .card-valor { color: #c0392b; } }
+  &.saldo-inicial { border-left-color: #8b5cf6; .card-valor { color: #6d28d9; } }
   &.saldo-pos { border-left-color: #2980b9; .card-valor { color: #1a5276; } }
   &.saldo-neg { border-left-color: #e74c3c; .card-valor { color: #c0392b; } }
 }
@@ -364,6 +393,52 @@
   gap: 0.35rem;
 
   label { font-size: 0.85rem; color: #475569; font-weight: 500; }
+  small { font-size: 0.78rem; color: #64748b; }
+}
+
+.inicio-nota {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+  color: #78350f;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.origen-saldo-options {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.origen-saldo-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #334155;
+
+  input { margin-top: 0.18rem; }
+  span { display: flex; flex-direction: column; gap: 0.12rem; }
+  strong { font-size: 0.85rem; }
+  small { font-size: 0.76rem; color: #64748b; }
+
+  &.selected {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+}
+
+.inicio-caja-nueva {
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 0.84rem;
 }
 
 .traslado-nota {

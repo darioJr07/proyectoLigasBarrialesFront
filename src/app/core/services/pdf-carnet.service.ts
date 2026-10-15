@@ -65,6 +65,22 @@ export class PdfCarnetService {
   }
 
   /**
+   * Genera un único PDF con los carnets elegidos manualmente, aunque pertenezcan
+   * a equipos diferentes.
+   */
+  async generarCarnetsSeleccionados(jugadoresCampeonato: JugadorCampeonato[]): Promise<void> {
+    if (!jugadoresCampeonato || jugadoresCampeonato.length === 0) {
+      console.warn('No hay carnets seleccionados para generar');
+      return;
+    }
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    const nombreArchivo = `CARNETS_SELECCIONADOS_${fecha}.pdf`;
+    const docDefinition = await this.construirDocumentoCarnetsMultiples(jugadoresCampeonato);
+    pdfMake.createPdf(docDefinition).download(nombreArchivo);
+  }
+
+  /**
    * Convierte una URL de imagen (Cloudinary) a base64
    * @param imageUrl URL de la imagen
    * @returns Promise con el string base64 o null si falla

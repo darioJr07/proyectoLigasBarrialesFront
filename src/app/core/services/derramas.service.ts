@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ReciboTesoreria } from './recibos-tesoreria.service';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export interface DerramaEquipo {
   estado: 'pendiente' | 'parcial' | 'pagado' | 'arrastrado';
   observaciones?: string;
   creadoEn?: string;
+  recibo?: ReciboTesoreria;
 }
 
 /** Deuda de un equipo en derramas (vista consolidada) */

@@ -149,16 +149,48 @@
       Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, filteredJugadorCampeonatos.length) }} de {{ filteredJugadorCampeonatos.length }} habilitación(es)
     </div>
 
+    <div *ngIf="!loading && mostrarSeleccionCarnets()" class="seleccion-carnets-bar">
+      <div class="seleccion-carnets-resumen">
+        <strong>🪪 Selección de carnets</strong>
+        <span>{{ cantidadCarnetsSeleccionados }} seleccionado(s)</span>
+        <small>La selección se conserva al cambiar de página, equipo o filtros.</small>
+      </div>
+      <div class="seleccion-carnets-acciones">
+        <button type="button" (click)="seleccionarCarnetsPagina()" [disabled]="carnetsSeleccionablesPagina.length === 0">
+          Seleccionar esta página
+        </button>
+        <button type="button" (click)="quitarCarnetsPagina()" [disabled]="carnetsSeleccionablesPagina.length === 0">
+          Quitar esta página
+        </button>
+        <button type="button" class="btn-limpiar-seleccion" (click)="limpiarSeleccionCarnets()" [disabled]="cantidadCarnetsSeleccionados === 0">
+          Limpiar selección
+        </button>
+        <button type="button" class="btn-descargar-seleccion" (click)="descargarCarnetsSeleccionados()" [disabled]="cantidadCarnetsSeleccionados === 0">
+          Descargar seleccionados
+        </button>
+      </div>
+    </div>
+
     <div *ngIf="!loading && jugadorCampeonatos.length > 0" class="jugador-campeonatos-grid">
       <div *ngFor="let jc of paginatedJugadorCampeonatos" class="jugador-campeonato-card" 
            [class.habilitado]="jc.estado === 'habilitado'"
            [class.pendiente]="jc.estado === 'pendiente'"
            [class.rechazado]="jc.estado === 'rechazado'"
            [class.baja]="jc.estado === 'baja'"
-           [class.inactive]="!jc.activo">
+           [class.inactive]="!jc.activo"
+           [class.carnet-seleccionado]="carnetEstaSeleccionado(jc.id)">
         
         <div class="card-header">
           <div class="jugador-info">
+            <label *ngIf="canGenerarCarnet(jc)" class="carnet-selector" title="Seleccionar carnet para descarga conjunta">
+              <input
+                type="checkbox"
+                [checked]="carnetEstaSeleccionado(jc.id)"
+                (change)="toggleCarnetSeleccion(jc, $any($event.target).checked)"
+                [attr.aria-label]="'Seleccionar carnet de ' + (jc.jugador?.nombre || 'jugador')"
+              />
+              <span>Seleccionar</span>
+            </label>
             <div class="jugador-nombre-container">
               <h3>{{ jc.jugador?.nombre || 'Jugador' }}</h3>
               <span class="numero-posicion">#{{ jc.numeroCancha }} - {{ jc.posicion }}</span>

@@ -15,17 +15,9 @@
     <!-- ── Título + nav de sección ─────────────────────────────────────── -->
     <div class="section-title">
       <h2>📦 Tesorería — Derramas Colectivas</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria"                class="btn-secondary-action">💰 Resumen</a>
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/movimientos"    class="btn-secondary-action">📒 Movimientos</a>
-        <a routerLink="/tesoreria/libro-caja"     class="btn-secondary-action">📖 Libro de Caja</a>
-        <a routerLink="/tesoreria/garantias"      class="btn-secondary-action">🔒 Garantías</a>
-        <a routerLink="/tesoreria/deudas"         class="btn-secondary-action">⚠️ Deudas</a>
-        <a *ngIf="permissions.canConfigurTesoreria()"
-           routerLink="/tesoreria/config"         class="btn-secondary-action">⚙️ Config. Vocalía</a>
-      </div>
     </div>
+
+    <app-tesoreria-nav></app-tesoreria-nav>
 
     <!-- ── Filtros ─────────────────────────────────────────────────────── -->
     <div class="filtros-card">
@@ -51,7 +43,15 @@
     </div>
 
     <!-- ── Alertas ────────────────────────────────────────────────────── -->
-    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+    <div class="alert alert-success" *ngIf="exito">
+      {{ exito }}
+      <button
+        *ngIf="ultimoRecibo && exito.includes(ultimoRecibo.numero)"
+        class="btn-accion btn-pagar"
+        (click)="descargarUltimoRecibo()">
+        Descargar recibo
+      </button>
+    </div>
     <div class="alert alert-error"   *ngIf="error && !modalNueva && !modalAsignar && !modalPago">
       {{ error }}
     </div>

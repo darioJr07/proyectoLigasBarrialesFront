@@ -10,11 +10,14 @@ import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { EquiposService } from '../../../core/services/equipos.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
+import { ReciboTesoreria } from '../../../core/services/recibos-tesoreria.service';
+import { ReciboTesoreriaPdfService } from '../../../core/services/recibo-tesoreria-pdf.service';
 
 @Component({
   selector: 'app-tesoreria-movimientos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-movimientos.component.html',
   styleUrl: './tesoreria-movimientos.component.scss',
 })
@@ -56,6 +59,7 @@ export class TesoreriaMovimientosComponent implements OnInit {
   loading = false;
   error   = '';
   exito   = '';
+  ultimoRecibo: ReciboTesoreria | null = null;
 
   constructor(
     private authService: AuthService,
@@ -64,6 +68,7 @@ export class TesoreriaMovimientosComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private ligasService: LigasService,
     private equiposService: EquiposService,
+    private reciboPdfService: ReciboTesoreriaPdfService,
   ) {
     this.user$ = this.authService.currentUser$;
   }
@@ -162,9 +167,12 @@ export class TesoreriaMovimientosComponent implements OnInit {
         this.movimientos.unshift(mov);
         this.guardando       = false;
         this.mostrarFormulario = false;
-        this.exito           = 'Movimiento registrado correctamente.';
+        this.ultimoRecibo    = mov.recibo ?? null;
+        this.exito           = mov.recibo
+          ? `Movimiento registrado. Se emitió el recibo ${mov.recibo.numero}.`
+          : 'Movimiento registrado correctamente.';
         this.resetFormulario();
-        setTimeout(() => { this.exito = ''; }, 3000);
+        setTimeout(() => { this.exito = ''; }, mov.recibo ? 7000 : 3000);
       },
       error: (err) => {
         this.guardando = false;
@@ -180,8 +188,11 @@ export class TesoreriaMovimientosComponent implements OnInit {
       next: (updated) => {
         const idx = this.movimientos.findIndex((m) => m.id === mov.id);
         if (idx >= 0) { this.movimientos[idx] = updated; }
-        this.exito = 'Movimiento marcado como pagado.';
-        setTimeout(() => { this.exito = ''; }, 3000);
+        this.ultimoRecibo = updated.recibo ?? null;
+        this.exito = updated.recibo
+          ? `Movimiento pagado. Se emitió el recibo ${updated.recibo.numero}.`
+          : 'Movimiento marcado como pagado.';
+        setTimeout(() => { this.exito = ''; }, 7000);
       },
       error: (err) => { this.error = err?.error?.message ?? 'Error al actualizar'; },
     });
@@ -205,4 +216,12 @@ export class TesoreriaMovimientosComponent implements OnInit {
   }
 
   logout(): void { this.authService.logout(); }
+
+  descargarUltimoRecibo(): void {
+    if (this.ultimoRecibo) this.reciboPdfService.descargar(this.ultimoRecibo);
+  }
+
+  descargarReciboMovimiento(movimiento: MovimientoTesoreria): void {
+    if (movimiento.recibo) this.reciboPdfService.descargar(movimiento.recibo);
+  }
 }

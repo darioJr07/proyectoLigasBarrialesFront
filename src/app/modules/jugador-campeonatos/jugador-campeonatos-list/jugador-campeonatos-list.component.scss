@@ -832,6 +832,85 @@
   padding: 0 0.25rem;
 }
 
+.seleccion-carnets-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #a9c5f4;
+  border-radius: 10px;
+  background: #eef5ff;
+
+  .seleccion-carnets-resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    color: #183b69;
+
+    span { font-weight: 600; }
+    small { color: #58708f; }
+  }
+
+  .seleccion-carnets-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    button {
+      padding: 0.6rem 0.9rem;
+      border: 1px solid #8eacd6;
+      border-radius: 6px;
+      background: white;
+      color: #234d80;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover:not(:disabled) { background: #e3edfb; }
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
+
+    .btn-limpiar-seleccion {
+      color: #8a3b28;
+      border-color: #d8a89d;
+    }
+
+    .btn-descargar-seleccion {
+      color: white;
+      background: #246fbd;
+      border-color: #246fbd;
+
+      &:hover:not(:disabled) { background: #195d9f; }
+    }
+  }
+}
+
+.carnet-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 66px;
+  color: #47617d;
+  font-size: 0.72rem;
+  cursor: pointer;
+
+  input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #246fbd;
+    cursor: pointer;
+  }
+}
+
+.jugador-campeonato-card.carnet-seleccionado {
+  outline: 3px solid rgba(36, 111, 189, 0.35);
+  box-shadow: 0 5px 16px rgba(36, 111, 189, 0.2);
+}
+
 // Paginador
 .paginator-container {
   display: flex;
@@ -919,6 +998,12 @@
 }
 
 @media (max-width: 600px) {
+  .seleccion-carnets-bar,
+  .seleccion-carnets-acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .paginator-container {
     flex-direction: column;
     align-items: stretch;

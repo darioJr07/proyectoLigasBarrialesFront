@@ -14,14 +14,9 @@
 
     <div class="section-title">
       <h2>🔒 Tesorería — Garantías de Equipos</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria" class="btn-secondary-action">💰 Resumen</a>
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/movimientos" class="btn-secondary-action">📒 Movimientos</a>
-        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
-        <a *ngIf="permissions.canConfigurTesoreria()" routerLink="/tesoreria/config" class="btn-secondary-action">⚙️ Config. Vocalía</a>
-      </div>
     </div>
+
+    <app-tesoreria-nav></app-tesoreria-nav>
 
     <!-- Selector de liga (solo master) -->
     <div class="filtros-card" *ngIf="permissions.isMaster()">
@@ -56,7 +51,15 @@
       </div>
     </div>
 
-    <div class="alert alert-success" *ngIf="exito">{{ exito }}</div>
+    <div class="alert alert-success" *ngIf="exito">
+      {{ exito }}
+      <button
+        *ngIf="ultimoRecibo && exito.includes(ultimoRecibo.numero)"
+        class="btn-accion btn-pagar"
+        (click)="descargarUltimoRecibo()">
+        Descargar recibo
+      </button>
+    </div>
     <div class="alert alert-error"   *ngIf="error">{{ error }}</div>
 
     <div class="loading-state" *ngIf="loading">Cargando datos...</div>

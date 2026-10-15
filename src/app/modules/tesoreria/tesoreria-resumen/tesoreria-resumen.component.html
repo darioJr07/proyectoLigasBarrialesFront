@@ -14,16 +14,9 @@
 
     <div class="section-title">
       <h2>💰 Tesorería — Resumen de Caja</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/movimientos" class="btn-secondary-action">📒 Movimientos</a>
-        <a routerLink="/tesoreria/libro-caja" class="btn-secondary-action">📖 Libro de Caja</a>
-        <a routerLink="/tesoreria/garantias" class="btn-secondary-action">🔒 Garantías</a>
-        <a routerLink="/tesoreria/derramas" class="btn-secondary-action">📦 Derramas</a>
-        <a routerLink="/tesoreria/deudas" class="btn-secondary-action">⚠️ Deudas</a>
-        <a *ngIf="permissions.canConfigurTesoreria()" routerLink="/tesoreria/config" class="btn-secondary-action">⚙️ Config. Vocalía</a>
-      </div>
     </div>
+
+    <app-tesoreria-nav></app-tesoreria-nav>
 
     <!-- Filtros -->
     <div class="filtros-card">
@@ -51,11 +44,32 @@
     </div>
 
     <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert alert-success" *ngIf="mensajeInicio">✅ {{ mensajeInicio }}</div>
 
     <div class="loading-state" *ngIf="loading">Cargando resumen...</div>
 
+    <div class="inicio-pendiente" *ngIf="resumen && !loading && !inicioOperativo">
+      <div>
+        <strong>Control de caja aún no iniciado</strong>
+        <p>Los cobros anteriores se conservan como historial. Define la fecha de inicio de la segunda vuelta y el efectivo real que tiene la Liga para comenzar a operar.</p>
+      </div>
+      <button *ngIf="permissions.canGestionarTesoreria()" class="btn-primary-action" (click)="abrirModalInicio()">
+        Iniciar control de caja
+      </button>
+    </div>
+
+    <div class="inicio-activo" *ngIf="inicioOperativo && !loading">
+      <span><strong>Control operativo desde:</strong> {{ inicioOperativo.fechaInicio | date:'dd/MM/yyyy' }}</span>
+      <span><strong>Saldo inicial:</strong> $ {{ inicioOperativo.saldoInicial | number:'1.2-2' }}</span>
+      <span *ngIf="inicioOperativo.origenSaldo === 'traslado'"><strong>Origen:</strong> traslado de campeonato anterior</span>
+    </div>
+
     <!-- Tarjetas de resumen -->
-    <div class="resumen-grid" *ngIf="resumen && !loading">
+    <div class="resumen-grid" *ngIf="resumen && inicioOperativo && !loading">
+      <div class="resumen-card saldo-inicial">
+        <div class="card-label">Saldo inicial de caja</div>
+        <div class="card-valor">$ {{ inicioOperativo.saldoInicial | number:'1.2-2' }}</div>
+      </div>
       <div class="resumen-card ingreso">
         <div class="card-label">Cobros de partido pagados</div>
         <div class="card-valor">$ {{ resumen.totalCobrosPartidoPagados | number:'1.2-2' }}</div>
@@ -77,20 +91,23 @@
         <div class="card-valor">$ {{ resumen.totalEgresos | number:'1.2-2' }}</div>
       </div>
       <div class="resumen-card" [class.saldo-pos]="resumen.saldo >= 0" [class.saldo-neg]="resumen.saldo < 0">
-        <div class="card-label">Saldo neto</div>
+        <div class="card-label">Saldo actual de caja</div>
         <div class="card-valor">$ {{ resumen.saldo | number:'1.2-2' }}</div>
       </div>
     </div>
 
     <!-- Botón de traslado de saldo (solo si campeonato finalizado y saldo > 0) -->
-    <div class="traslado-banner" *ngIf="puedeTrasldar && !mensajeTraslado">
+    <div class="traslado-banner" *ngIf="inicioOperativo && puedeTrasldar && !mensajeTraslado">
       <div class="traslado-info">
-        <span>🏁 Este campeonato está <strong>finalizado</strong> con un saldo a favor de <strong>$ {{ resumen!.saldo | number:'1.2-2' }}</strong></span>
-        <span class="traslado-hint">Puedes trasladar este saldo al nuevo campeonato para que el tesorero arranque con el dinero correcto.</span>
+        <span>🏁 Este campeonato tiene un <strong>cierre definitivo</strong> con saldo contado de <strong>$ {{ cierreDefinitivo!.saldoContado | number:'1.2-2' }}</strong></span>
+        <span class="traslado-hint">Para conservar el control, inicia el nuevo campeonato y elige “Traslado de campeonato anterior”; allí se registrará el ingreso automáticamente.</span>
       </div>
-      <button class="btn-traslado" (click)="abrirModalTraslado()">
-        Trasladar saldo →
-      </button>
+    </div>
+    <div class="traslado-banner" *ngIf="inicioOperativo && campeonatoSeleccionado?.estado === 'finalizado' && !cierreDefinitivo">
+      <div class="traslado-info">
+        <span>🔒 Para trasladar el saldo de este campeonato primero debe registrar su cierre definitivo de caja.</span>
+        <a class="btn-primary-action" routerLink="/tesoreria/cierres">Ir a Cierres</a>
+      </div>
     </div>
 
     <!-- Confirmación de traslado exitoso -->
@@ -99,7 +116,7 @@
     </div>
 
     <!-- Detalle por equipo -->
-    <div class="table-card" *ngIf="resumen?.resumenPorEquipo?.length && !loading">
+    <div class="table-card" *ngIf="inicioOperativo && resumen?.resumenPorEquipo?.length && !loading">
       <h3 class="table-title">Detalle por Equipo</h3>
       <div class="table-responsive">
         <table class="data-table">
@@ -127,7 +144,7 @@
       </div>
     </div>
 
-    <div class="empty-state" *ngIf="!resumen && !loading && !error && filtroCampeonatoId">
+    <div class="empty-state" *ngIf="inicioOperativo && !resumen?.resumenPorEquipo?.length && !loading && !error && filtroCampeonatoId">
       No hay datos de tesorería para este campeonato todavía.
     </div>
 
@@ -135,6 +152,66 @@
       Seleccione una liga y un campeonato para ver el resumen.
     </div>
 
+  </div>
+</div>
+
+<!-- Modal: inicio operativo de caja -->
+<div class="modal-overlay" *ngIf="modalInicio" (click)="cerrarModalInicio()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Iniciar control de caja</h3>
+      <button class="btn-close" (click)="cerrarModalInicio()" [disabled]="iniciandoOperacion">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="inicio-nota">
+        Los cobros y movimientos anteriores a esta fecha quedarán como historial y no se sumarán a la caja ni a las deudas operativas.
+      </p>
+      <div class="form-item">
+        <label>¿De dónde proviene el saldo para este campeonato?</label>
+        <div class="origen-saldo-options">
+          <label class="origen-saldo-option" [class.selected]="origenSaldo === 'caja_nueva'">
+            <input type="radio" name="origenSaldo" value="caja_nueva" [(ngModel)]="origenSaldo" [disabled]="iniciandoOperacion">
+            <span><strong>Caja nueva</strong><small>El campeonato inicia con $ 0,00.</small></span>
+          </label>
+          <label class="origen-saldo-option" [class.selected]="origenSaldo === 'manual'">
+            <input type="radio" name="origenSaldo" value="manual" [(ngModel)]="origenSaldo" [disabled]="iniciandoOperacion">
+            <span><strong>Saldo físico manual</strong><small>Usar efectivo real que ya tiene la Liga.</small></span>
+          </label>
+          <label class="origen-saldo-option" [class.selected]="origenSaldo === 'traslado'">
+            <input type="radio" name="origenSaldo" value="traslado" [(ngModel)]="origenSaldo" [disabled]="iniciandoOperacion">
+            <span><strong>Traslado de campeonato anterior</strong><small>El sistema registra el ingreso automáticamente, sin duplicarlo.</small></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-item">
+        <label>Fecha de inicio operativo</label>
+        <input class="form-select" type="date" [(ngModel)]="fechaInicio" [disabled]="iniciandoOperacion">
+        <small>Usa el primer día desde el que se controlarán los valores de la segunda vuelta.</small>
+      </div>
+      <div class="form-item" *ngIf="origenSaldo === 'manual'">
+        <label>Saldo inicial de caja</label>
+        <input class="form-select" type="number" min="0" step="0.01" [(ngModel)]="saldoInicial" [disabled]="iniciandoOperacion" placeholder="0.00">
+        <small>Ingresa el dinero físico real que actualmente tiene la Liga.</small>
+      </div>
+      <div class="form-item" *ngIf="origenSaldo === 'traslado'">
+        <label>Campeonato finalizado de origen</label>
+        <select class="form-select" [(ngModel)]="campeonatoOrigenId" [disabled]="iniciandoOperacion">
+          <option [ngValue]="null">-- Seleccione el campeonato --</option>
+          <option *ngFor="let c of campeonatosOrigenSaldo" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+        <small>El saldo inicial será $ 0,00 y el ingreso se registrará desde el campeonato seleccionado.</small>
+      </div>
+      <div class="inicio-caja-nueva" *ngIf="origenSaldo === 'caja_nueva'">
+        Este campeonato comenzará con saldo inicial de <strong>$ 0,00</strong>.
+      </div>
+      <div class="alert alert-error" *ngIf="errorInicio">{{ errorInicio }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary-action" (click)="cerrarModalInicio()" [disabled]="iniciandoOperacion">Cancelar</button>
+      <button class="btn-confirm" (click)="confirmarInicioOperacion()" [disabled]="iniciandoOperacion">
+        {{ iniciandoOperacion ? 'Guardando...' : 'Confirmar inicio' }}
+      </button>
+    </div>
   </div>
 </div>
 
@@ -148,7 +225,7 @@
     <div class="modal-body">
       <div class="traslado-monto">
         <span class="monto-label">Monto a trasladar</span>
-        <span class="monto-valor">$ {{ resumen!.saldo | number:'1.2-2' }}</span>
+        <span class="monto-valor">$ {{ cierreDefinitivo!.saldoContado | number:'1.2-2' }}</span>
       </div>
       <div class="form-item">
         <label>Campeonato destino</label>
@@ -160,7 +237,7 @@
         </select>
       </div>
       <p class="traslado-nota">
-        Se creará automáticamente un ingreso de <strong>$ {{ resumen!.saldo | number:'1.2-2' }}</strong>
+        Se creará automáticamente un ingreso de <strong>$ {{ cierreDefinitivo!.saldoContado | number:'1.2-2' }}</strong>
         en el campeonato seleccionado con la descripción
         <em>"Saldo trasladado del campeonato: {{ campeonatoSeleccionado?.nombre }}"</em>.
       </p>

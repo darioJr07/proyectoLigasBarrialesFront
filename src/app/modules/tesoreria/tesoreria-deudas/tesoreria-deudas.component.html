@@ -11,23 +11,15 @@
   <app-main-nav></app-main-nav>
 
   <div class="page-content">
-
-    <!-- ── Título + nav ────────────────────────────────────────────────── -->
     <div class="section-title">
-      <h2>⚠️ Tesorería — Deudas de Equipos</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria"                class="btn-secondary-action">💰 Resumen</a>
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/movimientos"    class="btn-secondary-action">📒 Movimientos</a>
-        <a routerLink="/tesoreria/libro-caja"     class="btn-secondary-action">📖 Libro de Caja</a>
-        <a routerLink="/tesoreria/garantias"      class="btn-secondary-action">🔒 Garantías</a>
-        <a routerLink="/tesoreria/derramas"       class="btn-secondary-action">📦 Derramas</a>
-        <a *ngIf="permissions.canConfigurTesoreria()"
-           routerLink="/tesoreria/config"         class="btn-secondary-action">⚙️ Config. Vocalía</a>
+      <div>
+        <h2>⚠️ Tesorería — Cuenta por Equipo</h2>
+        <p>Obligaciones pendientes de vocalías, movimientos, derramas y garantías.</p>
       </div>
     </div>
 
-    <!-- ── Filtros ─────────────────────────────────────────────────────── -->
+    <app-tesoreria-nav></app-tesoreria-nav>
+
     <div class="filtros-card">
       <div class="filtros-grid">
         <div class="filtro-item" *ngIf="permissions.isMaster()">
@@ -37,94 +29,300 @@
             <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
           </select>
         </div>
+
         <div class="filtro-item">
           <label>Equipo</label>
           <select class="form-select" [(ngModel)]="equipoId">
-            <option [ngValue]="null">-- Seleccione equipo --</option>
-            <option *ngFor="let e of equipos" [ngValue]="e.id">{{ e.nombre }}</option>
+            <option [ngValue]="null">Todos los equipos</option>
+            <option *ngFor="let equipo of equipos" [ngValue]="equipo.id">{{ equipo.nombre }}</option>
           </select>
         </div>
+
+        <div class="filtro-item campeonato-caja">
+          <label>Registrar pagos de derramas en</label>
+          <select class="form-select" [(ngModel)]="campeonatoCajaId">
+            <option [ngValue]="null">-- Seleccione campeonato --</option>
+            <option *ngFor="let campeonato of campeonatos" [ngValue]="campeonato.id">
+              {{ campeonato.nombre }}
+            </option>
+          </select>
+        </div>
+
         <div class="filtro-item filtro-accion">
-          <button class="btn-primary-action"
-                  (click)="consultar()"
-                  [disabled]="!ligaId || !equipoId">
-            Consultar
+          <button class="btn-primary-action" (click)="consultar()" [disabled]="!ligaId || loading">
+            {{ loading ? 'Consultando…' : 'Consultar' }}
           </button>
         </div>
       </div>
+      <p class="filtro-ayuda">
+        El campeonato de caja solo se utiliza cuando se cobra una derrama directa o arrastrada.
+      </p>
     </div>
 
     <div class="alert alert-error" *ngIf="error">{{ error }}</div>
-    <div class="loading-state"     *ngIf="loading">Consultando deudas...</div>
-
-    <!-- ── Sin deudas ────────────────────────────────────────────────────── -->
-    <div class="empty-state" *ngIf="!loading && equipoId && deudas.length === 0 && !error">
-      <div class="sin-deuda-icon">✅</div>
-      <p class="sin-deuda-msg">
-        <strong>{{ equipoSeleccionadoNombre }}</strong> no tiene deudas de derramas pendientes.
-      </p>
+    <div class="alert alert-success recibo-alert" *ngIf="exito">
+      <span>✅ {{ exito }}</span>
+      <button *ngIf="ultimoRecibo" class="btn-receipt" (click)="descargarRecibo(ultimoRecibo)">
+        Descargar recibo
+      </button>
     </div>
+    <div class="loading-state" *ngIf="loading">Consolidando obligaciones...</div>
 
-    <!-- ── Tabla de deudas ────────────────────────────────────────────────── -->
-    <div class="table-card" *ngIf="!loading && deudas.length > 0">
-
-      <!-- Resumen total -->
-      <div class="deuda-banner" [class.banner-alerta]="totalDeuda > 0">
-        <div class="banner-equipo">
-          <strong>{{ equipoSeleccionadoNombre }}</strong>
+    <ng-container *ngIf="!loading && cuenta">
+      <div class="resumen-general">
+        <div class="resumen-card total">
+          <span>Total pendiente consultado</span>
+          <strong>$ {{ cuenta.totalPendiente | number:'1.2-2' }}</strong>
         </div>
-        <div class="banner-total">
-          <span>Deuda total en derramas:</span>
-          <strong class="monto-deuda">$ {{ totalDeuda | number:'1.2-2' }}</strong>
+        <div class="resumen-card">
+          <span>Equipos con obligaciones</span>
+          <strong>{{ cuenta.resumenEquipos.length }}</strong>
         </div>
-        <div class="banner-aviso" *ngIf="totalDeuda > 0">
-          ⚠️ El equipo debe pagar antes de su primer partido oficial.
+        <div class="resumen-card">
+          <span>Obligaciones encontradas</span>
+          <strong>{{ cuenta.items.length }}</strong>
         </div>
       </div>
 
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Derrama</th>
-            <th>Campeonato Origen</th>
-            <th class="text-right">Total</th>
-            <th class="text-right">Abonado</th>
-            <th class="text-right">Saldo Pendiente</th>
-            <th class="text-center">Modo de Pago</th>
-            <th class="text-center">Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let d of deudas"
-              [class.fila-arrastrado]="d.estado === 'arrastrado'">
-            <td>{{ d.descripcion }}</td>
-            <td>{{ d.campeonatoOrigen }}</td>
-            <td class="text-right">$ {{ d.montoTotal | number:'1.2-2' }}</td>
-            <td class="text-right texto-success">$ {{ d.montoAbonado | number:'1.2-2' }}</td>
-            <td class="text-right texto-warning"><strong>$ {{ d.saldoPendiente | number:'1.2-2' }}</strong></td>
-            <td class="text-center">
-              {{ d.modoPago === 'por_vocalia' ? 'Por Vocalía' : 'Inmediato' }}
-            </td>
-            <td class="text-center">
-              <span class="badge" [ngClass]="badgeEstado(d.estado)">{{ etiquetaEstado(d.estado) }}</span>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr class="fila-total">
-            <td colspan="4"><strong>Total pendiente</strong></td>
-            <td class="text-right texto-warning"><strong>$ {{ totalDeuda | number:'1.2-2' }}</strong></td>
-            <td colspan="2"></td>
-          </tr>
-        </tfoot>
-      </table>
+      <div class="empty-state" *ngIf="cuenta.items.length === 0">
+        <div class="sin-deuda-icon">✅</div>
+        <p *ngIf="equipoId"><strong>{{ equipoSeleccionadoNombre }}</strong> no tiene obligaciones pendientes.</p>
+        <p *ngIf="!equipoId">No existen obligaciones pendientes para los equipos de esta liga.</p>
+      </div>
 
-      <p class="nota-deudas">
-        💡 Para registrar un pago, ve a
-        <a routerLink="/tesoreria/derramas" class="link-inline">Derramas</a>,
-        expande la derrama correspondiente y usa el botón 💵 del equipo.
-      </p>
+      <div class="table-card" *ngIf="!equipoId && cuenta.resumenEquipos.length > 0">
+        <div class="card-heading">
+          <div>
+            <h3>Resumen general por equipo</h3>
+            <p>Selecciona un equipo para revisar y cobrar sus obligaciones.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table resumen-table">
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th class="text-right">Vocalías</th>
+                <th class="text-right">Movimientos</th>
+                <th class="text-right">Derramas</th>
+                <th class="text-right">Garantías</th>
+                <th class="text-center">Obligaciones</th>
+                <th class="text-right">Total pendiente</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let resumen of cuenta.resumenEquipos">
+                <td><strong>{{ resumen.equipo }}</strong></td>
+                <td class="text-right">$ {{ resumen.cobrosPartido | number:'1.2-2' }}</td>
+                <td class="text-right">$ {{ resumen.movimientos | number:'1.2-2' }}</td>
+                <td class="text-right">$ {{ resumen.derramas | number:'1.2-2' }}</td>
+                <td class="text-right">$ {{ resumen.garantias | number:'1.2-2' }}</td>
+                <td class="text-center">{{ resumen.cantidadObligaciones }}</td>
+                <td class="text-right total-equipo">$ {{ resumen.totalPendiente | number:'1.2-2' }}</td>
+                <td class="text-right">
+                  <button class="btn-detail" (click)="verDetalle(resumen)">Ver cuenta</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card" *ngIf="equipoId && cuenta.items.length > 0">
+        <div class="detalle-header">
+          <div>
+            <button class="btn-back" (click)="verTodos()">← Todos los equipos</button>
+            <h3>{{ equipoSeleccionadoNombre }}</h3>
+            <p>Estado de cuenta consolidado.</p>
+          </div>
+          <div class="detalle-filtros">
+            <label>Tipo de obligación</label>
+            <select class="form-select" [(ngModel)]="filtroOrigen">
+              <option value="">Todas</option>
+              <option value="cobro_partido">Vocalías</option>
+              <option value="movimiento">Movimientos</option>
+              <option value="derrama">Derramas</option>
+              <option value="garantia">Garantías</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="deuda-banner">
+          <span>Saldo pendiente mostrado</span>
+          <strong>$ {{ totalDetalle | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Concepto</th>
+                <th>Origen</th>
+                <th class="text-right">Total</th>
+                <th class="text-right">Abonado</th>
+                <th class="text-right">Pendiente</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let deuda of itemsFiltrados" [class.fila-arrastrada]="deuda.estado === 'arrastrado'">
+                <td>
+                  <span class="origen-badge" [ngClass]="claseOrigen(deuda.origen)">
+                    {{ etiquetaOrigen(deuda.origen) }}
+                  </span>
+                </td>
+                <td>
+                  <strong>{{ deuda.concepto }}</strong>
+                  <small>{{ deuda.fecha | date:'dd/MM/yyyy' }}</small>
+                </td>
+                <td>{{ deuda.campeonato }}</td>
+                <td class="text-right">$ {{ deuda.montoTotal | number:'1.2-2' }}</td>
+                <td class="text-right texto-success">$ {{ deuda.montoAbonado | number:'1.2-2' }}</td>
+                <td class="text-right texto-warning"><strong>$ {{ deuda.saldoPendiente | number:'1.2-2' }}</strong></td>
+                <td class="text-center">
+                  <span class="estado-badge" [class.estado-arrastrado]="deuda.estado === 'arrastrado'">
+                    {{ etiquetaEstado(deuda.estado) }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button *ngIf="deuda.accion === 'pagar'" class="btn-pay" (click)="abrirPago(deuda)">
+                    Registrar pago
+                  </button>
+                  <span *ngIf="deuda.accion === 'automatico'" class="pago-auto" title="Se abona al cobrar una vocalía de partido">
+                    🔄 Por vocalía
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="itemsFiltrados.length === 0">
+                <td colspan="8" class="sin-resultados">No hay obligaciones de este tipo.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card historial-card" *ngIf="equipoId">
+        <div class="card-heading">
+          <div>
+            <h3>Historial de pagos y recibos</h3>
+            <p>Comprobantes emitidos a {{ equipoSeleccionadoNombre }}.</p>
+          </div>
+        </div>
+
+        <div class="loading-state historial-loading" *ngIf="cargandoRecibos">Cargando recibos...</div>
+        <div class="alert alert-error historial-error" *ngIf="errorRecibos">{{ errorRecibos }}</div>
+
+        <div class="table-responsive" *ngIf="!cargandoRecibos && recibos.length > 0">
+          <table class="data-table historial-table">
+            <thead>
+              <tr>
+                <th>Recibo</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Concepto</th>
+                <th>Campeonato</th>
+                <th>Registrado por</th>
+                <th class="text-center">Estado</th>
+                <th class="text-right">Monto</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let recibo of recibos">
+                <td><strong>{{ recibo.numero }}</strong></td>
+                <td>{{ recibo.fechaPago | date:'dd/MM/yyyy':'UTC' }}</td>
+                <td>
+                  <span class="origen-badge" [ngClass]="claseOrigen(recibo.origen)">
+                    {{ etiquetaOrigen(recibo.origen) }}
+                  </span>
+                </td>
+                <td>{{ recibo.concepto }}</td>
+                <td>{{ recibo.campeonato?.nombre || 'No aplica' }}</td>
+                <td>{{ recibo.emitidoPor?.nombre || 'Tesorería' }}</td>
+                <td class="text-center">
+                  <span class="recibo-estado" [class.recibo-anulado]="recibo.estado === 'anulado'">
+                    {{ recibo.estado === 'emitido' ? 'Emitido' : 'Anulado' }}
+                  </span>
+                </td>
+                <td class="text-right"><strong>$ {{ recibo.monto | number:'1.2-2' }}</strong></td>
+                <td class="text-center">
+                  <button class="btn-receipt-outline" (click)="descargarRecibo(recibo)">Reimprimir</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="historial-vacio" *ngIf="!cargandoRecibos && !errorRecibos && recibos.length === 0">
+          Todavía no existen recibos emitidos para este equipo.
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="modalPago" (click)="cerrarPago()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <span class="modal-eyebrow">Registrar pago</span>
+        <h3>{{ modalPago.equipo }}</h3>
+      </div>
+      <button class="modal-close" (click)="cerrarPago()" [disabled]="guardandoPago">✕</button>
     </div>
 
-  </div><!-- /page-content -->
-</div><!-- /page-container -->
+    <div class="modal-body">
+      <div class="pago-resumen">
+        <span class="origen-badge" [ngClass]="claseOrigen(modalPago.origen)">
+          {{ etiquetaOrigen(modalPago.origen) }}
+        </span>
+        <strong>{{ modalPago.concepto }}</strong>
+        <span>Saldo pendiente: $ {{ modalPago.saldoPendiente | number:'1.2-2' }}</span>
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorPago">{{ errorPago }}</div>
+
+      <div class="form-group">
+        <label>Monto a cobrar</label>
+        <input
+          type="number"
+          class="form-control"
+          [(ngModel)]="montoPago"
+          min="0.01"
+          [max]="modalPago.saldoPendiente"
+          step="0.01"
+          [readonly]="modalPago.origen !== 'derrama'"
+        >
+        <small *ngIf="modalPago.origen === 'derrama'">Puedes registrar un abono parcial o el pago total.</small>
+        <small *ngIf="modalPago.origen !== 'derrama'">Esta obligación se cobra por el valor pendiente completo.</small>
+      </div>
+
+      <div class="form-group" *ngIf="modalPago.origen === 'cobro_partido' || modalPago.origen === 'movimiento'">
+        <label>Fecha de pago</label>
+        <input type="date" class="form-control" [(ngModel)]="fechaPago">
+      </div>
+
+      <div class="form-group" *ngIf="modalPago.origen === 'derrama'">
+        <label>Registrar el ingreso en</label>
+        <select class="form-control" [(ngModel)]="campeonatoCajaId">
+          <option [ngValue]="null">-- Seleccione campeonato --</option>
+          <option *ngFor="let campeonato of campeonatos" [ngValue]="campeonato.id">
+            {{ campeonato.nombre }}
+          </option>
+        </select>
+        <small>El pago aparecerá en el Libro de Caja de este campeonato.</small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="cerrarPago()" [disabled]="guardandoPago">Cancelar</button>
+      <button class="btn-confirm" (click)="confirmarPago()" [disabled]="guardandoPago">
+        {{ guardandoPago ? 'Registrando…' : 'Confirmar pago' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -8,11 +8,12 @@ import { PermissionsService } from '../../../core/services/permissions.service';
 import { TesoreriaService, ConfigVocaliaItem } from '../../../core/services/tesoreria.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
 
 @Component({
   selector: 'app-tesoreria-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-config.component.html',
   styleUrl: './tesoreria-config.component.scss',
 })

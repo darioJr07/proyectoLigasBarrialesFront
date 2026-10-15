@@ -11,11 +11,13 @@ import { Router, RouterModule } from '@angular/router';
 import { TransferenciasService } from '../transferencias.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { JugadorCampeonatosService } from '../../jugador-campeonatos/jugador-campeonatos.service';
+import { InscripcionesService } from '../../inscripciones/inscripciones.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
 import { CreateTransferenciaDto } from '../transferencia.model';
 import { Campeonato } from '../../campeonatos/campeonato.model';
 import { JugadorCampeonato } from '../../jugador-campeonatos/jugador-campeonato.model';
+import { Equipo } from '../../../core/models/equipo.model';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
@@ -42,12 +44,14 @@ export class TransferenciaFormComponent implements OnInit {
   form: FormGroup;
   campeonatos: Campeonato[] = [];
   jugadoresHabilitados: JugadorCampeonato[] = [];
+  equiposDestino: Equipo[] = [];
   jugadorSearchControl = new FormControl('');
   filteredJugadores$: Observable<JugadorCampeonato[]> | undefined;
   loading = false;
   errorMessage = '';
   advertenciaMessage = '';
   currentEquipoId: number | null = null;
+  currentRole = '';
   user$ = this.authService.currentUser$;
 
   constructor(
@@ -56,23 +60,37 @@ export class TransferenciaFormComponent implements OnInit {
     private transferenciasService: TransferenciasService,
     private campeonatosService: CampeonatosService,
     private jugadorCampeonatosService: JugadorCampeonatosService,
+    private inscripcionesService: InscripcionesService,
     private authService: AuthService,
     public permissions: PermissionsService
   ) {
     this.form = this.fb.group({
       campeonatoId: ['', Validators.required],
+      equipoDestinoId: [''],
       jugadorCampeonatoId: ['', Validators.required],
-      observaciones: [''],
+      observaciones: ['', Validators.maxLength(500)],
     });
   }
 
   ngOnInit(): void {
     const currentUser = this.authService.getCurrentUser();
+    this.currentRole = currentUser?.rol?.nombre || '';
     this.currentEquipoId = currentUser?.equipoId || null;
 
-    if (!this.currentEquipoId) {
+    if (this.currentRole === 'dirigente_equipo' && !this.currentEquipoId) {
       this.errorMessage =
         'Debe estar asociado a un equipo para solicitar transferencias';
+      return;
+    }
+
+    if (this.currentRole === 'dirigente_equipo') {
+      this.form.patchValue({ equipoDestinoId: this.currentEquipoId });
+      this.form.get('equipoDestinoId')?.disable();
+    } else if (this.currentRole === 'master') {
+      this.form.get('equipoDestinoId')?.setValidators(Validators.required);
+      this.form.get('equipoDestinoId')?.updateValueAndValidity();
+    } else {
+      this.errorMessage = 'No tienes permisos para solicitar transferencias';
       return;
     }
 
@@ -83,9 +101,28 @@ export class TransferenciaFormComponent implements OnInit {
       if (campeonatoId) {
         // Resetear el campo de búsqueda y la selección de jugador
         this.jugadorSearchControl.setValue('');
-        this.form.patchValue({ jugadorCampeonatoId: '' });
+        this.form.patchValue({ jugadorCampeonatoId: '', equipoDestinoId: this.currentEquipoId || '' });
         this.loadJugadoresHabilitados(campeonatoId);
+        if (this.currentRole === 'master') {
+          this.loadEquiposDestino(campeonatoId);
+        }
       }
+    });
+  }
+
+  loadEquiposDestino(campeonatoId: number): void {
+    this.equiposDestino = [];
+    this.inscripcionesService.getByCampeonato(Number(campeonatoId)).subscribe({
+      next: (inscripciones) => {
+        this.equiposDestino = inscripciones
+          .filter((inscripcion) => inscripcion.activo && inscripcion.estado === 'confirmada' && !!inscripcion.equipo)
+          .map((inscripcion) => inscripcion.equipo as Equipo)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre));
+      },
+      error: (error) => {
+        console.error('Error loading equipos destino:', error);
+        this.errorMessage = 'Error al cargar los equipos inscritos en el campeonato';
+      },
     });
   }
 
@@ -114,7 +151,12 @@ export class TransferenciaFormComponent implements OnInit {
         // Inicializar el filtro de búsqueda
         this.filteredJugadores$ = this.jugadorSearchControl.valueChanges.pipe(
           startWith(''),
-          map((value) => this._filterJugadores(value || ''))
+          map((value) => {
+            if (typeof value === 'string' && this.form.get('jugadorCampeonatoId')?.value) {
+              this.form.patchValue({ jugadorCampeonatoId: '' }, { emitEvent: false });
+            }
+            return this._filterJugadores(value);
+          })
         );
         
         console.log('Jugadores disponibles para transferencia:', this.jugadoresHabilitados);
@@ -127,24 +169,28 @@ export class TransferenciaFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.valid && this.currentEquipoId) {
+    if (this.form.valid) {
       this.loading = true;
       this.errorMessage = '';
+      const formValue = this.form.getRawValue();
 
       // El valor del select ahora es directamente el jugadorId
-      const jugadorId = Number(this.form.value.jugadorCampeonatoId);
+      const jugadorId = Number(formValue.jugadorCampeonatoId);
+      const equipoDestinoId = this.currentRole === 'master'
+        ? Number(formValue.equipoDestinoId)
+        : Number(this.currentEquipoId);
 
-      if (!jugadorId) {
-        this.errorMessage = 'No se encontró el jugador seleccionado';
+      if (!jugadorId || !equipoDestinoId) {
+        this.errorMessage = 'Selecciona un jugador y un equipo destino válidos';
         this.loading = false;
         return;
       }
 
       const createDto: CreateTransferenciaDto = {
         jugadorId: jugadorId,
-        campeonatoId: Number(this.form.value.campeonatoId),
-        equipoDestinoId: this.currentEquipoId,
-        observaciones: this.form.value.observaciones,
+        campeonatoId: Number(formValue.campeonatoId),
+        equipoDestinoId,
+        observaciones: formValue.observaciones,
       };
 
       this.transferenciasService.create(createDto).subscribe({
@@ -184,7 +230,7 @@ export class TransferenciaFormComponent implements OnInit {
     this.authService.logout();
   }
 
-  private _filterJugadores(value: string): JugadorCampeonato[] {
+  private _filterJugadores(value: string | JugadorCampeonato | null): JugadorCampeonato[] {
     if (!value || typeof value !== 'string') {
       return this.jugadoresHabilitados;
     }

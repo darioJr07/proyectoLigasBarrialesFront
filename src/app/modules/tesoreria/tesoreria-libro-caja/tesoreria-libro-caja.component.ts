@@ -9,11 +9,16 @@ import { TesoreriaService, EntradaLibroCaja } from '../../../core/services/tesor
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
+import {
+  LibroCajaExportData,
+  LibroCajaExportService,
+} from './libro-caja-export.service';
 
 @Component({
   selector: 'app-tesoreria-libro-caja',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-libro-caja.component.html',
   styleUrl: './tesoreria-libro-caja.component.scss',
 })
@@ -30,6 +35,8 @@ export class TesoreriaLibroCajaComponent implements OnInit {
   filtroOrigen: string = '';
   filtroTipo: string = '';
   filtroEstado: string = '';
+  filtroFechaDesde = '';
+  filtroFechaHasta = '';
 
   totalIngresos  = 0;
   totalPendiente = 0;
@@ -45,6 +52,7 @@ export class TesoreriaLibroCajaComponent implements OnInit {
     private tesoreriaService: TesoreriaService,
     private campeonatosService: CampeonatosService,
     private ligasService: LigasService,
+    private exportService: LibroCajaExportService,
   ) {
     this.user$ = this.authService.currentUser$;
   }
@@ -87,11 +95,17 @@ export class TesoreriaLibroCajaComponent implements OnInit {
 
   buscar(): void {
     if (!this.filtroLigaId) { return; }
+    if (this.filtroFechaDesde && this.filtroFechaHasta && this.filtroFechaDesde > this.filtroFechaHasta) {
+      this.error = 'La fecha desde no puede ser posterior a la fecha hasta.';
+      return;
+    }
     this.loading = true;
     this.error   = '';
     this.tesoreriaService.getLibroCaja({
       ligaId:       this.filtroLigaId,
       campeonatoId: this.filtroCampeonatoId ?? undefined,
+      fechaDesde:   this.filtroFechaDesde || undefined,
+      fechaHasta:   this.filtroFechaHasta || undefined,
     }).subscribe({
       next: (list) => {
         this.entradas = list;
@@ -121,6 +135,56 @@ export class TesoreriaLibroCajaComponent implements OnInit {
     this.totalPendiente = activos.filter((e) => e.tipo === 'ingreso' && e.estado === 'pendiente').reduce((s, e) => s + e.monto, 0);
     this.totalEgresos   = activos.filter((e) => e.tipo === 'egreso').reduce((s, e) => s + e.monto, 0);
     this.saldo          = this.totalIngresos - this.totalEgresos;
+  }
+
+  limpiarFiltros(): void {
+    this.filtroOrigen = '';
+    this.filtroTipo = '';
+    this.filtroEstado = '';
+    this.filtroFechaDesde = '';
+    this.filtroFechaHasta = '';
+    this.buscar();
+  }
+
+  descargarPdf(): void {
+    if (this.entradasFiltradas.length === 0) return;
+    this.exportService.descargarPdf(this.datosExportacion());
+  }
+
+  descargarExcel(): void {
+    if (this.entradasFiltradas.length === 0) return;
+    this.exportService.descargarExcel(this.datosExportacion());
+  }
+
+  etiquetaOrigen(origen: string): string {
+    const etiquetas: Record<string, string> = {
+      vocalia: 'Vocalía',
+      manual: 'Manual',
+      saldo_inicial: 'Saldo inicial',
+    };
+    return etiquetas[origen] ?? origen;
+  }
+
+  private datosExportacion(): LibroCajaExportData {
+    const liga = this.ligas.find((item) => item.id === this.filtroLigaId);
+    const campeonato = this.campeonatos.find((item) => item.id === this.filtroCampeonatoId);
+    return {
+      ligaNombre: liga?.nombre ?? 'Liga barrial',
+      campeonatoNombre: campeonato?.nombre ?? 'Todos los campeonatos',
+      fechaDesde: this.filtroFechaDesde || undefined,
+      fechaHasta: this.filtroFechaHasta || undefined,
+      origen: this.filtroOrigen ? this.etiquetaOrigen(this.filtroOrigen) : '',
+      tipo: this.filtroTipo === 'ingreso' ? 'Ingreso' : this.filtroTipo === 'egreso' ? 'Egreso' : '',
+      estado: this.filtroEstado
+        ? this.filtroEstado.charAt(0).toUpperCase() + this.filtroEstado.slice(1)
+        : '',
+      entradas: this.entradasFiltradas,
+      totalIngresos: this.totalIngresos,
+      totalPendiente: this.totalPendiente,
+      totalEgresos: this.totalEgresos,
+      saldo: this.saldo,
+      generadoPor: this.authService.currentUserValue?.nombre ?? 'Tesorería',
+    };
   }
 
   logout(): void { this.authService.logout(); }

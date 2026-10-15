@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ReciboTesoreria } from './recibos-tesoreria.service';
 
 export interface GarantiaEquipo {
   id: number;
@@ -14,6 +15,7 @@ export interface GarantiaEquipo {
   fechaResolucion: string | null;
   motivo: string | null;
   creadoEn: string;
+  recibo?: ReciboTesoreria;
 }
 
 export interface PrestamoFondo {

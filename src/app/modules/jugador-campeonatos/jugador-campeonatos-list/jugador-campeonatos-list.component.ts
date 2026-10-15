@@ -50,6 +50,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
   currentPage = 1;
   pageSize = 6;
   pageSizeOptions = [6, 12, 24];
+  selectedCarnetIds = new Set<number>();
 
   get paginatedJugadorCampeonatos(): JugadorCampeonato[] {
     const start = (this.currentPage - 1) * this.pageSize;
@@ -101,6 +102,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
     this.jugadorCampeonatosService.getAll().subscribe({
       next: (data) => {
         this.jugadorCampeonatos = data;
+        this.sincronizarSeleccionCarnets();
         this.loading = false;
       },
       error: (error) => {
@@ -390,6 +392,87 @@ export class JugadorCampeonatosListComponent implements OnInit {
   canGenerarCarnetsPorEquipo(): boolean {
     const role = this.currentUser?.rol?.nombre;
     return role === 'master' || role === 'directivo_liga';
+  }
+
+  get carnetsSeleccionados(): JugadorCampeonato[] {
+    return this.jugadorCampeonatos.filter(
+      jc => this.selectedCarnetIds.has(jc.id) && this.canGenerarCarnet(jc)
+    );
+  }
+
+  get cantidadCarnetsSeleccionados(): number {
+    return this.carnetsSeleccionados.length;
+  }
+
+  get carnetsSeleccionablesPagina(): JugadorCampeonato[] {
+    return this.paginatedJugadorCampeonatos.filter(jc => this.canGenerarCarnet(jc));
+  }
+
+  mostrarSeleccionCarnets(): boolean {
+    return this.canGenerarCarnetsPorEquipo() &&
+      this.jugadorCampeonatos.some(jc => this.canGenerarCarnet(jc));
+  }
+
+  carnetEstaSeleccionado(id: number): boolean {
+    return this.selectedCarnetIds.has(id);
+  }
+
+  toggleCarnetSeleccion(jugadorCampeonato: JugadorCampeonato, seleccionado: boolean): void {
+    if (!this.canGenerarCarnet(jugadorCampeonato)) return;
+
+    if (seleccionado) {
+      this.selectedCarnetIds.add(jugadorCampeonato.id);
+    } else {
+      this.selectedCarnetIds.delete(jugadorCampeonato.id);
+    }
+  }
+
+  seleccionarCarnetsPagina(): void {
+    this.carnetsSeleccionablesPagina.forEach(jc => this.selectedCarnetIds.add(jc.id));
+  }
+
+  quitarCarnetsPagina(): void {
+    this.carnetsSeleccionablesPagina.forEach(jc => this.selectedCarnetIds.delete(jc.id));
+  }
+
+  limpiarSeleccionCarnets(): void {
+    this.selectedCarnetIds.clear();
+  }
+
+  async descargarCarnetsSeleccionados(): Promise<void> {
+    const seleccionados = this.carnetsSeleccionados;
+
+    if (seleccionados.length === 0) {
+      alert('Selecciona al menos un carnet para descargar');
+      return;
+    }
+
+    if (!confirm(`¿Desea generar ${seleccionados.length} carnet(s) seleccionado(s)?`)) {
+      return;
+    }
+
+    try {
+      this.loading = true;
+      await this.pdfCarnetService.generarCarnetsSeleccionados(seleccionados);
+      alert(`Se generaron ${seleccionados.length} carnet(s) seleccionado(s)`);
+    } catch (error) {
+      console.error('Error al generar carnets seleccionados:', error);
+      alert('Error al generar los carnets seleccionados');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private sincronizarSeleccionCarnets(): void {
+    const idsDisponibles = new Set(
+      this.jugadorCampeonatos
+        .filter(jc => this.canGenerarCarnet(jc))
+        .map(jc => jc.id)
+    );
+
+    this.selectedCarnetIds.forEach(id => {
+      if (!idsDisponibles.has(id)) this.selectedCarnetIds.delete(id);
+    });
   }
 
   /**

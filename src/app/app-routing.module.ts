@@ -393,6 +393,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'cierres',
+        loadComponent: () =>
+          import('./modules/tesoreria/tesoreria-cierres/tesoreria-cierres.component').then(
+            (m) => m.TesoreriaCierresComponent
+          ),
+      },
+      {
         path: 'config',
         canActivate: [RolesGuard],
         data: { roles: ['master', 'directivo_liga'] },

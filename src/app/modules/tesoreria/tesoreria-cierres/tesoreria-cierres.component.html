@@ -1,0 +1,143 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Sistema de Ligas Barriales</h1>
+    <div class="user-info" *ngIf="user$ | async as user">
+      <span>{{ user.nombre }}</span>
+      <span class="user-role">({{ user.rol.nombre }})</span>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <app-main-nav></app-main-nav>
+
+  <main class="page-content">
+    <div class="section-title">
+      <div>
+        <h2>🧾 Conciliaciones y cierre de caja</h2>
+        <p>Compara el saldo del sistema con el dinero contado y conserva cada corte como respaldo.</p>
+      </div>
+    </div>
+
+    <app-tesoreria-nav></app-tesoreria-nav>
+
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert alert-success" *ngIf="mensaje">{{ mensaje }}</div>
+    <div class="alert alert-final" *ngIf="cierreDefinitivo">
+      Este campeonato tiene cierre definitivo del {{ cierreDefinitivo.fechaCorte | date:'dd/MM/yyyy':'UTC' }}.
+      El comprobante continúa disponible en el historial.
+    </div>
+
+    <section class="card filtros-card">
+      <div class="form-grid">
+        <label *ngIf="permissions.isMaster()">
+          <span>Liga</span>
+          <select [(ngModel)]="ligaId" (change)="onLigaChange()">
+            <option [ngValue]="null">Seleccione una liga</option>
+            <option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option>
+          </select>
+        </label>
+        <label>
+          <span>Campeonato</span>
+          <select [(ngModel)]="campeonatoId" (change)="onCampeonatoChange()">
+            <option [ngValue]="null">Seleccione un campeonato</option>
+            <option *ngFor="let campeonato of campeonatos" [ngValue]="campeonato.id">
+              {{ campeonato.nombre }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>Fecha de corte</span>
+          <input type="date" [(ngModel)]="fechaCorte" [max]="fechaMaxima" (change)="preview = null">
+        </label>
+        <button class="btn-primary" (click)="calcular()"
+                [disabled]="loading || !!cierreDefinitivo || !ligaId || !campeonatoId || !fechaCorte">
+          {{ loading ? 'Calculando…' : 'Calcular corte' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="card corte-card" *ngIf="preview">
+      <div class="card-title">
+        <div>
+          <h3>Valores calculados</h3>
+          <p>Período: {{ preview.fechaDesde | date:'dd/MM/yyyy':'UTC' }} al {{ preview.fechaCorte | date:'dd/MM/yyyy':'UTC' }}</p>
+        </div>
+      </div>
+
+      <div class="period-warning">
+        Registre el corte al finalizar las operaciones del día. Una vez guardado, ningún pago podrá utilizar una fecha igual o anterior a este corte.
+      </div>
+
+      <div class="resumen-grid">
+        <div class="resumen-item base"><span>Saldo base</span><strong>$ {{ preview.saldoBase | number:'1.2-2' }}</strong></div>
+        <div class="resumen-item ingreso"><span>Ingresos cobrados</span><strong>+$ {{ preview.totalIngresos | number:'1.2-2' }}</strong></div>
+        <div class="resumen-item egreso"><span>Egresos pagados</span><strong>−$ {{ preview.totalEgresos | number:'1.2-2' }}</strong></div>
+        <div class="resumen-item esperado"><span>Saldo esperado</span><strong>$ {{ preview.saldoEsperado | number:'1.2-2' }}</strong></div>
+      </div>
+
+      <div class="registro-grid">
+        <label>
+          <span>Tipo de registro</span>
+          <select [(ngModel)]="tipo">
+            <option value="conciliacion">Conciliación periódica</option>
+            <option value="cierre_definitivo" [disabled]="campeonatoSeleccionado?.estado !== 'finalizado'">
+              Cierre definitivo
+            </option>
+          </select>
+          <small *ngIf="campeonatoSeleccionado?.estado !== 'finalizado'">El cierre definitivo se habilita al finalizar el campeonato.</small>
+        </label>
+        <label>
+          <span>Dinero contado</span>
+          <input type="number" min="0" step="0.01" [(ngModel)]="saldoContado">
+        </label>
+        <div class="diferencia" [class.cuadrado]="diferencia === 0" [class.descuadre]="diferencia !== 0">
+          <span>Diferencia</span>
+          <strong>{{ diferencia > 0 ? '+' : '' }}$ {{ diferencia | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <label class="observaciones">
+        <span>Observaciones <em *ngIf="diferencia !== 0">(obligatorias por diferencia)</em></span>
+        <textarea rows="3" maxlength="1000" [(ngModel)]="observaciones"
+                  placeholder="Detalle novedades del conteo, faltantes o sobrantes"></textarea>
+      </label>
+
+      <div class="final-warning" *ngIf="tipo === 'cierre_definitivo'">
+        El cierre definitivo es único: bloqueará nuevas operaciones de caja para este campeonato y no podrá editarse ni eliminarse.
+      </div>
+      <div class="actions">
+        <button class="btn-primary" (click)="registrar()"
+                [disabled]="guardando || saldoContado === null || (diferencia !== 0 && !observaciones.trim())">
+          {{ guardando ? 'Guardando…' : (tipo === 'cierre_definitivo' ? 'Confirmar cierre definitivo' : 'Guardar conciliación') }}
+        </button>
+      </div>
+    </section>
+
+    <section class="card historial-card">
+      <div class="card-title">
+        <div><h3>Historial de cortes</h3><p>Los registros guardados son inmutables.</p></div>
+      </div>
+      <div class="empty" *ngIf="campeonatoId && cierres.length === 0">Aún no existen conciliaciones para este campeonato.</div>
+      <div class="empty" *ngIf="!campeonatoId">Seleccione un campeonato para consultar el historial.</div>
+      <div class="table-responsive" *ngIf="cierres.length > 0">
+        <table>
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Período</th><th>Esperado</th><th>Contado</th><th>Diferencia</th><th>Responsable</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let cierre of cierres">
+              <td>{{ cierre.fechaCorte | date:'dd/MM/yyyy':'UTC' }}</td>
+              <td><span class="badge" [class.final]="cierre.tipo === 'cierre_definitivo'">{{ cierre.tipo === 'cierre_definitivo' ? 'Definitivo' : 'Conciliación' }}</span></td>
+              <td>{{ cierre.fechaDesde | date:'dd/MM/yyyy':'UTC' }} – {{ cierre.fechaCorte | date:'dd/MM/yyyy':'UTC' }}</td>
+              <td>$ {{ cierre.saldoEsperado | number:'1.2-2' }}</td>
+              <td>$ {{ cierre.saldoContado | number:'1.2-2' }}</td>
+              <td [class.ok]="cierre.diferencia === 0" [class.bad]="cierre.diferencia !== 0">
+                {{ cierre.diferencia > 0 ? '+' : '' }}$ {{ cierre.diferencia | number:'1.2-2' }}
+              </td>
+              <td>{{ cierre.creadoPor?.nombre ?? 'Usuario no disponible' }}</td>
+              <td><button class="btn-pdf" (click)="descargar(cierre)">PDF</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>

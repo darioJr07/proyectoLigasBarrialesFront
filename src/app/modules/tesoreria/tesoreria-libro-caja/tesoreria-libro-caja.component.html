@@ -13,14 +13,21 @@
   <div class="page-content">
 
     <div class="section-title">
-      <h2>📖 Libro de Caja</h2>
-      <div class="section-links">
-        <a routerLink="/tesoreria" class="btn-secondary-action">📊 Resumen</a>
-        <a routerLink="/tesoreria/cobros-partido" class="btn-secondary-action">📋 Cobros por Partido</a>
-        <a routerLink="/tesoreria/movimientos" class="btn-secondary-action">📒 Movimientos</a>
-        <a *ngIf="permissions.canConfigurTesoreria()" routerLink="/tesoreria/config" class="btn-secondary-action">⚙️ Config. Vocalía</a>
+      <div>
+        <h2>📖 Libro de Caja</h2>
+        <p>Consulta y exporta los movimientos según los filtros actuales.</p>
+      </div>
+      <div class="export-actions">
+        <button class="btn-export btn-pdf" (click)="descargarPdf()" [disabled]="entradasFiltradas.length === 0 || loading">
+          PDF
+        </button>
+        <button class="btn-export btn-excel" (click)="descargarExcel()" [disabled]="entradasFiltradas.length === 0 || loading">
+          Excel
+        </button>
       </div>
     </div>
+
+    <app-tesoreria-nav></app-tesoreria-nav>
 
     <div class="alert alert-error" *ngIf="error">{{ error }}</div>
 
@@ -47,6 +54,7 @@
             <option value="">Todos</option>
             <option value="vocalia">Vocalía</option>
             <option value="manual">Manual</option>
+            <option value="saldo_inicial">Saldo inicial</option>
           </select>
         </div>
         <div class="filtro-item">
@@ -66,8 +74,23 @@
             <option value="anulado">Anulado</option>
           </select>
         </div>
+        <div class="filtro-item">
+          <label>Fecha desde</label>
+          <input type="date" class="form-select" [(ngModel)]="filtroFechaDesde">
+        </div>
+        <div class="filtro-item">
+          <label>Fecha hasta</label>
+          <input type="date" class="form-select" [(ngModel)]="filtroFechaHasta">
+        </div>
         <div class="filtro-item filtro-accion">
-          <button class="btn-primary-action" (click)="buscar()">Buscar</button>
+          <div class="filter-buttons">
+            <button class="btn-primary-action" (click)="buscar()" [disabled]="loading || !filtroLigaId">
+              {{ loading ? 'Buscando…' : 'Buscar' }}
+            </button>
+            <button class="btn-secondary-action" (click)="limpiarFiltros()" [disabled]="loading || !filtroLigaId">
+              Limpiar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -91,14 +114,15 @@
           </thead>
           <tbody>
             <tr *ngFor="let e of entradasFiltradas" [class.fila-anulado]="e.estado === 'anulado'">
-              <td class="td-fecha">{{ e.fecha | date:'dd/MM/yyyy' }}</td>
+              <td class="td-fecha">{{ e.fecha | date:'dd/MM/yyyy':'UTC' }}</td>
               <td>{{ e.concepto }}</td>
               <td>{{ e.equipo ?? '—' }}</td>
               <td>
                 <span class="badge"
                       [class.badge-vocalia]="e.origen === 'vocalia'"
-                      [class.badge-manual]="e.origen === 'manual'">
-                  {{ e.origen === 'vocalia' ? 'Vocalía' : 'Manual' }}
+                      [class.badge-manual]="e.origen === 'manual'"
+                      [class.badge-saldo]="e.origen === 'saldo_inicial'">
+                  {{ etiquetaOrigen(e.origen) }}
                 </span>
               </td>
               <td class="td-ref">{{ e.referencia }}</td>

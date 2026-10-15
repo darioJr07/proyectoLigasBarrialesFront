@@ -72,6 +72,21 @@ export class JugadorCampeonatoFormComponent implements OnInit {
     this.showJugadorDropdown = false;
   }
 
+  onJugadorSearchInput(value: string): void {
+    this.jugadorSearchText = value;
+    this.showJugadorDropdown = true;
+
+    const jugadorId = Number(this.form.get('jugadorId')?.value);
+    const seleccionado = this.jugadores.find((jugador) => jugador.id === jugadorId);
+    const textoSeleccionado = seleccionado
+      ? `${seleccionado.nombre} - ${seleccionado.cedula}`
+      : '';
+
+    if (!seleccionado || value !== textoSeleccionado) {
+      this.form.get('jugadorId')?.setValue(null);
+    }
+  }
+
   onJugadorBlur(): void {
     // Timeout para permitir que el mousedown del option se ejecute primero
     setTimeout(() => { this.showJugadorDropdown = false; }, 200);
@@ -96,9 +111,9 @@ export class JugadorCampeonatoFormComponent implements OnInit {
       equipoId: [null, Validators.required],
       jugadorId: [null, Validators.required],
       categoriaId: [null, Validators.required],
-      numeroCancha: [''],
-      posicion: [''],
-      observaciones: [''],
+      numeroCancha: ['', [Validators.required, Validators.min(1), Validators.max(99)]],
+      posicion: ['', [Validators.required, Validators.maxLength(50)]],
+      observaciones: ['', Validators.maxLength(500)],
     });
   }
 
@@ -384,7 +399,7 @@ export class JugadorCampeonatoFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.valid || (this.form.invalid && this.form.get('categoriaId')?.disabled)) {
+    if (this.form.valid) {
       this.loading = true;
       this.errorMessage = '';
 

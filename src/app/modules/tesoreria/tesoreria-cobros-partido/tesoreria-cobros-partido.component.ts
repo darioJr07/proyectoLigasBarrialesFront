@@ -9,11 +9,14 @@ import { TesoreriaService, CobroPartido } from '../../../core/services/tesoreria
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { LigasService } from '../../../core/services/ligas.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
+import { TesoreriaNavComponent } from '../../../shared/components/tesoreria-nav/tesoreria-nav.component';
+import { ReciboTesoreria } from '../../../core/services/recibos-tesoreria.service';
+import { ReciboTesoreriaPdfService } from '../../../core/services/recibo-tesoreria-pdf.service';
 
 @Component({
   selector: 'app-tesoreria-cobros-partido',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MainNavComponent, TesoreriaNavComponent],
   templateUrl: './tesoreria-cobros-partido.component.html',
   styleUrl: './tesoreria-cobros-partido.component.scss',
 })
@@ -27,10 +30,12 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
   filtroCampeonatoId: number | null = null;
   filtroLigaId: number | null = null;
   filtroEstado: string = '';
+  incluirHistorial = false;
 
   loading = false;
   error   = '';
   exito   = '';
+  ultimoRecibo: ReciboTesoreria | null = null;
 
   constructor(
     private authService: AuthService,
@@ -38,6 +43,7 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
     private tesoreriaService: TesoreriaService,
     private campeonatosService: CampeonatosService,
     private ligasService: LigasService,
+    private reciboPdfService: ReciboTesoreriaPdfService,
   ) {
     this.user$ = this.authService.currentUser$;
   }
@@ -84,6 +90,7 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
       ligaId:       this.filtroLigaId,
       campeonatoId: this.filtroCampeonatoId ?? undefined,
       estado:       this.filtroEstado || undefined,
+      incluirHistorial: this.incluirHistorial,
     }).subscribe({
       next: (list) => { this.cobros = list; this.loading = false; },
       error: (err) => { this.error = err?.error?.message ?? 'Error al cargar cobros'; this.loading = false; },
@@ -91,7 +98,7 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
   }
 
   marcarPagado(cobro: CobroPartido): void {
-    if (!cobro.id) { return; }
+    if (!cobro.id || cobro.esHistorico) { return; }
     const equipo = cobro.equipo?.nombre ?? 'equipo';
     const monto = cobro.total ?? '';
     if (!confirm(`¿Confirmar cobro de $${monto} al equipo "${equipo}"?\nEsta acción marcará el cobro como PAGADO.`)) { return; }
@@ -100,15 +107,18 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
       next: (updated) => {
         const idx = this.cobros.findIndex((c) => c.id === cobro.id);
         if (idx >= 0) { this.cobros[idx] = updated; }
-        this.exito = 'Cobro marcado como pagado.';
-        setTimeout(() => { this.exito = ''; }, 3000);
+        this.ultimoRecibo = updated.recibo ?? null;
+        this.exito = updated.recibo
+          ? `Cobro pagado. Se emitió el recibo ${updated.recibo.numero}.`
+          : 'Cobro marcado como pagado.';
+        setTimeout(() => { this.exito = ''; }, 7000);
       },
       error: (err) => { this.error = err?.error?.message ?? 'Error al actualizar'; },
     });
   }
 
   marcarNoPresentado(cobro: CobroPartido): void {
-    if (!cobro.id) { return; }
+    if (!cobro.id || cobro.esHistorico) { return; }
     const equipo = cobro.equipo?.nombre ?? 'equipo';
     const monto  = cobro.total ?? '';
     if (!confirm(
@@ -127,4 +137,8 @@ export class TesoreríaCobrosPartidoComponent implements OnInit {
   }
 
   logout(): void { this.authService.logout(); }
+
+  descargarUltimoRecibo(): void {
+    if (this.ultimoRecibo) this.reciboPdfService.descargar(this.ultimoRecibo);
+  }
 }

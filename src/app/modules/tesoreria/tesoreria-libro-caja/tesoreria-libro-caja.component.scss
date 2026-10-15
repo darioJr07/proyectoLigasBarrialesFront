@@ -20,12 +20,23 @@
 .section-title {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;
   h2 { margin: 0; font-size: 1.3rem; color: #2c3e50; }
+  p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.88rem; }
 }
 .section-links { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.export-actions { display: flex; gap: 0.55rem; }
+.btn-export {
+  min-width: 72px; padding: 0.52rem 0.85rem; border-radius: 7px; border: 1px solid transparent;
+  color: white; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  &.btn-pdf { background: #c0392b; }
+  &.btn-excel { background: #198754; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+  &:not(:disabled):hover { opacity: 0.88; }
+}
 
 .btn-primary-action {
   background: #2980b9; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; display: inline-block; transition: opacity 0.2s;
   &:hover { opacity: 0.88; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .btn-secondary-action {
   background: white; color: #475569; border: 1.5px solid #e2e8f0; padding: 0.55rem 1.1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block;
@@ -43,6 +54,7 @@
   &.filtro-accion { justify-content: flex-end; }
 }
 .form-select { padding: 0.5rem 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; color: #1e293b; background: white; cursor: pointer; &:focus { outline: none; border-color: #2980b9; } }
+.filter-buttons { display: flex; gap: 0.55rem; align-items: center; }
 
 .loading-state { text-align: center; padding: 2rem; color: #64748b; font-size: 0.95rem; }
 .empty-state { text-align: center; padding: 3rem 2rem; color: #94a3b8; font-size: 0.95rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -71,6 +83,14 @@
   &.badge-anulado  { background: #f1f5f9; color: #94a3b8; }
   &.badge-vocalia  { background: #ede9fe; color: #5b21b6; }
   &.badge-manual   { background: #dbeafe; color: #1e40af; }
+  &.badge-saldo    { background: #f3e8ff; color: #7e22ce; }
+}
+
+@media (max-width: 760px) {
+  .page-content { padding: 1rem; }
+  .filtro-item { width: 100%; }
+  .filter-buttons { width: 100%; }
+  .filter-buttons button { flex: 1; }
 }
 
 .totales-footer {
