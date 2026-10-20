@@ -231,11 +231,15 @@
         <div class="sancion-body">
           <p class="sancionado">
             <strong>
-              <span *ngIf="s.jugador && s.numeroCanchaCalificacion != null" class="num-cancha">#{{ s.numeroCanchaCalificacion }}</span>
+              <span *ngIf="s.jugador && (s.numeroCanchaActual ?? s.numeroCanchaCalificacion) != null" class="num-cancha">#{{ s.numeroCanchaActual ?? s.numeroCanchaCalificacion }}</span>
               {{ sancionadoLabel(s) }}
             </strong>
-            <span *ngIf="s.equipo && s.jugador"> — {{ s.equipo.nombre }}</span>
+            <span *ngIf="s.equipo && s.jugador && !s.equipoTransferido"> — {{ s.equipo.nombre }}</span>
             <span *ngIf="s.equipo && !s.jugador"> (equipo)</span>
+          </p>
+          <p class="cambio-equipo" *ngIf="s.jugador && s.equipoTransferido && s.equipoActual">
+            Equipo actual: <strong>{{ s.equipoActual.nombre }}</strong>
+            <span *ngIf="s.equipo"> · Sanción recibida con {{ s.equipo.nombre }}</span>
           </p>
           <p class="campeonato-info" *ngIf="s.campeonato">
             📅 {{ s.campeonato.nombre }}

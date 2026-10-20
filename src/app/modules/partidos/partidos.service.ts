@@ -11,6 +11,9 @@ import {
   GenerarFixtureResponse,
   CrearProgramacionSemanalDto,
   ProgramacionSemanal,
+  ProgramacionSemanalResumen,
+  VocaliaPartido,
+  VocaliasProgramacion,
 } from './partido.model';
 
 @Injectable({
@@ -110,6 +113,18 @@ export class PartidosService {
     if (categoriaId) params = params.set('categoriaId', categoriaId);
     return this.http.get<ProgramacionSemanal | null>(`${this.apiUrl}/programacion-semanal/pendiente`, { params });
   }
+  listarProgramacionesSemanalesConfirmadas(
+    campeonatoId: number,
+    categoriaId?: number,
+    etapa?: string,
+    jornada?: number,
+  ): Observable<ProgramacionSemanalResumen[]> {
+    let params = new HttpParams().set('campeonatoId', campeonatoId);
+    if (categoriaId) params = params.set('categoriaId', categoriaId);
+    if (etapa) params = params.set('etapa', etapa);
+    if (jornada) params = params.set('jornada', jornada);
+    return this.http.get<ProgramacionSemanalResumen[]>(`${this.apiUrl}/programacion-semanal/confirmadas`, { params });
+  }
   sacarBolilla(id: number, partidoId: number): Observable<{ bolilla: any; partido: Partido }> {
     return this.http.post<{ bolilla: any; partido: Partido }>(`${this.apiUrl}/programacion-semanal/${id}/sacar-bolilla/${partidoId}`, {});
   }
@@ -124,5 +139,31 @@ export class PartidosService {
   }
   asignarBolillaManual(id: number, partidoId: number, bolillaId: number): Observable<ProgramacionSemanal> {
     return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/asignar-manual`, { partidoId, bolillaId });
+  }
+  obtenerVocaliasProgramacion(id: number): Observable<VocaliasProgramacion> {
+    return this.http.get<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias`);
+  }
+  prepararVocaliasProgramacion(id: number): Observable<VocaliasProgramacion> {
+    return this.http.post<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/preparar`, {});
+  }
+  reiniciarVocaliasProgramacion(id: number): Observable<VocaliasProgramacion> {
+    return this.http.post<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/reiniciar`, {});
+  }
+  configurarVocaliaProgramacion(id: number, vocaliaId: number, data: {
+    tipoAsignacion: VocaliaPartido['tipoAsignacion'];
+    partidoOrigenId?: number;
+    equipoVocalId?: number;
+    directivoNombre?: string;
+  }): Observable<VocaliasProgramacion> {
+    return this.http.patch<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/${vocaliaId}`, data);
+  }
+  sortearVocaliaProgramacion(id: number, vocaliaId: number, equipoExtractorId: number): Observable<VocaliasProgramacion> {
+    return this.http.post<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/${vocaliaId}/sortear`, { equipoExtractorId });
+  }
+  liberarVocaliaProgramacion(id: number, vocaliaId: number): Observable<VocaliasProgramacion> {
+    return this.http.post<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/${vocaliaId}/liberar`, {});
+  }
+  confirmarVocaliasProgramacion(id: number): Observable<VocaliasProgramacion> {
+    return this.http.post<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias/confirmar`, {});
   }
 }

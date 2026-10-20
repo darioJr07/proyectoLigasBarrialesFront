@@ -1,7 +1,11 @@
 <div class="page-container">
   <header class="page-header"><h1>Sistema de Ligas Barriales</h1><div class="user-info" *ngIf="user$ | async as user"><span>{{ user.nombre }}</span><span class="user-role">({{ user.rol.nombre }})</span><button class="btn-logout" (click)="logout()">Cerrar sesión</button></div></header>
   <app-main-nav></app-main-nav>
-  <main class="dashboard-content"><div class="welcome-card">
+  <main class="dashboard-content">
+    <div class="module-warning" *ngIf="moduloBloqueadoMensaje" role="alert">
+      {{ moduloBloqueadoMensaje }}
+    </div>
+    <div class="welcome-card">
     <h2>Bienvenido al Sistema</h2><p>Accesos rápidos organizados según las funciones disponibles para tu rol.</p>
     <section class="indicadores" *ngIf="resumen?.campeonato"><h3>{{ resumen.campeonato.nombre }}</h3><div class="indicadores-grid">
       <a *ngIf="canAccessPartidos()" routerLink="/partidos" class="indicador"><strong>{{ resumen.partidosPendientes }}</strong><span>Partidos pendientes</span></a>

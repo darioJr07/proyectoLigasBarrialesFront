@@ -68,9 +68,18 @@ export interface RegistrarResultadoDto {
 export interface GenerarFixtureDto {
   campeonatoId: number;
   categoriaId: number;
-  equipoIds: number[];
+  equipoIds?: number[];
   etapa: string;
   conRevancha?: boolean;
+  formato?: 'tabla_unica' | 'grupos_cruce_descansos';
+  marcarComoActual?: boolean;
+  grupos?: {
+    nombre: string;
+    equipos: {
+      equipoId: number;
+      bonificaciones?: { puntos: number; etapaOrigen?: string; posicionOrigen?: number; motivo: string }[];
+    }[];
+  }[];
 }
 
 export interface GenerarFixtureResponse {
@@ -87,6 +96,33 @@ export interface BolillaHorario {
 export interface ProgramacionSemanal {
   id: number; ligaId: number; campeonatoId: number; categoriaId?: number | null; etapa: string; jornada: number;
   totalPartidos: number; estado: 'borrador' | 'en_sorteo' | 'confirmada' | 'cancelada'; bolillas: BolillaHorario[]; partidos: Partido[];
+  creadoEn?: string; confirmadoEn?: string | null;
+}
+
+export type ProgramacionSemanalResumen = Omit<ProgramacionSemanal, 'bolillas' | 'partidos'>;
+
+export interface VocaliaPartido {
+  id: number;
+  programacionId: number;
+  partidoId: number;
+  partido: Partido;
+  partidoOrigenId?: number | null;
+  partidoOrigen?: Partido | null;
+  tipoAsignacion: 'sorteo' | 'manual_equipo' | 'directivo';
+  reglaAsignacion: 'normal' | 'cierre_tres' | 'manual';
+  equipoExtractorId?: number | null;
+  equipoExtractor?: any | null;
+  resultadoBolilla?: 'si' | 'no' | null;
+  equipoVocalId?: number | null;
+  equipoVocal?: any | null;
+  directivoNombre?: string | null;
+  estado: 'pendiente' | 'asignada' | 'confirmada';
+  confirmadoEn?: string | null;
+}
+
+export interface VocaliasProgramacion {
+  estado: 'sin_asignar' | 'en_preparacion' | 'confirmada';
+  vocalias: VocaliaPartido[];
 }
 
 export interface CrearProgramacionSemanalDto {

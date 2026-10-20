@@ -89,6 +89,8 @@ npm run lint
 ## Funcionalidades UI Destacadas
 
 - Navegacion protegida por roles.
+- Los dirigentes refrescan la configuración al entrar a Jugadores, Inscripciones/Habilitaciones o Transferencias; si el módulo está cerrado o no puede verificarse, vuelven al dashboard con un aviso visible.
+- La configuración aplica un criterio seguro ante errores de red: no habilita por defecto un módulo cuyo estado no pudo comprobarse.
 - Menus y acciones visibles segun permisos.
 - Filtros avanzados por rol.
 - Autocomplete de jugadores.

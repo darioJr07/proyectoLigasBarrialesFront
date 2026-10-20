@@ -9,7 +9,7 @@ import { LigasService } from '../../../core/services/ligas.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { CategoriasService } from '../../categorias/categorias.service';
 import { PartidosService } from '../partidos.service';
-import { BolillaHorario, ProgramacionSemanal } from '../partido.model';
+import { BolillaHorario, ProgramacionSemanal, ProgramacionSemanalResumen, VocaliaPartido, VocaliasProgramacion } from '../partido.model';
 import { ProgramacionSemanalExport, ProgramacionSemanalExportService } from './programacion-semanal-export.service';
 
 @Component({ selector: 'app-programacion-semanal', standalone: true, imports: [CommonModule, FormsModule, RouterLink, MainNavComponent], templateUrl: './programacion-semanal.component.html', styleUrls: ['./programacion-semanal.component.scss'] })
@@ -21,6 +21,12 @@ export class ProgramacionSemanalComponent implements OnInit {
   bolillaManualId: number | null = null;
   cargando = false; sorteando = false; confirmando = false; error = ''; exito = ''; ultimaBolilla: any = null;
   partidosProgramables: any[] = []; etapasDisponibles: string[] = []; jornadasDisponibles: number[] = [];
+  programacionesConfirmadas: ProgramacionSemanalResumen[] = [];
+  historialEtapa = ''; historialJornada: number | null = null;
+  historialCargando = false; programacionAbriendoId: number | null = null;
+  vocalias: VocaliaPartido[] = []; vocaliasEstado: VocaliasProgramacion['estado'] = 'sin_asignar';
+  vocaliasCargando = false; vocaliaProcesandoId: number | null = null;
+  extractoresVocalia: Record<number, number | null> = {};
   user$: Observable<any>;
   esMaster = false;
   constructor(private readonly ligasService: LigasService, private readonly campeonatosService: CampeonatosService, private readonly categoriasService: CategoriasService, private readonly partidosService: PartidosService, private readonly authService: AuthService, private readonly exportador: ProgramacionSemanalExportService) { this.user$ = authService.currentUser$; }
@@ -39,9 +45,9 @@ export class ProgramacionSemanalComponent implements OnInit {
 
     this.error = 'Tu usuario no tiene una liga asignada para realizar la programación semanal.';
   }
-  cambiarLiga(): void { this.campeonatos = []; this.categorias = []; this.campeonatoId = null; if (this.ligaId) this.campeonatosService.getByLiga(this.ligaId).subscribe(c => this.campeonatos = c); }
-  cambiarCampeonato(): void { this.categorias = []; this.categoriaId = null; this.etapa = ''; this.jornada = null; this.partidosProgramables = []; if (this.campeonatoId) { this.categoriasService.getByCampeonato(this.campeonatoId).subscribe(c => this.categorias = c); this.cargarOpcionesProgramables(); } }
-  cambiarCategoria(): void { this.etapa = ''; this.jornada = null; this.cargarOpcionesProgramables(); }
+  cambiarLiga(): void { this.campeonatos = []; this.categorias = []; this.campeonatoId = null; this.reiniciarHistorial(); if (this.ligaId) this.campeonatosService.getByLiga(this.ligaId).subscribe(c => this.campeonatos = c); }
+  cambiarCampeonato(): void { this.categorias = []; this.categoriaId = null; this.etapa = ''; this.jornada = null; this.partidosProgramables = []; this.reiniciarHistorial(); if (this.campeonatoId) { this.categoriasService.getByCampeonato(this.campeonatoId).subscribe(c => this.categorias = c); this.cargarOpcionesProgramables(); this.cargarProgramacionesConfirmadas(); } }
+  cambiarCategoria(): void { this.etapa = ''; this.jornada = null; this.historialEtapa = ''; this.historialJornada = null; this.cargarOpcionesProgramables(); this.cargarProgramacionesConfirmadas(); }
   cambiarEtapa(): void { this.jornada = null; this.jornadasDisponibles = [...new Set(this.partidosProgramables.filter(p => p.etapa === this.etapa).map(p => p.jornada))].sort((a, b) => a - b); }
   generarBolillas(): void {
     this.error = ''; const inicio = this.minutos(this.horaInicio), fin = this.minutos(this.horaFin);
@@ -72,7 +78,7 @@ export class ProgramacionSemanalComponent implements OnInit {
   get pendientes(): any[] { if (!this.sesion) return []; const asignados = new Set(this.sesion.bolillas.filter(b => b.partidoId).map(b => b.partidoId)); return this.sesion.partidos.filter(p => !asignados.has(p.id)); }
   get bolillasDisponibles(): number { return this.sesion?.bolillas.filter(b => b.estado === 'disponible').length ?? 0; }
   sacar(): void { if (!this.sesion || !this.partidoSeleccionadoId) return; this.sorteando = true; this.error = ''; this.partidosService.sacarBolilla(this.sesion.id, this.partidoSeleccionadoId).subscribe({ next: r => { this.ultimaBolilla = r.bolilla; this.partidoSeleccionadoId = null; this.refrescar(); this.sorteando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo sacar la bolilla.'; this.sorteando = false; } }); }
-  confirmar(): void { if (!this.sesion || this.pendientes.length) return; this.confirmando = true; this.partidosService.confirmarProgramacionSemanal(this.sesion.id).subscribe({ next: s => { this.sesion = s; this.exito = 'Programación confirmada. Los horarios fueron guardados en los partidos.'; this.confirmando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo confirmar la programación.'; this.confirmando = false; } }); }
+  confirmar(): void { if (!this.sesion || this.pendientes.length) return; this.confirmando = true; this.partidosService.confirmarProgramacionSemanal(this.sesion.id).subscribe({ next: s => { this.sesion = s; this.exito = 'Programación confirmada. Los horarios fueron guardados en los partidos.'; this.confirmando = false; this.cargarProgramacionesConfirmadas(); this.cargarVocalias(); }, error: e => { this.error = e?.error?.message ?? 'No se pudo confirmar la programación.'; this.confirmando = false; } }); }
   cancelar(): void {
     if (!this.sesion || !window.confirm('¿Cancelar este sorteo? Las asignaciones aún no confirmadas se descartarán y los partidos no cambiarán.')) return;
     this.error = '';
@@ -94,6 +100,128 @@ export class ProgramacionSemanalComponent implements OnInit {
       error: e => this.error = e?.error?.message ?? 'No se pudo asignar el horario manualmente.',
     });
   }
+  cargarProgramacionesConfirmadas(): void {
+    if (!this.campeonatoId) { this.programacionesConfirmadas = []; return; }
+    this.historialCargando = true;
+    this.partidosService.listarProgramacionesSemanalesConfirmadas(this.campeonatoId, this.categoriaId ?? undefined).subscribe({
+      next: programaciones => { this.programacionesConfirmadas = programaciones; this.historialCargando = false; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudieron cargar las programaciones confirmadas.'; this.historialCargando = false; },
+    });
+  }
+  abrirProgramacionConfirmada(programacion: ProgramacionSemanalResumen): void {
+    this.error = ''; this.exito = ''; this.programacionAbriendoId = programacion.id;
+    this.partidosService.obtenerProgramacionSemanal(programacion.id).subscribe({
+      next: sesion => {
+        this.sesion = sesion;
+        this.programacionAbriendoId = null;
+        this.partidoSeleccionadoId = null;
+        this.bolillaManualId = null;
+        this.ultimaBolilla = null;
+        this.cargarVocalias();
+      },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo recuperar la programación confirmada.'; this.programacionAbriendoId = null; },
+    });
+  }
+  cerrarProgramacion(): void {
+    this.sesion = null;
+    this.partidoSeleccionadoId = null;
+    this.bolillaManualId = null;
+    this.ultimaBolilla = null;
+    this.vocalias = [];
+    this.vocaliasEstado = 'sin_asignar';
+    this.extractoresVocalia = {};
+    this.error = '';
+    this.cargarOpcionesProgramables();
+    this.cargarProgramacionesConfirmadas();
+  }
+  cargarVocalias(): void {
+    if (!this.sesion || this.sesion.estado !== 'confirmada') return;
+    this.vocaliasCargando = true;
+    this.partidosService.obtenerVocaliasProgramacion(this.sesion.id).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliasCargando = false; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudieron cargar las vocalías.'; this.vocaliasCargando = false; },
+    });
+  }
+  prepararVocalias(): void {
+    if (!this.sesion) return;
+    this.vocaliasCargando = true; this.error = '';
+    this.partidosService.prepararVocaliasProgramacion(this.sesion.id).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliasCargando = false; this.exito = 'Propuesta de vocalías preparada. Revisa cada relación antes del sorteo.'; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo preparar la asignación de vocalías.'; this.vocaliasCargando = false; },
+    });
+  }
+  reiniciarVocalias(): void {
+    if (!this.sesion || !window.confirm('¿Regenerar toda la propuesta? Se eliminarán los sorteos y asignaciones de vocalía que todavía no estén confirmados.')) return;
+    this.vocaliasCargando = true; this.error = '';
+    this.partidosService.reiniciarVocaliasProgramacion(this.sesion.id).subscribe({
+      next: respuesta => { this.extractoresVocalia = {}; this.actualizarVocalias(respuesta); this.vocaliasCargando = false; this.exito = 'Propuesta regenerada con la regla par/impar del día.'; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo regenerar la propuesta de vocalías.'; this.vocaliasCargando = false; },
+    });
+  }
+  sortearVocalia(vocalia: VocaliaPartido): void {
+    if (!this.sesion || !vocalia.partidoOrigenId || !this.extractoresVocalia[vocalia.id]) return;
+    this.vocaliaProcesandoId = vocalia.id; this.error = '';
+    this.partidosService.configurarVocaliaProgramacion(this.sesion.id, vocalia.id, { tipoAsignacion: 'sorteo', partidoOrigenId: vocalia.partidoOrigenId }).subscribe({
+      next: () => this.partidosService.sortearVocaliaProgramacion(this.sesion!.id, vocalia.id, this.extractoresVocalia[vocalia.id]!).subscribe({
+        next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliaProcesandoId = null; this.exito = 'Bolilla extraída y equipo vocal asignado.'; },
+        error: e => { this.error = e?.error?.message ?? 'No se pudo realizar el sorteo de vocalía.'; this.vocaliaProcesandoId = null; },
+      }),
+      error: e => { this.error = e?.error?.message ?? 'No se pudo preparar el sorteo de vocalía.'; this.vocaliaProcesandoId = null; },
+    });
+  }
+  asignarVocaliaManual(vocalia: VocaliaPartido): void {
+    if (!this.sesion || !vocalia.partidoOrigenId || !vocalia.equipoVocalId) return;
+    this.vocaliaProcesandoId = vocalia.id; this.error = '';
+    this.partidosService.configurarVocaliaProgramacion(this.sesion.id, vocalia.id, { tipoAsignacion: 'manual_equipo', partidoOrigenId: vocalia.partidoOrigenId, equipoVocalId: vocalia.equipoVocalId }).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliaProcesandoId = null; this.exito = 'Equipo vocal asignado manualmente.'; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo asignar el equipo vocal.'; this.vocaliaProcesandoId = null; },
+    });
+  }
+  asignarDirectivo(vocalia: VocaliaPartido): void {
+    if (!this.sesion || !vocalia.directivoNombre?.trim()) return;
+    this.vocaliaProcesandoId = vocalia.id; this.error = '';
+    this.partidosService.configurarVocaliaProgramacion(this.sesion.id, vocalia.id, { tipoAsignacion: 'directivo', directivoNombre: vocalia.directivoNombre.trim() }).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliaProcesandoId = null; this.exito = 'Directivo responsable asignado.'; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo asignar el directivo.'; this.vocaliaProcesandoId = null; },
+    });
+  }
+  liberarVocalia(vocalia: VocaliaPartido): void {
+    if (!this.sesion || !window.confirm('¿Liberar esta vocalía para corregir su asignación?')) return;
+    this.vocaliaProcesandoId = vocalia.id; this.error = '';
+    this.partidosService.liberarVocaliaProgramacion(this.sesion.id, vocalia.id).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliaProcesandoId = null; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudo liberar la vocalía.'; this.vocaliaProcesandoId = null; },
+    });
+  }
+  confirmarVocalias(): void {
+    if (!this.sesion || !this.vocalias.length || this.vocalias.some(item => item.estado !== 'asignada')) return;
+    if (!window.confirm('¿Confirmar todas las vocalías? Después quedarán en modo de solo lectura.')) return;
+    this.vocaliasCargando = true; this.error = '';
+    this.partidosService.confirmarVocaliasProgramacion(this.sesion.id).subscribe({
+      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliasCargando = false; this.exito = 'Vocalías confirmadas correctamente.'; },
+      error: e => { this.error = e?.error?.message ?? 'No se pudieron confirmar las vocalías.'; this.vocaliasCargando = false; },
+    });
+  }
+  partidosOrigen(vocalia: VocaliaPartido): any[] { return this.sesion?.partidos.filter(partido => partido.id !== vocalia.partidoId) ?? []; }
+  candidatosVocalia(vocalia: VocaliaPartido): any[] {
+    const origen = this.sesion?.partidos.find(partido => partido.id === vocalia.partidoOrigenId);
+    return origen ? [origen.equipoLocal, origen.equipoVisitante].filter(Boolean) : [];
+  }
+  textoPartido(partido: any): string { return partido ? `${partido.equipoLocal?.nombre} vs ${partido.equipoVisitante?.nombre}` : 'Partido no disponible'; }
+  textoVocal(vocalia: VocaliaPartido | undefined): string {
+    if (!vocalia || vocalia.estado === 'pendiente') return 'Pendiente';
+    return vocalia.tipoAsignacion === 'directivo' ? vocalia.directivoNombre ?? 'Directivo' : vocalia.equipoVocal?.nombre ?? this.nombreEquipo(vocalia.equipoVocalId);
+  }
+  nombreEquipo(equipoId: number | null | undefined): string {
+    if (!equipoId || !this.sesion) return 'Equipo';
+    for (const partido of this.sesion.partidos) {
+      if (partido.equipoLocalId === equipoId) return partido.equipoLocal?.nombre ?? 'Equipo';
+      if (partido.equipoVisitanteId === equipoId) return partido.equipoVisitante?.nombre ?? 'Equipo';
+    }
+    return 'Equipo';
+  }
+  vocaliaDelPartido(partidoId: number | null | undefined): VocaliaPartido | undefined { return this.vocalias.find(item => item.partidoId === partidoId); }
+  get vocaliasPendientesCantidad(): number { return this.vocalias.filter(item => item.estado !== 'asignada' && item.estado !== 'confirmada').length; }
   exportarPdf(): void { const datos = this.datosExportacion(); if (datos) this.exportador.descargarPdf(datos); }
   exportarExcel(): void { const datos = this.datosExportacion(); if (datos) this.exportador.descargarExcel(datos); }
   async exportarImagenes(): Promise<void> {
@@ -112,21 +240,50 @@ export class ProgramacionSemanalComponent implements OnInit {
     const partido = this.pendientes.find(item => item.id === this.partidoSeleccionadoId);
     return this.sesion.bolillas.filter(bolilla => bolilla.estado === 'disponible' && (!partido?.cancha || bolilla.cancha.toLowerCase() === partido.cancha.toLowerCase()));
   }
+  get etapasHistorial(): string[] {
+    return [...new Set(this.programacionesConfirmadas.map(item => item.etapa))].sort();
+  }
+  get jornadasHistorial(): number[] {
+    return [...new Set(this.programacionesConfirmadas
+      .filter(item => !this.historialEtapa || item.etapa === this.historialEtapa)
+      .map(item => item.jornada))].sort((a, b) => a - b);
+  }
+  get programacionesConfirmadasFiltradas(): ProgramacionSemanalResumen[] {
+    return this.programacionesConfirmadas.filter(item =>
+      (!this.historialEtapa || item.etapa === this.historialEtapa)
+      && (!this.historialJornada || item.jornada === this.historialJornada)
+    );
+  }
+  cambiarEtapaHistorial(): void { this.historialJornada = null; }
+  nombreCategoria(categoriaId: number | null | undefined): string {
+    if (!categoriaId) return 'Todas las categorías';
+    return this.categorias.find(categoria => categoria.id === categoriaId)?.nombre ?? `Categoría #${categoriaId}`;
+  }
+  nombreEtapa(etapa: string): string { return etapa.replace(/_/g, ' '); }
   private datosExportacion(): ProgramacionSemanalExport | null {
     if (!this.sesion) return null;
     const filas = this.sesion.bolillas.filter(bolilla => !!bolilla.partido).map(bolilla => ({
       fecha: String(bolilla.fecha).slice(0, 10), hora: bolilla.hora, cancha: bolilla.cancha,
       categoria: bolilla.partido?.categoria?.nombre ?? this.categorias.find(categoria => categoria.id === bolilla.partido?.categoriaId)?.nombre ?? 'Categoría',
       local: bolilla.partido?.equipoLocal?.nombre ?? '', visitante: bolilla.partido?.equipoVisitante?.nombre ?? '', manual: !!bolilla.asignacionManual,
+      vocal: this.textoVocal(this.vocaliaDelPartido(bolilla.partidoId)),
     }));
     if (!filas.length) { this.error = 'Aún no existen horarios asignados para exportar.'; return null; }
     const liga = this.ligas.find(item => item.id === this.sesion!.ligaId);
     const campeonato = this.campeonatos.find(item => item.id === this.sesion!.campeonatoId);
-    return { liga: liga?.nombre ?? 'Liga', ligaImagen: liga?.imagen, campeonato: campeonato?.nombre ?? 'Campeonato', categoria: this.categoriaId ? this.categorias.find(item => item.id === this.categoriaId)?.nombre ?? 'Categoría' : 'Todas las categorías', etapa: this.sesion.etapa, jornada: this.sesion.jornada, estado: this.sesion.estado === 'confirmada' ? 'confirmada' : 'en_sorteo', filas };
+    return { liga: liga?.nombre ?? 'Liga', ligaImagen: liga?.imagen, campeonato: campeonato?.nombre ?? 'Campeonato', categoria: this.nombreCategoria(this.sesion.categoriaId), etapa: this.sesion.etapa, jornada: this.sesion.jornada, estado: this.sesion.estado === 'confirmada' ? 'confirmada' : 'en_sorteo', filas };
   }
   private crearNuevaSesion(): void {
     this.partidosService.crearProgramacionSemanal({ campeonatoId: this.campeonatoId!, categoriaId: this.categoriaId ?? undefined, etapa: this.etapa.trim(), jornada: this.jornada!, bolillas: this.bolillas }).subscribe({ next: s => { this.sesion = s; this.cargando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo iniciar el sorteo.'; this.cargando = false; } });
   }
+  private actualizarVocalias(respuesta: VocaliasProgramacion): void {
+    this.vocaliasEstado = respuesta.estado;
+    this.vocalias = respuesta.vocalias;
+    for (const vocalia of this.vocalias) {
+      if (!(vocalia.id in this.extractoresVocalia)) this.extractoresVocalia[vocalia.id] = vocalia.equipoExtractorId ?? null;
+    }
+  }
+  private reiniciarHistorial(): void { this.programacionesConfirmadas = []; this.historialEtapa = ''; this.historialJornada = null; }
   private cargarOpcionesProgramables(): void { if (!this.campeonatoId) return; this.partidosService.getByCampeonato(this.campeonatoId, this.categoriaId ?? undefined).subscribe({ next: partidos => { this.partidosProgramables = partidos.filter(p => p.estado === 'programado' && (!p.fechaPartido || !p.horaPartido)); this.etapasDisponibles = [...new Set(this.partidosProgramables.map(p => p.etapa))].sort(); }, error: () => this.error = 'No se pudieron cargar las jornadas programables.' }); }
   private refrescar(): void { if (this.sesion) this.partidosService.obtenerProgramacionSemanal(this.sesion.id).subscribe(s => this.sesion = s); }
   private minutos(hora: string): number | null { const p = hora.split(':').map(Number); return p.length === 2 && p.every(Number.isFinite) ? p[0] * 60 + p[1] : null; }

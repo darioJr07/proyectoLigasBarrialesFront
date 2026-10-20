@@ -11,11 +11,11 @@ export interface SancionesExportables { ligaNombre: string; ligaImagen?: string;
 @Injectable({ providedIn: 'root' })
 export class SancionesExportService {
   descargarPdf(data: SancionesExportables): void {
-    const body = [['#', 'SANCIONADO', 'EQUIPO', 'SANCIÓN', 'CUMPLIMIENTO', 'ESTADO'].map(text => ({ text, style: 'tableHeader' })), ...data.sanciones.map((s, i) => [String(i + 1), this.persona(s), s.equipo?.nombre ?? '—', s.tipoSancion?.nombre ?? '—', this.cumplimiento(s), this.estado(s)])];
+    const body = [['#', 'SANCIONADO', 'EQUIPO', 'SANCIÓN', 'CUMPLIMIENTO', 'ESTADO'].map(text => ({ text, style: 'tableHeader' })), ...data.sanciones.map((s, i) => [String(i + 1), this.persona(s), this.equipoReporte(s), s.tipoSancion?.nombre ?? '—', this.cumplimiento(s), this.estado(s)])];
     pdfMake.createPdf({ pageMargins: [28, 32, 28, 32], pageOrientation: 'landscape', content: [{ text: 'REPORTE DE SANCIONES', style: 'title', alignment: 'center' }, { text: data.ligaNombre, style: 'league', alignment: 'center' }, { text: `${data.campeonatoNombre} · ${data.tipoNombre}`, style: 'subtitle', alignment: 'center', margin: [0, 3, 0, 14] }, { table: { headerRows: 1, widths: [24, '*', '*', '*', 90, 90], body }, layout: { fillColor: (row: number) => row === 0 ? '#243B5A' : row % 2 === 0 ? '#F5F7FA' : null } }, { text: `Generado el ${this.fecha()} · ${data.sanciones.length} sanción(es)`, style: 'footer', margin: [0, 14, 0, 0] }], styles: { title: { fontSize: 17, bold: true, color: '#1A252F' }, league: { fontSize: 11, bold: true, color: '#3498DB' }, subtitle: { fontSize: 10, color: '#52616B' }, footer: { fontSize: 8, color: '#7F8C8D' }, tableHeader: { bold: true, color: '#FFFFFF', fontSize: 8 } }, defaultStyle: { fontSize: 8 } } as any).download(`${this.nombre(data)}.pdf`);
   }
   descargarExcel(data: SancionesExportables): void {
-    const hoja = XLSX.utils.aoa_to_sheet([['REPORTE DE SANCIONES'], ['Liga', data.ligaNombre], ['Campeonato', data.campeonatoNombre], ['Tipo', data.tipoNombre], ['Generado el', this.fecha()], [], ['N.º', 'Sancionado', 'Equipo', 'Tipo', 'Descripción', 'Cumplidos', 'Suspensión', 'Estado', 'Fecha'], ...data.sanciones.map((s, i) => [i + 1, this.persona(s), s.equipo?.nombre ?? '', s.tipoSancion?.nombre ?? '', s.descripcion ?? '', s.partidosCumplidos ?? 0, s.partidosSuspension ?? 0, this.estado(s), s.fechaSancion ?? ''])]);
+    const hoja = XLSX.utils.aoa_to_sheet([['REPORTE DE SANCIONES'], ['Liga', data.ligaNombre], ['Campeonato', data.campeonatoNombre], ['Tipo', data.tipoNombre], ['Generado el', this.fecha()], [], ['N.º', 'Sancionado', 'Equipo', 'Tipo', 'Descripción', 'Cumplidos', 'Suspensión', 'Estado', 'Fecha'], ...data.sanciones.map((s, i) => [i + 1, this.persona(s), this.equipoReporte(s), s.tipoSancion?.nombre ?? '', s.descripcion ?? '', s.partidosCumplidos ?? 0, s.partidosSuspension ?? 0, this.estado(s), s.fechaSancion ?? ''])]);
     hoja['!cols'] = [{ wch: 7 }, { wch: 30 }, { wch: 25 }, { wch: 25 }, { wch: 42 }, { wch: 12 }, { wch: 13 }, { wch: 22 }, { wch: 15 }]; hoja['!merges'] = [XLSX.utils.decode_range('A1:I1')];
     const libro = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(libro, hoja, 'Sanciones'); XLSX.writeFile(libro, `${this.nombre(data)}.xlsx`);
   }
@@ -41,12 +41,21 @@ export class SancionesExportService {
           ? (s.fechaFinSuspension ? `HASTA ${this.formatearFecha(s.fechaFinSuspension)}` : this.avanceEquipo(s, data))
           : this.partidosPendientes(s);
       if (esSancionGeneral) return `<text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="1010" y="${y}" class="general" text-anchor="end">${this.xml(this.cortar(texto, 42))}</text>`;
-      return `<text x="70" y="${y}" class="r">${this.xml(this.cortar(this.nombreParaImagen(this.persona(s)), 24))}</text><text x="380" y="${y}" class="r">${this.xml(this.cortar(s.equipo?.nombre ?? '', 22))}</text><text x="700" y="${y}" class="r" text-anchor="middle">${s.numeroCanchaCalificacion ?? ''}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 24))}</text>`;
+      return `<text x="70" y="${y}" class="r">${this.xml(this.cortar(this.nombreParaImagen(this.persona(s)), 24))}</text><text x="380" y="${y}" class="r">${this.xml(this.cortar(this.equipoVisual(s), 22))}</text><text x="700" y="${y}" class="r" text-anchor="middle">${s.numeroCanchaActual ?? s.numeroCanchaCalificacion ?? ''}</text><text x="1010" y="${y}" class="r b" text-anchor="end">${this.xml(this.cortar(texto, 24))}</text>`;
     }).join('');
     const watermark = logo ? `<image href="${logo}" x="270" y="800" width="540" height="540" opacity=".10"/>` : '', cabecera = logo ? `<circle cx="948" cy="126" r="66" fill="#fff" opacity=".16"/><image href="${logo}" x="898" y="76" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>` : '';
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#02102f"/><stop offset=".55" stop-color="#06447f"/><stop offset="1" stop-color="#02102f"/></linearGradient></defs><style>.a{font:700 42px Arial;fill:#75a6d5}.b{font:700 50px Arial;fill:#cda412}.m{font:700 20px Arial;fill:white}.h{font:700 18px Arial;fill:white}.r{font:500 18px Arial;fill:white}.general{font:700 16px Arial;fill:white}.foot{font:700 14px Arial;fill:white}</style><rect width="1080" height="1920" fill="url(#g)"/><text x="55" y="150" class="a">JUGADORES Y EQUIPOS</text><text x="55" y="215" class="b">SANCIONADOS</text><text x="55" y="285" class="m">${this.xml(data.campeonatoNombre)} · ${this.fecha()}</text>${cabecera}<path d="M45 405H1035L1005 440H75Z" fill="#cda412"/><text x="70" y="430" class="h">NOMBRE</text><text x="380" y="430" class="h">CLUB</text><text x="700" y="430" class="h" text-anchor="middle">NÚMERO</text><text x="1010" y="430" class="h" text-anchor="end">SANCIÓN</text>${watermark}${rows}<text x="55" y="1860" class="foot">COMISION TECNICA LMLT 2026-2028</text></svg>`;
   }
   private persona(s: Sancion): string { return s.jugador?.nombre ?? s.equipo?.nombre ?? 'Sanción general'; }
+  private equipoVisual(s: Sancion): string {
+    return s.jugador ? (s.equipoActual?.nombre ?? s.equipo?.nombre ?? '') : (s.equipo?.nombre ?? '');
+  }
+  private equipoReporte(s: Sancion): string {
+    const actual = this.equipoVisual(s);
+    return s.jugador && s.equipoTransferido && s.equipo?.nombre
+      ? `${actual} (origen: ${s.equipo.nombre})`
+      : actual || '—';
+  }
 
   /**
    * Las sanciones de equipo, barra o directivo son registros de historial que

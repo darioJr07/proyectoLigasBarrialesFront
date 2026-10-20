@@ -95,6 +95,9 @@ export class SancionesListComponent implements OnInit {
       if (s.equipo?.id && s.equipo?.nombre) {
         mapa.set(s.equipo.id, s.equipo.nombre);
       }
+      if (s.equipoActual?.id && s.equipoActual?.nombre) {
+        mapa.set(s.equipoActual.id, s.equipoActual.nombre);
+      }
     }
     return [...mapa.entries()]
       .map(([id, nombre]) => ({ id, nombre }))
@@ -104,14 +107,15 @@ export class SancionesListComponent implements OnInit {
   get sancionesFiltradas(): Sancion[] {
     const termino = this.busqueda.trim().toLowerCase();
     return this.sanciones.filter(s => {
-      if (this.filtroEquipoId && s.equipo?.id !== this.filtroEquipoId) return false;
+      if (this.filtroEquipoId && s.equipo?.id !== this.filtroEquipoId && s.equipoActual?.id !== this.filtroEquipoId) return false;
       if (this.filtroCumplimiento === 'fecha' && !s.fechaFinSuspension) return false;
       if (this.filtroCumplimiento === 'contador' && (s.fechaFinSuspension || (s.partidosSuspension ?? 0) <= 0)) return false;
       if (this.filtroCumplimiento === 'registro' && (s.fechaFinSuspension || (s.partidosSuspension ?? 0) > 0)) return false;
       if (termino) {
         const enJugador = s.jugador?.nombre?.toLowerCase().includes(termino);
         const enEquipo  = s.equipo?.nombre?.toLowerCase().includes(termino);
-        if (!enJugador && !enEquipo) return false;
+        const enEquipoActual = s.equipoActual?.nombre?.toLowerCase().includes(termino);
+        if (!enJugador && !enEquipo && !enEquipoActual) return false;
       }
       return true;
     });

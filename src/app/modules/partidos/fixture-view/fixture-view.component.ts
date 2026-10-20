@@ -9,6 +9,7 @@ import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { CategoriasService } from '../../categorias/categorias.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 import { Partido } from '../partido.model';
+import { FixtureExportData, FixtureExportService } from './fixture-export.service';
 
 interface EquipoFixture {
   id: number;
@@ -32,6 +33,7 @@ interface JornadaFixture {
 export class FixtureViewComponent implements OnInit {
   user$ = this.authService.currentUser$;
   loading = false;
+  exportandoImagen = false;
   errorMessage = '';
   miEquipoId: number | null = null;  // ID del equipo del dirigente autenticado
 
@@ -69,6 +71,7 @@ export class FixtureViewComponent implements OnInit {
     private campeonatosService: CampeonatosService,
     private categoriasService: CategoriasService,
     private route: ActivatedRoute,
+    private fixtureExportService: FixtureExportService,
   ) {}
 
   ngOnInit(): void {
@@ -293,6 +296,41 @@ export class FixtureViewComponent implements OnInit {
 
   imprimir(): void {
     window.print();
+  }
+
+  descargarPdf(): void {
+    if (!this.jornadas.length) return;
+    this.errorMessage = '';
+    try {
+      this.fixtureExportService.descargarPdf(this.datosExportacion());
+    } catch {
+      this.errorMessage = 'No se pudo generar el PDF del fixture.';
+    }
+  }
+
+  async descargarImagen(): Promise<void> {
+    if (!this.jornadas.length || this.exportandoImagen) return;
+    this.errorMessage = '';
+    this.exportandoImagen = true;
+    try {
+      await this.fixtureExportService.descargarImagen(this.datosExportacion());
+    } catch {
+      this.errorMessage = 'No se pudo generar la imagen del fixture.';
+    } finally {
+      this.exportandoImagen = false;
+    }
+  }
+
+  private datosExportacion(): FixtureExportData {
+    const liga = this.ligas.find(item => item.id === this.selectedLigaId);
+    return {
+      liga: liga?.nombre ?? 'Liga barrial',
+      campeonato: this.campeonatoNombre,
+      categoria: this.categoriaNombre,
+      etapa: this.selectedEtapa,
+      equipos: this.equipos,
+      jornadas: this.jornadas,
+    };
   }
 
   logout(): void {

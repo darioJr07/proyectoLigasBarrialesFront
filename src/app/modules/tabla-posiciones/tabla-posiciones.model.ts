@@ -14,6 +14,7 @@ export interface FilaPosicion {
   gc: number;     // Goles en Contra
   dg: number;     // Diferencia de Goles
   puntos: number; // Puntos totales
+  puntosBonificacion: number; // Puntos favorables con los que inició la etapa
   puntosDescuento: number; // Descuento disciplinario definitivo
   tieneSancion: boolean; // true si el equipo fue sancionado al menos 1 vez en la etapa
 }

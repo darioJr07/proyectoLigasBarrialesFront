@@ -65,6 +65,23 @@
                 <input type="text" class="form-select" formControlName="etapa" placeholder="Ej: Fase Regular, Cuartos de Final…" />
               </div>
 
+              <div class="form-item">
+                <label>Formato de la etapa *</label>
+                <select class="form-select" formControlName="formato">
+                  <option value="tabla_unica">Tabla única — todos contra todos</option>
+                  <option value="grupos_cruce_descansos">Dos grupos — cruce de equipos libres</option>
+                </select>
+                <p class="check-hint" *ngIf="esLiguilla">En cada jornada, los equipos libres de los grupos A y B se enfrentarán entre sí.</p>
+              </div>
+
+              <div class="form-item form-check-item">
+                <label class="check-label">
+                  <input type="checkbox" formControlName="marcarComoActual" />
+                  Mostrar esta etapa como la actual
+                </label>
+                <p class="check-hint">El portal público abrirá esta etapa primero; las anteriores permanecerán disponibles.</p>
+              </div>
+
               <div class="form-item form-check-item">
                 <label class="check-label">
                   <input type="checkbox" formControlName="conRevancha" />
@@ -119,7 +136,25 @@
                     </span>
                   </div>
                 </div>
-                <p *ngIf="equiposSeleccionados.length % 2 !== 0 && equiposSeleccionados.length > 0" class="warn-bye">
+                <div *ngIf="esLiguilla && equiposSeleccionadosDetalle.length" class="selection-preview">
+                  <div class="selection-preview-title">Asignación de grupos y puntos favorables</div>
+                  <div *ngFor="let equipo of equiposSeleccionadosDetalle" class="grupo-equipo-config">
+                    <div class="grupo-equipo-cabecera">
+                      <strong>{{ equipo.nombre }}</strong>
+                      <label><span>Grupo</span><select class="form-select" [(ngModel)]="grupoPorEquipo[equipo.id]" [ngModelOptions]="{standalone: true}"><option value="">Seleccionar</option><option value="A">Grupo A</option><option value="B">Grupo B</option></select></label>
+                    </div>
+                    <div class="bonificacion-principal">
+                      <label><span>Puntos iniciales <small>(opcional)</small></span><input class="form-select" type="number" min="0" placeholder="0" [(ngModel)]="puntosInicialesPorEquipo[equipo.id]" [ngModelOptions]="{standalone: true}"></label>
+                    </div>
+                    <div class="bonificacion-detalle" *ngIf="(puntosInicialesPorEquipo[equipo.id] || 0) > 0">
+                      <label><span>Etapa de origen</span><input class="form-select" type="text" placeholder="Ej: Primera etapa" [(ngModel)]="origenBonificacionPorEquipo[equipo.id]" [ngModelOptions]="{standalone: true}"></label>
+                      <label><span>Posición anterior</span><input class="form-select" type="number" min="1" placeholder="Ej: 1" [(ngModel)]="posicionOrigenPorEquipo[equipo.id]" [ngModelOptions]="{standalone: true}"></label>
+                      <label class="campo-motivo"><span>Motivo</span><input class="form-select" type="text" placeholder="Ej: Bonificación por clasificación" [(ngModel)]="motivoBonificacionPorEquipo[equipo.id]" [ngModelOptions]="{standalone: true}"></label>
+                    </div>
+                  </div>
+                  <p class="selection-hint">Grupo A: {{ grupoAIds.length }} · Grupo B: {{ grupoBIds.length }}. Deben tener la misma cantidad impar, mínimo 3.</p>
+                </div>
+                <p *ngIf="!esLiguilla && equiposSeleccionados.length % 2 !== 0 && equiposSeleccionados.length > 0" class="warn-bye">
                   ⚠️ Número impar de equipos. Se agregará un BYE automáticamente.
                 </p>
               </div>
@@ -127,7 +162,7 @@
               <button
                 type="submit"
                 class="btn-submit"
-                [disabled]="loading || fixtureForm.invalid || equiposSeleccionados.length < 2"
+                [disabled]="!puedeGenerar()"
               >
                 <span *ngIf="loading" class="spinner-sm"></span>
                 {{ loading ? 'Generando...' : '🗓️ Generar Fixture' }}

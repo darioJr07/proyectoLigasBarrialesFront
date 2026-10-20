@@ -4,6 +4,15 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { FilaPosicion } from './tabla-posiciones.model';
 
+export interface EtapaTablaDetalle {
+  id: number | null;
+  nombre: string;
+  orden: number;
+  formato: 'tabla_unica' | 'grupos_cruce_descansos';
+  estado: 'pendiente' | 'actual' | 'finalizada';
+  grupos: { id: number; nombre: string; orden: number }[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,12 +31,14 @@ export class TablaPosicionesService {
   calcular(
     campeonatoId: number,
     categoriaId: number,
-    etapa: string
+    etapa: string,
+    grupoId?: number,
   ): Observable<FilaPosicion[]> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('campeonatoId', campeonatoId.toString())
       .set('categoriaId', categoriaId.toString())
       .set('etapa', etapa);
+    if (grupoId !== undefined) params = params.set('grupoId', grupoId.toString());
     return this.http.get<FilaPosicion[]>(this.apiUrl, { params });
   }
 
@@ -39,5 +50,12 @@ export class TablaPosicionesService {
       .set('campeonatoId', campeonatoId.toString())
       .set('categoriaId', categoriaId.toString());
     return this.http.get<string[]>(`${this.partidosApiUrl}/etapas`, { params });
+  }
+
+  getEtapasDetalle(campeonatoId: number, categoriaId: number): Observable<EtapaTablaDetalle[]> {
+    const params = new HttpParams()
+      .set('campeonatoId', campeonatoId.toString())
+      .set('categoriaId', categoriaId.toString());
+    return this.http.get<EtapaTablaDetalle[]>(`${this.partidosApiUrl}/etapas/detalle`, { params });
   }
 }

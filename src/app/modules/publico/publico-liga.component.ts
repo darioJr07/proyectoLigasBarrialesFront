@@ -17,7 +17,8 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
   categoriaId: number | null = null;
   etapa = '';
   tabla: FilaPosicionPublica[] = [];
-  tablasGenerales: { categoria: CategoriaPublica; tabla: FilaPosicionPublica[] }[] = [];
+  tablasCategoria: { nombre: string; tabla: FilaPosicionPublica[] }[] = [];
+  tablasGenerales: { categoria: CategoriaPublica; tablas: { nombre: string; tabla: FilaPosicionPublica[] }[] }[] = [];
   goleadores: GoleadorPublico[] = [];
   goleadoresGenerales: { categoria: CategoriaPublica; goleadores: GoleadorPublico[] }[] = [];
   sanciones: SancionPublica[] = [];
@@ -115,18 +116,29 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
     if (!this.campeonatoSeleccionado || !categoriaId) return;
     this.cargandoResumen = true; this.error = '';
     const campeonatoId = this.campeonatoSeleccionado.id;
-    this.publicoService.listarEtapas(campeonatoId, categoriaId).subscribe({
+    this.publicoService.listarEtapasDetalle(campeonatoId, categoriaId).subscribe({
       next: etapas => {
-        this.etapa = etapas[0] ?? '';
+        const etapaActual = etapas.find(item => item.estado === 'actual') ?? etapas[etapas.length - 1];
+        this.etapa = etapaActual?.nombre ?? '';
         if (!this.etapa) { this.cargandoResumen = false; return; }
+        const tablas$ = etapaActual.grupos.length
+          ? forkJoin(etapaActual.grupos.map(grupo =>
+              this.publicoService.consultarPosiciones(campeonatoId, categoriaId, this.etapa, grupo.id).pipe(
+                map(tabla => ({ nombre: grupo.nombre, tabla })),
+              ),
+            ))
+          : this.publicoService.consultarPosiciones(campeonatoId, categoriaId, this.etapa).pipe(
+              map(tabla => [{ nombre: '', tabla }]),
+            );
         forkJoin({
-          tabla: this.publicoService.consultarPosiciones(campeonatoId, categoriaId, this.etapa),
+          tablas: tablas$,
           goleadores: this.publicoService.listarGoleadores(campeonatoId, categoriaId),
           sanciones: this.publicoService.listarSanciones(campeonatoId),
           jornadas: this.publicoService.listarJornadas(campeonatoId, categoriaId, this.etapa),
         }).subscribe({
           next: resumen => {
-            this.tabla = resumen.tabla;
+            this.tablasCategoria = resumen.tablas;
+            this.tabla = resumen.tablas[0]?.tabla ?? [];
             this.goleadores = resumen.goleadores.slice(0, 15);
             this.sanciones = this.ordenarSanciones(resumen.sanciones).slice(0, 6);
             this.obtenerUltimaJornadaConResultados(campeonatoId, categoriaId, this.etapa, resumen.jornadas).subscribe({
@@ -146,22 +158,34 @@ export class PublicoLigaComponent implements OnInit, OnDestroy {
     if (!this.campeonatoSeleccionado || !this.categorias.length) return;
     this.cargandoResumen = true; this.error = ''; this.tabla = []; this.goleadores = []; this.goleadoresGenerales = []; this.sanciones = []; this.resultados = []; this.resultadosGenerales = [];
     const campeonatoId = this.campeonatoSeleccionado.id;
-    forkJoin(this.categorias.map(categoria => this.publicoService.listarEtapas(campeonatoId, categoria.id))).subscribe({
+    forkJoin(this.categorias.map(categoria => this.publicoService.listarEtapasDetalle(campeonatoId, categoria.id))).subscribe({
       next: etapasPorCategoria => {
         const categoriasConEtapa = this.categorias
-          .map((categoria, indice) => ({ categoria, etapa: etapasPorCategoria[indice][0] }))
-          .filter((item): item is { categoria: CategoriaPublica; etapa: string } => Boolean(item.etapa));
+          .map((categoria, indice) => {
+            const etapas = etapasPorCategoria[indice];
+            return { categoria, etapa: etapas.find(item => item.estado === 'actual') ?? etapas[etapas.length - 1] };
+          })
+          .filter(item => Boolean(item.etapa));
         if (!categoriasConEtapa.length) { this.tablasGenerales = []; this.cargandoResumen = false; return; }
-        forkJoin(categoriasConEtapa.map(item => this.publicoService.consultarPosiciones(campeonatoId, item.categoria.id, item.etapa))).subscribe({
+        forkJoin(categoriasConEtapa.map(item => item.etapa.grupos.length
+          ? forkJoin(item.etapa.grupos.map(grupo =>
+              this.publicoService.consultarPosiciones(campeonatoId, item.categoria.id, item.etapa.nombre, grupo.id).pipe(
+                map(tabla => ({ nombre: grupo.nombre, tabla })),
+              ),
+            ))
+          : this.publicoService.consultarPosiciones(campeonatoId, item.categoria.id, item.etapa.nombre).pipe(
+              map(tabla => [{ nombre: '', tabla }]),
+            ),
+        )).subscribe({
           next: tablas => {
-            this.tablasGenerales = categoriasConEtapa.map((item, indice) => ({ categoria: item.categoria, tabla: tablas[indice] }));
+            this.tablasGenerales = categoriasConEtapa.map((item, indice) => ({ categoria: item.categoria, tablas: tablas[indice] }));
             forkJoin(categoriasConEtapa.map(item => this.publicoService.listarGoleadores(campeonatoId, item.categoria.id))).subscribe({
               next: goleadores => { this.goleadoresGenerales = categoriasConEtapa.map((item, indice) => ({ categoria: item.categoria, goleadores: goleadores[indice].slice(0, 15) })); },
             });
             this.publicoService.listarSanciones(campeonatoId).subscribe({ next: sanciones => this.sanciones = this.ordenarSanciones(sanciones).slice(0, 12) });
             forkJoin(categoriasConEtapa.map(item =>
-              this.publicoService.listarJornadas(campeonatoId, item.categoria.id, item.etapa).pipe(
-                switchMap(jornadas => this.obtenerUltimaJornadaConResultados(campeonatoId, item.categoria.id, item.etapa, jornadas)),
+              this.publicoService.listarJornadas(campeonatoId, item.categoria.id, item.etapa.nombre).pipe(
+                switchMap(jornadas => this.obtenerUltimaJornadaConResultados(campeonatoId, item.categoria.id, item.etapa.nombre, jornadas)),
                 map(resultado => resultado.partidos.map(partido => ({ ...partido, categoriaNombre: item.categoria.nombre }))),
               ),
             )).subscribe({

@@ -19,6 +19,11 @@ export interface ConfiguracionItem {
   providedIn: 'root',
 })
 export class ConfiguracionService {
+  private readonly modulosControlados = [
+    'modulo_jugadores',
+    'modulo_inscripciones',
+    'modulo_transferencias',
+  ];
   private readonly apiUrl = `${environment.apiUrl}/configuracion`;
   private loaded = false;
   private cache = new BehaviorSubject<Map<string, boolean>>(new Map());
@@ -38,7 +43,10 @@ export class ConfiguracionService {
       }),
       map(() => undefined),
       catchError(() => {
-        // Fail-open: si no se puede cargar, se asume todo habilitado
+        // Fail-closed: un error de red no debe abrir módulos restringidos.
+        const map = new Map<string, boolean>();
+        this.modulosControlados.forEach((clave) => map.set(clave, false));
+        this.cache.next(map);
         this.loaded = true;
         return of(undefined);
       })
@@ -52,11 +60,10 @@ export class ConfiguracionService {
 
   /**
    * Verifica si un módulo está habilitado (síncrono, usa caché)
-   * Por defecto devuelve true si no se ha cargado aún (fail-open)
+   * Solo devuelve true cuando la configuración fue cargada y está habilitada.
    */
   isHabilitado(clave: string): boolean {
-    const val = this.cache.value.get(clave);
-    return val !== false;
+    return this.loaded && this.cache.value.get(clave) === true;
   }
 
   /** Obtiene todos los items de configuración desde el backend */

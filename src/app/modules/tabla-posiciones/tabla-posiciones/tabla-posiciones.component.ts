@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { TablaPosicionesService } from '../tabla-posiciones.service';
+import { EtapaTablaDetalle, TablaPosicionesService } from '../tabla-posiciones.service';
 import { FilaPosicion } from '../tabla-posiciones.model';
 import { LigasService } from '../../../core/services/ligas.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
@@ -34,12 +34,14 @@ export class TablaPosicionesComponent implements OnInit {
 
   // Las etapas se cargan dinámicamente desde la BD al seleccionar campeonato+categoría
   etapasDisponibles: string[] = [];
+  etapasDetalle: EtapaTablaDetalle[] = [];
 
   // ─── Selecciones actuales ─────────────────────────────────────────────────
   selectedLigaId: number | null = null;
   selectedCampeonatoId: number | null = null;
   selectedCategoriaId: number | null = null;
   selectedEtapa = '';
+  selectedGrupoId: number | null = null;
 
   // Para mostrar el nombre del campeonato/categoría en el título de la tabla
   campeonatoNombre = '';
@@ -96,6 +98,7 @@ export class TablaPosicionesComponent implements OnInit {
     this.selectedCampeonatoId = null;
     this.selectedCategoriaId = null;
     this.selectedEtapa = '';
+    this.selectedGrupoId = null;
     const liga = this.ligas.find((item) => item.id === +this.selectedLigaId!);
     this.ligaNombre = liga?.nombre ?? '';
     if (this.selectedLigaId) this.loadCampeonatos(this.selectedLigaId);
@@ -114,6 +117,7 @@ export class TablaPosicionesComponent implements OnInit {
     this.tablaCargada = false;
     this.selectedCategoriaId = null;
     this.selectedEtapa = '';
+    this.selectedGrupoId = null;
     if (this.selectedCampeonatoId) {
       this.loadCategorias(this.selectedCampeonatoId);
       const camp = this.campeonatos.find((c) => c.id === +this.selectedCampeonatoId!);
@@ -130,6 +134,7 @@ export class TablaPosicionesComponent implements OnInit {
   onCategoriaChange(): void {
     this.tabla = [];
     this.selectedEtapa = '';
+    this.selectedGrupoId = null;
     this.etapasDisponibles = [];
     this.tablaCargada = false;
     const cat = this.categorias.find((c) => c.id === +this.selectedCategoriaId!);
@@ -140,16 +145,33 @@ export class TablaPosicionesComponent implements OnInit {
   }
 
   loadEtapas(campeonatoId: number, categoriaId: number): void {
-    this.tablaPosicionesService.getEtapas(campeonatoId, categoriaId).subscribe({
-      next: (etapas) => (this.etapasDisponibles = etapas),
+    this.tablaPosicionesService.getEtapasDetalle(campeonatoId, categoriaId).subscribe({
+      next: (etapas) => {
+        this.etapasDetalle = etapas;
+        this.etapasDisponibles = etapas.map(etapa => etapa.nombre);
+        const actual = etapas.find(etapa => etapa.estado === 'actual') ?? etapas[etapas.length - 1];
+        this.selectedEtapa = actual?.nombre ?? '';
+        this.selectedGrupoId = actual?.grupos[0]?.id ?? null;
+      },
     });
+  }
+
+  onEtapaChange(): void {
+    this.tabla = [];
+    this.tablaCargada = false;
+    this.selectedGrupoId = this.etapaSeleccionada?.grupos[0]?.id ?? null;
+  }
+
+  get etapaSeleccionada(): EtapaTablaDetalle | undefined {
+    return this.etapasDetalle.find(etapa => etapa.nombre === this.selectedEtapa);
   }
 
   // ─── Cargar tabla ─────────────────────────────────────────────────────────
 
   /** Se puede cargar cuando los 3 filtros están seleccionados */
   get puedeCargar(): boolean {
-    return !!(this.selectedCampeonatoId && this.selectedCategoriaId && this.selectedEtapa);
+    const requiereGrupo = Boolean(this.etapaSeleccionada?.grupos.length);
+    return !!(this.selectedCampeonatoId && this.selectedCategoriaId && this.selectedEtapa && (!requiereGrupo || this.selectedGrupoId));
   }
 
   cargarTabla(): void {
@@ -160,7 +182,7 @@ export class TablaPosicionesComponent implements OnInit {
     this.tablaCargada = true;
 
     this.tablaPosicionesService
-      .calcular(this.selectedCampeonatoId!, this.selectedCategoriaId!, this.selectedEtapa)
+      .calcular(this.selectedCampeonatoId!, this.selectedCategoriaId!, this.selectedEtapa, this.selectedGrupoId ?? undefined)
       .subscribe({
         next: (data) => {
           this.tabla = data;
@@ -214,7 +236,8 @@ export class TablaPosicionesComponent implements OnInit {
 
   /** Etiqueta legible para la etapa seleccionada */
   get etapaLabel(): string {
-    return this.selectedEtapa;
+    const grupo = this.etapaSeleccionada?.grupos.find(item => item.id === this.selectedGrupoId);
+    return grupo ? `${this.selectedEtapa} — ${grupo.nombre}` : this.selectedEtapa;
   }
 
   /** Clase CSS para destacar las primeras posiciones y la zona de descenso.

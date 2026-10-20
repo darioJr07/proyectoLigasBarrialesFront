@@ -45,6 +45,11 @@ export interface Sancion {
   numeroCanchaCalificacion?: number | null;
   equipoId?: number;
   equipo?: { id: number; nombre: string };
+  /** Equipo habilitado actual; equipo conserva el club donde se origino la sancion. */
+  equipoActualId?: number | null;
+  equipoActual?: { id: number; nombre: string; imagen?: string | null } | null;
+  equipoTransferido?: boolean;
+  numeroCanchaActual?: number | null;
   descripcion?: string;
   partidosSuspension: number;
   partidosCumplidos: number;

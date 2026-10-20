@@ -31,12 +31,107 @@
     <button class="principal" [disabled]="cargando" (click)="iniciar()">{{ cargando ? 'Validando…' : 'Iniciar sorteo' }}</button>
   </section>
 
+  <section *ngIf="!sesion && campeonatoId" class="panel historial">
+    <div class="historial-titulo">
+      <div>
+        <h2>Programaciones confirmadas</h2>
+        <p>Recupera una programación anterior para revisar los partidos o volver a descargarla.</p>
+      </div>
+      <button (click)="cargarProgramacionesConfirmadas()" [disabled]="historialCargando">{{ historialCargando ? 'Actualizando…' : 'Actualizar' }}</button>
+    </div>
+    <div class="form historial-filtros" *ngIf="programacionesConfirmadas.length">
+      <select [(ngModel)]="historialEtapa" (change)="cambiarEtapaHistorial()">
+        <option value="">Todas las etapas</option>
+        <option *ngFor="let item of etapasHistorial" [value]="item">{{ nombreEtapa(item) }}</option>
+      </select>
+      <select [(ngModel)]="historialJornada">
+        <option [ngValue]="null">Todas las jornadas</option>
+        <option *ngFor="let item of jornadasHistorial" [ngValue]="item">Jornada {{ item }}</option>
+      </select>
+    </div>
+    <p class="historial-vacio" *ngIf="historialCargando">Buscando programaciones confirmadas…</p>
+    <p class="historial-vacio" *ngIf="!historialCargando && !programacionesConfirmadasFiltradas.length">No existen programaciones confirmadas con los filtros seleccionados.</p>
+    <div class="historial-tabla" *ngIf="!historialCargando && programacionesConfirmadasFiltradas.length">
+      <div class="historial-fila historial-encabezado"><span>Etapa / jornada</span><span>Categoría</span><span>Partidos</span><span>Confirmada</span><span></span></div>
+      <div class="historial-fila" *ngFor="let item of programacionesConfirmadasFiltradas">
+        <span><strong>{{ nombreEtapa(item.etapa) }}</strong><small>Jornada {{ item.jornada }}</small></span>
+        <span>{{ nombreCategoria(item.categoriaId) }}</span>
+        <span>{{ item.totalPartidos }}</span>
+        <span>{{ item.confirmadoEn | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span><button class="ver-programacion" (click)="abrirProgramacionConfirmada(item)" [disabled]="programacionAbriendoId === item.id">{{ programacionAbriendoId === item.id ? 'Abriendo…' : 'Ver programación' }}</button></span>
+      </div>
+    </div>
+  </section>
+
   <section *ngIf="sesion" class="panel">
-    <h2>2. Bolillero — Jornada {{ sesion.jornada }}</h2><p>{{ pendientes.length }} partido(s) pendientes · {{ bolillasDisponibles }} bolilla(s) disponible(s)</p>
-    <div class="sorteo"><div><h3>Partido a sortear</h3><select [(ngModel)]="partidoSeleccionadoId"><option [ngValue]="null">Selecciona el partido mencionado</option><option *ngFor="let p of pendientes" [ngValue]="p.id">{{ p.categoria?.nombre || 'Categoría' }} · {{ p.equipoLocal?.nombre }} vs {{ p.equipoVisitante?.nombre }}{{ p.cancha ? ' · ' + p.cancha : '' }}</option></select><button class="principal" [disabled]="!partidoSeleccionadoId || sorteando" (click)="sacar()">{{ sorteando ? 'Sacando…' : '🎱 Sacar bolilla' }}</button></div><div class="resultado" *ngIf="ultimaBolilla"><strong>Bolilla {{ ultimaBolilla.numero }}</strong><span>{{ ultimaBolilla.fecha }} · {{ ultimaBolilla.hora }}</span><span>{{ ultimaBolilla.cancha }}</span></div></div>
+    <div class="sesion-titulo">
+      <div><h2>{{ sesion.estado === 'confirmada' ? 'Programación confirmada' : '2. Bolillero' }} — Jornada {{ sesion.jornada }}</h2><p *ngIf="sesion.estado === 'en_sorteo'">{{ pendientes.length }} partido(s) pendientes · {{ bolillasDisponibles }} bolilla(s) disponible(s)</p><p *ngIf="sesion.estado === 'confirmada'">Consulta de solo lectura · {{ sesion.totalPartidos }} partido(s)</p></div>
+      <button *ngIf="sesion.estado === 'confirmada'" class="btn-volver-historial" (click)="cerrarProgramacion()">← Volver a programaciones</button>
+    </div>
+    <div *ngIf="sesion.estado === 'en_sorteo'" class="sorteo"><div><h3>Partido a sortear</h3><select [(ngModel)]="partidoSeleccionadoId"><option [ngValue]="null">Selecciona el partido mencionado</option><option *ngFor="let p of pendientes" [ngValue]="p.id">{{ p.categoria?.nombre || 'Categoría' }} · {{ p.equipoLocal?.nombre }} vs {{ p.equipoVisitante?.nombre }}{{ p.cancha ? ' · ' + p.cancha : '' }}</option></select><button class="principal" [disabled]="!partidoSeleccionadoId || sorteando" (click)="sacar()">{{ sorteando ? 'Sacando…' : '🎱 Sacar bolilla' }}</button></div><div class="resultado" *ngIf="ultimaBolilla"><strong>Bolilla {{ ultimaBolilla.numero }}</strong><span>{{ ultimaBolilla.fecha }} · {{ ultimaBolilla.hora }}</span><span>{{ ultimaBolilla.cancha }}</span></div></div>
     <section *ngIf="sesion.estado === 'en_sorteo'" class="correccion"><h3>Horario solicitado o corrección manual</h3><p>Si un equipo tiene una solicitud reglamentaria, selecciona su partido y reserva una bolilla compatible antes de sortear los demás. También puedes liberar una asignación para corregirla. Las bolillas incompatibles con la cancha del partido no se muestran.</p><div class="form"><select [(ngModel)]="partidoSeleccionadoId"><option [ngValue]="null">Partido pendiente</option><option *ngFor="let p of pendientes" [ngValue]="p.id">{{ p.equipoLocal?.nombre }} vs {{ p.equipoVisitante?.nombre }}</option></select><select [(ngModel)]="bolillaManualId" [disabled]="!partidoSeleccionadoId"><option [ngValue]="null">Bolilla disponible</option><option *ngFor="let b of bolillasManualesDisponibles" [ngValue]="b.id">#{{ b.numero }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }}</option></select><button [disabled]="!partidoSeleccionadoId || !bolillaManualId" (click)="asignarManual()">Reservar horario solicitado</button></div></section>
-    <h3>Asignaciones</h3><ul><li *ngFor="let b of sesion.bolillas"><span>Bolilla {{ b.numero }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }}</span><strong *ngIf="b.partido">{{ b.partido.equipoLocal?.nombre }} vs {{ b.partido.equipoVisitante?.nombre }}{{ b.asignacionManual ? ' · Reservado manualmente' : '' }}</strong><em *ngIf="!b.partido && b.estado === 'disponible'">Disponible</em><em *ngIf="!b.partido && b.estado === 'no_utilizada'">No utilizada</em><button *ngIf="b.partido && sesion.estado === 'en_sorteo'" class="liberar" (click)="liberar(b)">Liberar</button></li></ul>
+    <h3>Asignaciones</h3><ul><li *ngFor="let b of sesion.bolillas"><span>Bolilla {{ b.numero }} · {{ b.fecha }} {{ b.hora }} · {{ b.cancha }}</span><strong *ngIf="b.partido">{{ b.partido.equipoLocal?.nombre }} vs {{ b.partido.equipoVisitante?.nombre }}{{ b.asignacionManual ? ' · Reservado manualmente' : '' }}<small *ngIf="vocalias.length" class="vocal-resumen">Vocal: {{ textoVocal(vocaliaDelPartido(b.partidoId)) }}</small></strong><em *ngIf="!b.partido && b.estado === 'disponible'">Disponible</em><em *ngIf="!b.partido && b.estado === 'no_utilizada'">No utilizada</em><button *ngIf="b.partido && sesion.estado === 'en_sorteo'" class="liberar" (click)="liberar(b)">Liberar</button></li></ul>
+
+    <section *ngIf="sesion.estado === 'confirmada'" class="vocalias-panel">
+      <div class="vocalias-cabecera">
+        <div><h3>Vocalías de la programación</h3><p>En cada día, los partidos se emparejan cuando la cantidad es par. La rotación circular se aplica únicamente a los tres últimos cuando la cantidad es impar.</p></div>
+        <div class="vocalias-estado-acciones"><span class="estado-vocalias" [class.confirmado]="vocaliasEstado === 'confirmada'">{{ vocaliasEstado === 'confirmada' ? '✓ Confirmadas' : vocaliasEstado === 'en_preparacion' ? 'En preparación' : 'Sin asignar' }}</span><button *ngIf="vocaliasEstado === 'en_preparacion'" class="regenerar-vocalias" (click)="reiniciarVocalias()">Regenerar propuesta</button></div>
+      </div>
+      <p class="historial-vacio" *ngIf="vocaliasCargando">Cargando vocalías…</p>
+      <div *ngIf="!vocaliasCargando && !vocalias.length" class="vocalias-inicio">
+        <p>Prepara la propuesta para realizar el sorteo presencial de bolillas Sí/No.</p>
+        <button class="principal" (click)="prepararVocalias()">Preparar vocalías</button>
+      </div>
+      <div class="vocalia-card" *ngFor="let vocalia of vocalias">
+        <div class="vocalia-partido">
+          <span>{{ vocalia.partido.fechaPartido | date:'dd/MM/yyyy' }} · {{ vocalia.partido.horaPartido }} · {{ vocalia.partido.cancha }}</span>
+          <strong>{{ textoPartido(vocalia.partido) }}</strong>
+          <small *ngIf="vocalia.reglaAsignacion === 'cierre_tres'">Rotación de los tres últimos partidos</small>
+        </div>
+
+        <div class="vocalia-confirmada" *ngIf="vocalia.estado === 'confirmada'">
+          <span>Vocal confirmado</span><strong>{{ textoVocal(vocalia) }}</strong>
+          <small *ngIf="vocalia.resultadoBolilla">Bolilla {{ vocalia.resultadoBolilla === 'si' ? 'SÍ' : 'NO' }} · Extrajo {{ vocalia.equipoExtractor?.nombre }}</small>
+        </div>
+
+        <div class="vocalia-config" *ngIf="vocalia.estado !== 'confirmada'">
+          <div *ngIf="vocalia.estado === 'asignada'" class="vocalia-resultado">
+            <span>Vocal asignado</span><strong>{{ textoVocal(vocalia) }}</strong>
+            <small *ngIf="vocalia.resultadoBolilla">Resultado: {{ vocalia.resultadoBolilla === 'si' ? 'SÍ' : 'NO' }} · Extrajo {{ vocalia.equipoExtractor?.nombre }}</small>
+            <button class="liberar" [disabled]="vocaliaProcesandoId === vocalia.id" (click)="liberarVocalia(vocalia)">Liberar para corregir</button>
+          </div>
+
+          <ng-container *ngIf="vocalia.estado === 'pendiente'">
+            <label>Forma de asignación<select [(ngModel)]="vocalia.tipoAsignacion"><option value="sorteo">Sorteo Sí/No</option><option value="manual_equipo">Equipo manual</option><option value="directivo">Directivo</option></select></label>
+
+            <ng-container *ngIf="vocalia.tipoAsignacion !== 'directivo'">
+              <label>Partido que proporciona el vocal<select [(ngModel)]="vocalia.partidoOrigenId"><option [ngValue]="null">Seleccionar partido</option><option *ngFor="let origen of partidosOrigen(vocalia)" [ngValue]="origen.id">{{ textoPartido(origen) }}</option></select></label>
+            </ng-container>
+
+            <ng-container *ngIf="vocalia.tipoAsignacion === 'sorteo'">
+              <label>Equipo que extrae la bolilla<select [(ngModel)]="extractoresVocalia[vocalia.id]" [disabled]="!vocalia.partidoOrigenId"><option [ngValue]="null">Seleccionar equipo</option><option *ngFor="let equipo of candidatosVocalia(vocalia)" [ngValue]="equipo.id">{{ equipo.nombre }}</option></select></label>
+              <p class="regla-si-no" *ngIf="extractoresVocalia[vocalia.id] as extractorId"><strong>SÍ:</strong> {{ nombreEquipo(extractorId) }} · <strong>NO:</strong> {{ nombreEquipo(candidatosVocalia(vocalia)[0]?.id === extractorId ? candidatosVocalia(vocalia)[1]?.id : candidatosVocalia(vocalia)[0]?.id) }}</p>
+              <button class="principal" [disabled]="!vocalia.partidoOrigenId || !extractoresVocalia[vocalia.id] || vocaliaProcesandoId === vocalia.id" (click)="sortearVocalia(vocalia)">{{ vocaliaProcesandoId === vocalia.id ? 'Extrayendo…' : '🎱 Extraer Sí/No' }}</button>
+            </ng-container>
+
+            <ng-container *ngIf="vocalia.tipoAsignacion === 'manual_equipo'">
+              <label>Equipo responsable<select [(ngModel)]="vocalia.equipoVocalId" [disabled]="!vocalia.partidoOrigenId"><option [ngValue]="null">Seleccionar equipo</option><option *ngFor="let equipo of candidatosVocalia(vocalia)" [ngValue]="equipo.id">{{ equipo.nombre }}</option></select></label>
+              <button class="principal" [disabled]="!vocalia.partidoOrigenId || !vocalia.equipoVocalId || vocaliaProcesandoId === vocalia.id" (click)="asignarVocaliaManual(vocalia)">Asignar equipo</button>
+            </ng-container>
+
+            <ng-container *ngIf="vocalia.tipoAsignacion === 'directivo'">
+              <label>Directivo responsable<input [(ngModel)]="vocalia.directivoNombre" maxlength="200" placeholder="Nombre del directivo o comisión"></label>
+              <button class="principal" [disabled]="!vocalia.directivoNombre?.trim() || vocaliaProcesandoId === vocalia.id" (click)="asignarDirectivo(vocalia)">Asignar directivo</button>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+      <div class="confirmar-vocalias" *ngIf="vocalias.length && vocaliasEstado !== 'confirmada'">
+        <span>{{ vocaliasPendientesCantidad }} vocalía(s) pendiente(s)</span>
+        <button class="principal" [disabled]="vocaliasCargando || vocaliasPendientesCantidad > 0" (click)="confirmarVocalias()">Confirmar vocalías</button>
+      </div>
+    </section>
     <div class="exportar"><span>Descargar programación{{ sesion.estado === 'en_sorteo' ? ' (borrador)' : '' }}</span><button (click)="exportarPdf()">PDF</button><button (click)="exportarExcel()">Excel</button><button (click)="exportarImagenes()">Imágenes por fecha</button></div>
-    <div class="acciones-finales"><button class="principal" [disabled]="pendientes.length > 0 || confirmando || sesion.estado === 'confirmada'" (click)="confirmar()">{{ sesion.estado === 'confirmada' ? '✓ Programación confirmada' : confirmando ? 'Confirmando…' : 'Confirmar programación' }}</button><button *ngIf="sesion.estado === 'en_sorteo'" class="cancelar" (click)="cancelar()">Cancelar sorteo</button></div>
+    <div class="acciones-finales" *ngIf="sesion.estado === 'en_sorteo'"><button class="principal" [disabled]="pendientes.length > 0 || confirmando" (click)="confirmar()">{{ confirmando ? 'Confirmando…' : 'Confirmar programación' }}</button><button class="cancelar" (click)="cancelar()">Cancelar sorteo</button></div>
   </section>
 </main>

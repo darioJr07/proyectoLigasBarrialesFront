@@ -94,6 +94,10 @@ export class ActaImprimirComponent implements OnInit {
       next: (res) => {
         if (res.informe?.vocalNombre) {
           this.vocalEditable = res.informe.vocalNombre;
+        } else if (res.vocaliaProgramada) {
+          this.vocalEditable = res.vocaliaProgramada.tipoAsignacion === 'directivo'
+            ? res.vocaliaProgramada.directivoNombre ?? ''
+            : res.vocaliaProgramada.equipoVocal?.nombre ?? '';
         }
         // Si no hay vocal guardado, se deja vacío para que el usuario lo escriba manualmente
       },

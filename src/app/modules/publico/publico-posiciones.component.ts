@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CategoriaPublica, FilaPosicionPublica, PublicoService } from './publico.service';
+import { forkJoin } from 'rxjs';
+import { CategoriaPublica, EtapaPublica, FilaPosicionPublica, PublicoService } from './publico.service';
 
 @Component({
   selector: 'app-publico-posiciones',
@@ -11,10 +12,11 @@ export class PublicoPosicionesComponent implements OnInit {
   ligaId = 0;
   campeonatoId = 0;
   categorias: CategoriaPublica[] = [];
-  etapas: string[] = [];
+  etapas: EtapaPublica[] = [];
   categoriaId = 0;
   etapa = '';
   tabla: FilaPosicionPublica[] = [];
+  tablasGrupos: { grupoId: number; nombre: string; tabla: FilaPosicionPublica[] }[] = [];
   cargando = true;
   error = '';
 
@@ -40,14 +42,37 @@ export class PublicoPosicionesComponent implements OnInit {
 
   private cargarEtapas(): void {
     this.cargando = true;
-    this.publicoService.listarEtapas(this.campeonatoId, this.categoriaId).subscribe({
-      next: etapas => { this.etapas = etapas; this.etapa = etapas[0] ?? ''; this.etapa ? this.cargarTabla() : this.cargando = false; },
+    this.publicoService.listarEtapasDetalle(this.campeonatoId, this.categoriaId).subscribe({
+      next: etapas => {
+        this.etapas = etapas;
+        this.etapa = (etapas.find(item => item.estado === 'actual') ?? etapas[etapas.length - 1])?.nombre ?? '';
+        this.etapa ? this.cargarTabla() : this.cargando = false;
+      },
       error: () => { this.error = 'No se pudieron cargar las etapas.'; this.cargando = false; },
     });
   }
 
   private cargarTabla(): void {
     this.cargando = true;
+    this.tabla = [];
+    this.tablasGrupos = [];
+    const etapaSeleccionada = this.etapas.find(item => item.nombre === this.etapa);
+    if (etapaSeleccionada?.grupos.length) {
+      forkJoin(etapaSeleccionada.grupos.map(grupo =>
+        this.publicoService.consultarPosiciones(this.campeonatoId, this.categoriaId, this.etapa, grupo.id),
+      )).subscribe({
+        next: tablas => {
+          this.tablasGrupos = etapaSeleccionada.grupos.map((grupo, indice) => ({
+            grupoId: grupo.id,
+            nombre: grupo.nombre,
+            tabla: tablas[indice],
+          }));
+          this.cargando = false;
+        },
+        error: () => { this.error = 'No se pudieron cargar las tablas de posiciones.'; this.cargando = false; },
+      });
+      return;
+    }
     this.publicoService.consultarPosiciones(this.campeonatoId, this.categoriaId, this.etapa).subscribe({
       next: tabla => { this.tabla = tabla; this.cargando = false; },
       error: () => { this.error = 'No se pudo cargar la tabla de posiciones.'; this.cargando = false; },

@@ -6,7 +6,7 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ConfiguracionService } from '../services/configuracion.service';
 
@@ -44,12 +44,8 @@ export class ModuloGuard implements CanActivate {
     const modulo = route.data['modulo'] as string;
     if (!modulo) return true;
 
-    // Si ya tenemos la config en caché, verificar directamente
-    if (this.configuracionService.isLoaded()) {
-      return this.checkModulo(modulo);
-    }
-
-    // Si no está cargada aún, cargarla primero
+    // Consultar siempre el estado actual al entrar al módulo. Así una sesión
+    // iniciada antes del cierre no depende de una configuración obsoleta.
     return this.configuracionService.cargar().pipe(
       map(() => this.checkModulo(modulo))
     );

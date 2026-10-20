@@ -21,7 +21,16 @@ export interface CampeonatoPublico {
 export interface CategoriaPublica { id: number; nombre: string; orden: number; }
 export interface FilaPosicionPublica {
   posicion: number; equipoId: number; equipoNombre: string; equipoImagen?: string | null;
-  pj: number; pg: number; pe: number; pp: number; gf: number; gc: number; dg: number; puntos: number; puntosDescuento: number; tieneSancion: boolean;
+  pj: number; pg: number; pe: number; pp: number; gf: number; gc: number; dg: number; puntos: number; puntosBonificacion: number; puntosDescuento: number; tieneSancion: boolean;
+}
+export interface GrupoEtapaPublica { id: number; nombre: string; orden: number; }
+export interface EtapaPublica {
+  id: number | null;
+  nombre: string;
+  orden: number;
+  formato: 'tabla_unica' | 'grupos_cruce_descansos';
+  estado: 'pendiente' | 'actual' | 'finalizada';
+  grupos: GrupoEtapaPublica[];
 }
 export interface PartidoPublico {
   id: number; jornada: number; fechaPartido?: string | null; horaPartido?: string | null; cancha?: string | null;
@@ -35,6 +44,7 @@ export interface SancionPublica {
   id: number; destino: 'jugador' | 'equipo' | 'barra' | 'directivo'; sancionado: string;
   jugadorImagen?: string | null;
   equipo: { id: number; nombre: string; imagen?: string | null } | null; tipo: string;
+  equipoOrigen?: { id: number; nombre: string; imagen?: string | null } | null;
   puntosDescuentoAplicado: number;
   partidosPendientes?: number | null; fechaFinSuspension?: string | null;
   contadorActual?: number | null; contadorLimite?: number | null;
@@ -67,8 +77,14 @@ export class PublicoService {
     return this.http.get<string[]>(`${this.apiUrl}/partidos/etapas`, { params: { campeonatoId, categoriaId } });
   }
 
-  consultarPosiciones(campeonatoId: number, categoriaId: number, etapa: string): Observable<FilaPosicionPublica[]> {
-    return this.http.get<FilaPosicionPublica[]>(`${this.apiUrl}/posiciones`, { params: { campeonatoId, categoriaId, etapa } });
+  listarEtapasDetalle(campeonatoId: number, categoriaId: number): Observable<EtapaPublica[]> {
+    return this.http.get<EtapaPublica[]>(`${this.apiUrl}/partidos/etapas-detalle`, { params: { campeonatoId, categoriaId } });
+  }
+
+  consultarPosiciones(campeonatoId: number, categoriaId: number, etapa: string, grupoId?: number): Observable<FilaPosicionPublica[]> {
+    const params: Record<string, string | number> = { campeonatoId, categoriaId, etapa };
+    if (grupoId !== undefined) params['grupoId'] = grupoId;
+    return this.http.get<FilaPosicionPublica[]>(`${this.apiUrl}/posiciones`, { params });
   }
 
   listarJornadas(campeonatoId: number, categoriaId: number, etapa: string): Observable<number[]> {

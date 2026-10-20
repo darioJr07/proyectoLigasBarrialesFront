@@ -66,10 +66,18 @@
         <select
           class="filter-select"
           [(ngModel)]="selectedEtapa"
+          (change)="onEtapaChange()"
           [disabled]="!selectedCategoriaId"
         >
           <option value="">— Seleccionar etapa —</option>
           <option *ngFor="let e of etapasDisponibles" [value]="e">{{ e }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="etapaSeleccionada?.grupos?.length">
+        <label class="filter-label">Grupo</label>
+        <select class="filter-select" [(ngModel)]="selectedGrupoId">
+          <option *ngFor="let grupo of etapaSeleccionada?.grupos" [ngValue]="grupo.id">{{ grupo.nombre }}</option>
         </select>
       </div>
 
@@ -122,6 +130,7 @@
             <th class="col-stat" title="Goles a Favor">GF</th>
             <th class="col-stat" title="Goles en Contra">GC</th>
             <th class="col-stat" title="Diferencia de Goles">DG</th>
+            <th class="col-stat" title="Puntos favorables con los que inició la etapa">Bonus</th>
             <th class="col-descuento" title="Descuento disciplinario aplicado por el Tribunal">Desc.</th>
             <th class="col-pts" title="Puntos">Pts</th>
           </tr>
@@ -150,6 +159,7 @@
             <td class="col-stat" [class]="getDgClass(fila.dg)">
               {{ fila.dg > 0 ? '+' + fila.dg : fila.dg }}
             </td>
+            <td class="col-stat">{{ fila.puntosBonificacion > 0 ? '+' + fila.puntosBonificacion : '—' }}</td>
             <td class="col-descuento" [class.con-descuento]="fila.puntosDescuento > 0">
               {{ fila.puntosDescuento > 0 ? '-' + fila.puntosDescuento : '—' }}
             </td>

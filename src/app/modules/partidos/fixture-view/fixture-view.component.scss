@@ -65,7 +65,14 @@
     &:hover { background: #e9ecef; }
   }
 
-  .btn-print {
+  .export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
+  }
+
+  .btn-export {
     background: white;
     border: 1px solid #667eea;
     color: #667eea;
@@ -75,6 +82,11 @@
     cursor: pointer;
     transition: all 0.2s;
     &:hover { background: #667eea; color: white; }
+    &:disabled { opacity: 0.6; cursor: wait; }
+    &.btn-pdf { border-color: #dc3545; color: #dc3545; }
+    &.btn-pdf:hover { background: #dc3545; color: white; }
+    &.btn-image { border-color: #198754; color: #198754; }
+    &.btn-image:hover:not(:disabled) { background: #198754; color: white; }
   }
 }
 
@@ -399,7 +411,7 @@
 @media print {
   .page-header,
   .page-title .btn-back,
-  .page-title .btn-print,
+  .page-title .export-actions,
   app-main-nav,
   .filters-section {
     display: none !important;
@@ -423,6 +435,19 @@
   .jornadas-table { min-width: unset; flex-wrap: wrap; }
 
   .jornada-col { min-width: 120px; page-break-inside: avoid; }
+}
+
+@media (max-width: 760px) {
+  .page-title {
+    align-items: flex-start;
+    gap: 1rem;
+    flex-direction: column;
+
+    .export-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
 }
 
 // --- Opción A: wrap de columnas para scroll vertical --- /

@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CategoriaPublica, PartidoPublico, PublicoService } from './publico.service';
+import { CategoriaPublica, EtapaPublica, PartidoPublico, PublicoService } from './publico.service';
 
 @Component({ selector: 'app-publico-resultados', templateUrl: './publico-resultados.component.html', styleUrls: ['./publico.component.scss'] })
 export class PublicoResultadosComponent implements OnInit {
-  ligaId = 0; campeonatoId = 0; categorias: CategoriaPublica[] = []; etapas: string[] = []; jornadas: number[] = [];
+  ligaId = 0; campeonatoId = 0; categorias: CategoriaPublica[] = []; etapas: EtapaPublica[] = []; jornadas: number[] = [];
   categoriaId = 0; etapa = ''; jornada = 0; partidos: PartidoPublico[] = []; cargando = true; error = '';
 
   constructor(private readonly route: ActivatedRoute, private readonly publicoService: PublicoService) {}
@@ -25,8 +25,12 @@ export class PublicoResultadosComponent implements OnInit {
 
   private cargarEtapas(): void {
     this.cargando = true;
-    this.publicoService.listarEtapas(this.campeonatoId, this.categoriaId).subscribe({
-      next: etapas => { this.etapas = etapas; this.etapa = etapas[0] ?? ''; this.etapa ? this.cargarJornadas() : this.cargando = false; },
+    this.publicoService.listarEtapasDetalle(this.campeonatoId, this.categoriaId).subscribe({
+      next: etapas => {
+        this.etapas = etapas;
+        this.etapa = (etapas.find(item => item.estado === 'actual') ?? etapas[etapas.length - 1])?.nombre ?? '';
+        this.etapa ? this.cargarJornadas() : this.cargando = false;
+      },
       error: () => this.fallar('No se pudieron cargar las etapas.'),
     });
   }

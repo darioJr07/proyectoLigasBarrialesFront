@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { PartidosService } from '../partidos.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
@@ -15,7 +15,7 @@ import { GenerarFixtureResponse } from '../partido.model';
 @Component({
   selector: 'app-generar-fixture',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MainNavComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, MainNavComponent],
   templateUrl: './generar-fixture.component.html',
   styleUrls: ['./generar-fixture.component.scss'],
 })
@@ -31,6 +31,11 @@ export class GenerarFixtureComponent implements OnInit {
   categorias: any[] = [];
   equiposDisponibles: any[] = [];
   equiposSeleccionados: number[] = [];
+  grupoPorEquipo: Record<number, '' | 'A' | 'B'> = {};
+  puntosInicialesPorEquipo: Record<number, number> = {};
+  motivoBonificacionPorEquipo: Record<number, string> = {};
+  origenBonificacionPorEquipo: Record<number, string> = {};
+  posicionOrigenPorEquipo: Record<number, number | null> = {};
 
   fixtureGenerado: GenerarFixtureResponse | null = null;
   jornadaActiva = 1;
@@ -50,8 +55,10 @@ export class GenerarFixtureComponent implements OnInit {
       ligaId: ['', Validators.required],
       campeonatoId: ['', Validators.required],
       categoriaId: ['', Validators.required],
-      etapa: ['Fase Regular', [Validators.required, Validators.maxLength(100)]],
+      etapa: ['Fase Regular', [Validators.required, Validators.maxLength(50)]],
       conRevancha: [false],
+      formato: ['tabla_unica', Validators.required],
+      marcarComoActual: [true],
     });
   }
 
@@ -68,6 +75,7 @@ export class GenerarFixtureComponent implements OnInit {
       this.categorias = [];
       this.equiposDisponibles = [];
       this.equiposSeleccionados = [];
+      this.reiniciarConfiguracionGrupos();
       this.fixtureForm.patchValue({ campeonatoId: '', categoriaId: '' });
       if (ligaId) this.loadCampeonatos(ligaId);
     });
@@ -76,6 +84,7 @@ export class GenerarFixtureComponent implements OnInit {
       this.categorias = [];
       this.equiposDisponibles = [];
       this.equiposSeleccionados = [];
+      this.reiniciarConfiguracionGrupos();
       this.fixtureForm.patchValue({ categoriaId: '' });
       if (campeonatoId) this.loadCategorias(campeonatoId);
     });
@@ -83,6 +92,7 @@ export class GenerarFixtureComponent implements OnInit {
     this.fixtureForm.get('categoriaId')?.valueChanges.subscribe((categoriaId) => {
       this.equiposDisponibles = [];
       this.equiposSeleccionados = [];
+      this.reiniciarConfiguracionGrupos();
       if (categoriaId) this.loadEquipasPorCategoria(categoriaId);
     });
   }
@@ -137,8 +147,14 @@ export class GenerarFixtureComponent implements OnInit {
     const idx = this.equiposSeleccionados.indexOf(equipoId);
     if (idx === -1) {
       this.equiposSeleccionados.push(equipoId);
+      this.grupoPorEquipo[equipoId] = '';
     } else {
       this.equiposSeleccionados.splice(idx, 1);
+      delete this.grupoPorEquipo[equipoId];
+      delete this.puntosInicialesPorEquipo[equipoId];
+      delete this.motivoBonificacionPorEquipo[equipoId];
+      delete this.origenBonificacionPorEquipo[equipoId];
+      delete this.posicionOrigenPorEquipo[equipoId];
     }
   }
 
@@ -159,10 +175,20 @@ export class GenerarFixtureComponent implements OnInit {
 
   seleccionarTodos(): void {
     this.equiposSeleccionados = this.equiposDisponibles.map((e) => e.id);
+    this.equiposSeleccionados.forEach(id => this.grupoPorEquipo[id] ??= '');
   }
 
   deseleccionarTodos(): void {
     this.equiposSeleccionados = [];
+    this.reiniciarConfiguracionGrupos();
+  }
+
+  private reiniciarConfiguracionGrupos(): void {
+    this.grupoPorEquipo = {};
+    this.puntosInicialesPorEquipo = {};
+    this.motivoBonificacionPorEquipo = {};
+    this.origenBonificacionPorEquipo = {};
+    this.posicionOrigenPorEquipo = {};
   }
 
   get jornadasFixture(): number[] {
@@ -180,9 +206,27 @@ export class GenerarFixtureComponent implements OnInit {
     return equipo?.nombre ?? `Equipo #${id}`;
   }
 
+  get esLiguilla(): boolean {
+    return this.fixtureForm.get('formato')?.value === 'grupos_cruce_descansos';
+  }
+
+  get grupoAIds(): number[] { return this.equiposSeleccionados.filter(id => this.grupoPorEquipo[id] === 'A'); }
+  get grupoBIds(): number[] { return this.equiposSeleccionados.filter(id => this.grupoPorEquipo[id] === 'B'); }
+
+  puedeGenerar(): boolean {
+    if (this.loading || this.fixtureForm.invalid || this.equiposSeleccionados.length < 2) return false;
+    if (!this.esLiguilla) return true;
+    return this.grupoAIds.length + this.grupoBIds.length === this.equiposSeleccionados.length
+      && this.grupoAIds.length >= 3
+      && this.grupoAIds.length === this.grupoBIds.length
+      && this.grupoAIds.length % 2 !== 0;
+  }
+
   onSubmit(): void {
-    if (this.fixtureForm.invalid || this.equiposSeleccionados.length < 2) {
-      this.errorMessage = 'Debes seleccionar al menos 2 equipos y completar todos los campos.';
+    if (!this.puedeGenerar()) {
+      this.errorMessage = this.esLiguilla
+        ? 'Asigna todos los equipos en dos grupos iguales, con una cantidad impar mínima de 3 por grupo.'
+        : 'Debes seleccionar al menos 2 equipos y completar todos los campos.';
       return;
     }
 
@@ -192,14 +236,31 @@ export class GenerarFixtureComponent implements OnInit {
     this.fixtureGenerado = null;
 
     const formValue = this.fixtureForm.getRawValue();
-    const equipoIdsOrdenados = [...this.equiposSeleccionados];
+    const crearGrupo = (nombre: string, ids: number[]) => ({
+      nombre,
+      equipos: ids.map(equipoId => {
+        const puntos = Number(this.puntosInicialesPorEquipo[equipoId] ?? 0);
+        return {
+          equipoId,
+          bonificaciones: puntos > 0 ? [{
+            puntos,
+            etapaOrigen: this.origenBonificacionPorEquipo[equipoId]?.trim() || undefined,
+            posicionOrigen: this.posicionOrigenPorEquipo[equipoId] || undefined,
+            motivo: this.motivoBonificacionPorEquipo[equipoId]?.trim() || 'Puntos favorables por clasificación',
+          }] : [],
+        };
+      }),
+    });
     this.partidosService
       .generarFixture({
         campeonatoId: +formValue.campeonatoId,
         categoriaId: +formValue.categoriaId,
-        equipoIds: equipoIdsOrdenados,
+        equipoIds: this.esLiguilla ? undefined : [...this.equiposSeleccionados],
         etapa: formValue.etapa,
         conRevancha: formValue.conRevancha,
+        formato: formValue.formato,
+        marcarComoActual: formValue.marcarComoActual,
+        grupos: this.esLiguilla ? [crearGrupo('Grupo A', this.grupoAIds), crearGrupo('Grupo B', this.grupoBIds)] : undefined,
       })
       .subscribe({
         next: (res) => {

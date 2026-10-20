@@ -396,3 +396,77 @@
     &:hover { background: #667eea; color: white; }
   }
 }
+.grupo-equipo-config {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #dbe3ff;
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+}
+
+.grupo-equipo-cabecera {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.grupo-equipo-cabecera strong {
+  font-size: 0.86rem;
+  color: #26324a;
+  padding-bottom: 0.55rem;
+  overflow-wrap: anywhere;
+}
+
+.grupo-equipo-config label {
+  display: block;
+  min-width: 0;
+}
+
+.grupo-equipo-config label > span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #596579;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.grupo-equipo-config label small {
+  font-weight: 400;
+  color: #8490a3;
+}
+
+.grupo-equipo-config .form-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.bonificacion-principal {
+  margin-top: 0.65rem;
+}
+
+.bonificacion-detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed #d8def2;
+}
+
+.bonificacion-detalle .campo-motivo {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  .grupo-equipo-cabecera,
+  .bonificacion-detalle {
+    grid-template-columns: 1fr;
+  }
+
+  .bonificacion-detalle .campo-motivo {
+    grid-column: auto;
+  }
+}

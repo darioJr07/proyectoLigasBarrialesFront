@@ -131,6 +131,13 @@ export interface InformePartidoResponse {
   partido: any;
   informe: ActaInformePartido | null;
   incidencias: ActaIncidencia[];
+  vocaliaProgramada?: {
+    tipoAsignacion: 'sorteo' | 'manual_equipo' | 'directivo';
+    equipoVocalId?: number | null;
+    equipoVocal?: any | null;
+    directivoNombre?: string | null;
+    estado: 'confirmada';
+  } | null;
 }
 
 /** Fila editable de incidencia en el formulario del vocal */

@@ -246,8 +246,15 @@ export class ActaPartidoComponent implements OnInit {
           this.observacionesVocal   = res.informe.observacionesVocal  ?? '';
           this.nombreArbitro        = res.informe.nombreArbitro        ?? '';
           this.observacionesArbitro = res.informe.observacionesArbitro ?? '';
-          this.vocalNombre          = res.informe.vocalNombre          ?? '';
-          this.vocalEquipoId        = res.informe.vocalEquipoId        ?? null;
+        }
+        if (res.informe?.vocalNombre) {
+          this.vocalNombre = res.informe.vocalNombre;
+          this.vocalEquipoId = res.informe.vocalEquipoId ?? null;
+        } else if (res.vocaliaProgramada) {
+          this.vocalNombre = res.vocaliaProgramada.tipoAsignacion === 'directivo'
+            ? res.vocaliaProgramada.directivoNombre ?? ''
+            : res.vocaliaProgramada.equipoVocal?.nombre ?? '';
+          this.vocalEquipoId = res.vocaliaProgramada.equipoVocalId ?? null;
         }
 
         // Pre-cargar las incidencias 'pendiente' para edición
