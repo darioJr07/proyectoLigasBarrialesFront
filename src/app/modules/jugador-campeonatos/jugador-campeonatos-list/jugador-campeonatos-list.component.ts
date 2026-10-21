@@ -4,7 +4,12 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { JugadorCampeonatosService } from '../jugador-campeonatos.service';
-import { JugadorCampeonato } from '../jugador-campeonato.model';
+import {
+  CambioDorsalEtapa,
+  JugadorCampeonato,
+  OpcionesCambioDorsal,
+  OpcionEtapaCambioDorsal,
+} from '../jugador-campeonato.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
@@ -31,6 +36,17 @@ export class JugadorCampeonatosListComponent implements OnInit {
   user$: Observable<any>;
   showImageModal = false;
   modalImageUrl = '';
+  showDorsalModal = false;
+  cambioDorsalLoading = false;
+  cambioDorsalError = '';
+  jugadorCambioDorsal: JugadorCampeonato | null = null;
+  opcionesCambioDorsal: OpcionesCambioDorsal | null = null;
+  cambioDorsalForm: {
+    etapaCompetenciaId: number | null;
+    numeroCancha: number | null;
+    jornadaDesde: number;
+    motivo: string;
+  } = { etapaCompetenciaId: null, numeroCancha: null, jornadaDesde: 1, motivo: '' };
   searchTerm = '';
   
   // Filtros
@@ -123,6 +139,136 @@ export class JugadorCampeonatosListComponent implements OnInit {
 
   canApprove(): boolean {
     return this.permissions.canAprobarHabilitaciones();
+  }
+
+  canCambiarDorsal(jugadorCampeonato: JugadorCampeonato): boolean {
+    const role = this.currentUser?.rol?.nombre;
+    return (role === 'master' || role === 'directivo_liga')
+      && jugadorCampeonato.estado === 'habilitado'
+      && jugadorCampeonato.activo !== false;
+  }
+
+  dorsalVisible(jugadorCampeonato: JugadorCampeonato): number {
+    return this.conDorsalActual(jugadorCampeonato).numeroCancha;
+  }
+
+  abrirCambioDorsal(jugadorCampeonato: JugadorCampeonato): void {
+    if (!this.canCambiarDorsal(jugadorCampeonato)) return;
+    this.showDorsalModal = true;
+    this.cambioDorsalLoading = true;
+    this.cambioDorsalError = '';
+    this.jugadorCambioDorsal = jugadorCampeonato;
+    this.opcionesCambioDorsal = null;
+    this.cambioDorsalForm = {
+      etapaCompetenciaId: null,
+      numeroCancha: null,
+      jornadaDesde: 1,
+      motivo: '',
+    };
+    this.jugadorCampeonatosService.getOpcionesCambioDorsal(jugadorCampeonato.id).subscribe({
+      next: opciones => {
+        this.opcionesCambioDorsal = opciones;
+        const etapa = opciones.etapas.find(item => item.estado === 'actual' && item.puedeCambiar)
+          ?? opciones.etapas.find(item => item.puedeCambiar)
+          ?? opciones.etapas.find(item => item.estado === 'actual')
+          ?? opciones.etapas[0];
+        if (etapa) {
+          this.cambioDorsalForm.etapaCompetenciaId = etapa.id;
+          this.cambioDorsalForm.jornadaDesde = Math.min(
+            etapa.proximaJornadaSugerida,
+            opciones.jornadaLimite,
+          );
+        }
+        this.cambioDorsalLoading = false;
+      },
+      error: error => {
+        this.cambioDorsalError = error.error?.message || 'No se pudo cargar la información del cambio de dorsal.';
+        this.cambioDorsalLoading = false;
+      },
+    });
+  }
+
+  cerrarCambioDorsal(): void {
+    if (this.cambioDorsalLoading) return;
+    this.showDorsalModal = false;
+    this.jugadorCambioDorsal = null;
+    this.opcionesCambioDorsal = null;
+    this.cambioDorsalError = '';
+  }
+
+  get etapaCambioDorsalSeleccionada(): OpcionEtapaCambioDorsal | undefined {
+    return this.opcionesCambioDorsal?.etapas.find(
+      item => item.id === Number(this.cambioDorsalForm.etapaCompetenciaId),
+    );
+  }
+
+  onEtapaCambioDorsalChange(): void {
+    const etapa = this.etapaCambioDorsalSeleccionada;
+    if (!etapa || !this.opcionesCambioDorsal) return;
+    this.cambioDorsalForm.jornadaDesde = Math.min(
+      etapa.proximaJornadaSugerida,
+      this.opcionesCambioDorsal.jornadaLimite,
+    );
+    this.cambioDorsalError = '';
+  }
+
+  guardarCambioDorsal(): void {
+    const jugador = this.jugadorCambioDorsal;
+    const etapa = this.etapaCambioDorsalSeleccionada;
+    const numero = Number(this.cambioDorsalForm.numeroCancha);
+    if (!jugador || !etapa) return;
+    if (!etapa.puedeCambiar) {
+      this.cambioDorsalError = etapa.cambioActivo
+        ? 'El jugador ya tiene un cambio activo en esta etapa.'
+        : 'Esta etapa ya no permite cambios de dorsal.';
+      return;
+    }
+    if (!Number.isInteger(numero) || numero < 1 || numero > 99) {
+      this.cambioDorsalError = 'Ingresa un dorsal entre 1 y 99.';
+      return;
+    }
+    if (!this.cambioDorsalForm.motivo.trim()) {
+      this.cambioDorsalError = 'El motivo del cambio es obligatorio.';
+      return;
+    }
+
+    this.cambioDorsalLoading = true;
+    this.cambioDorsalError = '';
+    this.jugadorCampeonatosService.registrarCambioDorsal(jugador.id, {
+      etapaCompetenciaId: etapa.id,
+      numeroCancha: numero,
+      jornadaDesde: Number(this.cambioDorsalForm.jornadaDesde),
+      motivo: this.cambioDorsalForm.motivo.trim(),
+    }).subscribe({
+      next: () => {
+        this.cambioDorsalLoading = false;
+        this.showDorsalModal = false;
+        this.jugadorCambioDorsal = null;
+        this.loadJugadorCampeonatos();
+      },
+      error: error => {
+        this.cambioDorsalError = error.error?.message || 'No se pudo registrar el cambio de dorsal.';
+        this.cambioDorsalLoading = false;
+      },
+    });
+  }
+
+  anularCambioDorsal(jugador: JugadorCampeonato, cambio: CambioDorsalEtapa): void {
+    const motivo = prompt('Ingrese el motivo de anulación del cambio de dorsal:');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      alert('El motivo de anulación es obligatorio.');
+      return;
+    }
+    if (!confirm(`¿Anular el dorsal #${cambio.numeroCancha} de ${cambio.etapa?.nombre || 'esta etapa'}?`)) return;
+    this.loading = true;
+    this.jugadorCampeonatosService.anularCambioDorsal(jugador.id, cambio.id, motivo.trim()).subscribe({
+      next: () => this.loadJugadorCampeonatos(),
+      error: error => {
+        this.loading = false;
+        alert(error.error?.message || 'No se pudo anular el cambio de dorsal.');
+      },
+    });
   }
 
   getEstadoText(estado: string): string {
@@ -440,7 +586,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
   }
 
   async descargarCarnetsSeleccionados(): Promise<void> {
-    const seleccionados = this.carnetsSeleccionados;
+    const seleccionados = this.carnetsSeleccionados.map(item => this.conDorsalActual(item));
 
     if (seleccionados.length === 0) {
       alert('Selecciona al menos un carnet para descargar');
@@ -486,7 +632,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
 
     try {
       this.loading = true;
-      await this.pdfCarnetService.generarCarnetIndividual(jugadorCampeonato);
+      await this.pdfCarnetService.generarCarnetIndividual(this.conDorsalActual(jugadorCampeonato));
       this.loading = false;
     } catch (error) {
       console.error('Error al generar carnet:', error);
@@ -506,7 +652,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
 
     try {
       this.loading = true;
-      await this.pdfCarnetService.abrirCarnetIndividual(jugadorCampeonato);
+      await this.pdfCarnetService.abrirCarnetIndividual(this.conDorsalActual(jugadorCampeonato));
       this.loading = false;
     } catch (error) {
       console.error('Error al abrir carnet:', error);
@@ -546,7 +692,9 @@ export class JugadorCampeonatosListComponent implements OnInit {
 
     try {
       this.loading = true;
-      await this.pdfCarnetService.generarCarnetsPorEquipo(jugadoresHabilitados);
+      await this.pdfCarnetService.generarCarnetsPorEquipo(
+        jugadoresHabilitados.map(item => this.conDorsalActual(item)),
+      );
       this.loading = false;
       alert(`Se generaron ${jugadoresHabilitados.length} carnet(s) exitosamente`);
     } catch (error) {
@@ -638,7 +786,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
     try {
       this.loading = true;
       await this.listaJugadoresService.descargarListaPDF(
-        this.filteredJugadorCampeonatos,
+        this.filteredJugadorCampeonatos.map(item => this.conDorsalActual(item)),
         this.getNombreCampeonato(),
         this.getNombreEquipo(),
         this.getEquipoImagenUrl(),
@@ -659,7 +807,7 @@ export class JugadorCampeonatosListComponent implements OnInit {
   descargarListaExcel(): void {
     try {
       this.listaJugadoresService.descargarListaExcel(
-        this.filteredJugadorCampeonatos,
+        this.filteredJugadorCampeonatos.map(item => this.conDorsalActual(item)),
         this.getNombreCampeonato(),
         this.getNombreEquipo()
       );
@@ -667,5 +815,14 @@ export class JugadorCampeonatosListComponent implements OnInit {
       console.error('Error al generar Excel:', error);
       alert('Error al generar el Excel');
     }
+  }
+
+  private conDorsalActual(jugadorCampeonato: JugadorCampeonato): JugadorCampeonato {
+    const cambioActual = jugadorCampeonato.cambiosDorsalActivos?.find(
+      cambio => cambio.etapa?.estado === 'actual',
+    );
+    return cambioActual
+      ? { ...jugadorCampeonato, numeroCancha: cambioActual.numeroCancha }
+      : jugadorCampeonato;
   }
 }

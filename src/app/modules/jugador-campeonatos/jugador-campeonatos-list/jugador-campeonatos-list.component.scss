@@ -504,6 +504,43 @@
       background: #bee5eb;
     }
   }
+
+  &.dorsal {
+    background: #ede9fe;
+    color: #5b21b6;
+    font-weight: 800;
+
+    &:hover {
+      background: #ddd6fe;
+    }
+  }
+}
+
+.dorsal-change-summary {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #c4b5fd;
+  border-left: 4px solid #7c3aed;
+  border-radius: 7px;
+  background: #f5f3ff;
+  color: #3b2764;
+  font-size: 0.88rem;
+
+  small {
+    display: block;
+    margin-top: 0.25rem;
+    color: #675984;
+  }
+
+  button {
+    margin-top: 0.55rem;
+    padding: 0.3rem 0.55rem;
+    border: 1px solid #d8b4b4;
+    border-radius: 5px;
+    background: #fff;
+    color: #9b2c2c;
+    cursor: pointer;
+  }
 }
 
 // Sección de imágenes (foto + cédula)
@@ -649,6 +686,121 @@
   max-height: 80vh;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.dorsal-modal {
+  box-sizing: border-box;
+  width: 680px;
+  max-width: calc(100vw - 2rem);
+  max-height: 88vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+
+  h3 {
+    margin: 0 0 1rem;
+    color: #243b53;
+  }
+
+  .modal-close {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 30px;
+    height: 30px;
+    font-size: 1.1rem;
+  }
+}
+
+.dorsal-player-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #334155;
+
+  strong { color: #312e81; }
+}
+
+.dorsal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    color: #475569;
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.62rem 0.7rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #1e293b;
+    font: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+  }
+
+  .motivo-field { grid-column: 1 / -1; }
+}
+
+.dorsal-rule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.83rem;
+
+  .dorsal-warning { color: #b45309; font-weight: 700; }
+}
+
+.dorsal-error {
+  margin-top: 0.9rem;
+  padding: 0.7rem;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.88rem;
+}
+
+.dorsal-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.dorsal-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+@media (max-width: 600px) {
+  .dorsal-form-grid { grid-template-columns: 1fr; }
+  .dorsal-form-grid .motivo-field { grid-column: auto; }
 }
 // Estilos para filtros
 .filters-container {

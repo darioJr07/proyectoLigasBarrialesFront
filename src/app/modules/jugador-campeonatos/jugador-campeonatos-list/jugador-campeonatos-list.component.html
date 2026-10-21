@@ -193,7 +193,7 @@
             </label>
             <div class="jugador-nombre-container">
               <h3>{{ jc.jugador?.nombre || 'Jugador' }}</h3>
-              <span class="numero-posicion">#{{ jc.numeroCancha }} - {{ jc.posicion }}</span>
+              <span class="numero-posicion">#{{ dorsalVisible(jc) }} - {{ jc.posicion }}</span>
             </div>
           </div>
           <div class="badges">
@@ -245,6 +245,20 @@
           <p><strong>Cédula:</strong> {{ jc.jugador?.cedula || 'N/A' }}</p>
           <p><strong>Fecha Solicitud:</strong> {{ jc.fechaInscripcion | date:'dd/MM/yyyy HH:mm' }}</p>
           <p *ngIf="jc.fechaAprobacion"><strong>Fecha Aprobación:</strong> {{ jc.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</p>
+          <div class="dorsal-change-summary" *ngFor="let cambio of jc.cambiosDorsalActivos">
+            <div>
+              <strong>{{ cambio.etapa?.nombre || 'Etapa' }}:</strong>
+              #{{ cambio.numeroCancha }} desde la jornada {{ cambio.jornadaDesde }}
+            </div>
+            <small>Dorsal original: #{{ jc.numeroCancha }} · {{ cambio.motivo }}</small>
+            <button
+              *ngIf="canCambiarDorsal(jc)"
+              type="button"
+              (click)="anularCambioDorsal(jc, cambio)"
+              title="Anular este cambio de dorsal">
+              Anular cambio
+            </button>
+          </div>
           
           <!-- Mensaje especial para habilitaciones rechazadas -->
           <div *ngIf="jc.estado === 'rechazado' && !jc.activo" class="rechazo-info">
@@ -288,6 +302,12 @@
                   (click)="descargarCarnet(jc)" 
                   title="Descargar Carnet">
             🪪
+          </button>
+          <button *ngIf="canCambiarDorsal(jc)"
+                  class="btn-icon dorsal"
+                  (click)="abrirCambioDorsal(jc)"
+                  title="Cambiar dorsal por etapa">
+            #
           </button>
           <button class="btn-icon" 
                   (click)="verHistorial(jc.jugadorId)" 
@@ -343,6 +363,85 @@
       <div class="modal-content" (click)="$event.stopPropagation()">
         <button class="modal-close" (click)="closeImageModal()">✕</button>
         <img [src]="modalImageUrl" alt="Cédula ampliada" class="modal-image">
+      </div>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showDorsalModal" (click)="cerrarCambioDorsal()">
+      <div class="modal-content dorsal-modal" (click)="$event.stopPropagation()">
+        <button class="modal-close" type="button" (click)="cerrarCambioDorsal()">✕</button>
+        <h3>Cambiar dorsal por etapa</h3>
+
+        <div *ngIf="cambioDorsalLoading && !opcionesCambioDorsal" class="dorsal-loading">
+          Cargando información...
+        </div>
+
+        <ng-container *ngIf="opcionesCambioDorsal as opciones">
+          <div class="dorsal-player-summary">
+            <strong>{{ opciones.habilitacion.jugador?.nombre }}</strong>
+            <span>{{ opciones.habilitacion.equipo?.nombre }} · Dorsal original #{{ opciones.habilitacion.numeroCancha }}</span>
+          </div>
+
+          <div class="dorsal-form-grid">
+            <label>
+              Etapa
+              <select
+                [(ngModel)]="cambioDorsalForm.etapaCompetenciaId"
+                (change)="onEtapaCambioDorsalChange()"
+                name="etapaCambioDorsal">
+                <option *ngFor="let etapa of opciones.etapas" [ngValue]="etapa.id">
+                  {{ etapa.nombre }} · {{ etapa.estado }}
+                </option>
+              </select>
+              <small *ngIf="!opciones.etapas.length" class="dorsal-warning">
+                No existen etapas con partidos para este campeonato y categoría.
+              </small>
+            </label>
+
+            <label>
+              Nuevo dorsal
+              <input type="number" min="1" max="99" [(ngModel)]="cambioDorsalForm.numeroCancha" name="nuevoDorsal" />
+            </label>
+
+            <label>
+              Vigente desde la jornada
+              <select [(ngModel)]="cambioDorsalForm.jornadaDesde" name="jornadaDesde">
+                <option
+                  *ngFor="let jornada of [1, 2, 3]"
+                  [ngValue]="jornada"
+                  [disabled]="jornada <= (etapaCambioDorsalSeleccionada?.ultimaJornadaJugada || 0)">
+                  Jornada {{ jornada }}
+                </option>
+              </select>
+            </label>
+
+            <label class="motivo-field">
+              Motivo del cambio
+              <textarea maxlength="500" rows="3" [(ngModel)]="cambioDorsalForm.motivo" name="motivoCambioDorsal"></textarea>
+            </label>
+          </div>
+
+          <div class="dorsal-rule-info" *ngIf="etapaCambioDorsalSeleccionada as etapa">
+            <span>Última jornada disputada: {{ etapa.ultimaJornadaJugada || 'Ninguna' }}</span>
+            <span>El cambio solo puede iniciar hasta la jornada {{ opciones.jornadaLimite }}.</span>
+            <span *ngIf="etapa.cambioActivo" class="dorsal-warning">Ya existe un cambio activo para esta etapa.</span>
+            <span *ngIf="!etapa.puedeCambiar && !etapa.cambioActivo" class="dorsal-warning">La etapa ya no admite cambios.</span>
+          </div>
+
+          <div class="dorsal-error" *ngIf="cambioDorsalError">{{ cambioDorsalError }}</div>
+
+          <div class="dorsal-modal-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarCambioDorsal()" [disabled]="cambioDorsalLoading">Cancelar</button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="guardarCambioDorsal()"
+              [disabled]="cambioDorsalLoading || !etapaCambioDorsalSeleccionada?.puedeCambiar">
+              {{ cambioDorsalLoading ? 'Guardando...' : 'Registrar cambio' }}
+            </button>
+          </div>
+        </ng-container>
+
+        <div class="dorsal-error" *ngIf="cambioDorsalError && !opcionesCambioDorsal">{{ cambioDorsalError }}</div>
       </div>
     </div>
   </div>

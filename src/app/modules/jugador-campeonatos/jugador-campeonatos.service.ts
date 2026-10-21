@@ -2,7 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { JugadorCampeonato, CreateJugadorCampeonatoDto } from './jugador-campeonato.model';
+import {
+  CambioDorsalEtapa,
+  CreateJugadorCampeonatoDto,
+  JugadorCampeonato,
+  OpcionesCambioDorsal,
+  RegistrarCambioDorsalDto,
+} from './jugador-campeonato.model';
 
 @Injectable({
   providedIn: 'root'
@@ -58,6 +64,21 @@ export class JugadorCampeonatosService {
 
   darDeBaja(id: number, motivo: string): Observable<JugadorCampeonato> {
     return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/dar-de-baja`, { motivo });
+  }
+
+  getOpcionesCambioDorsal(id: number): Observable<OpcionesCambioDorsal> {
+    return this.http.get<OpcionesCambioDorsal>(`${this.apiUrl}/${id}/cambios-dorsal/opciones`);
+  }
+
+  registrarCambioDorsal(id: number, data: RegistrarCambioDorsalDto): Observable<CambioDorsalEtapa> {
+    return this.http.post<CambioDorsalEtapa>(`${this.apiUrl}/${id}/cambios-dorsal`, data);
+  }
+
+  anularCambioDorsal(id: number, cambioId: number, motivo: string): Observable<CambioDorsalEtapa> {
+    return this.http.patch<CambioDorsalEtapa>(
+      `${this.apiUrl}/${id}/cambios-dorsal/${cambioId}/anular`,
+      { motivo },
+    );
   }
 
   delete(id: number): Observable<void> {

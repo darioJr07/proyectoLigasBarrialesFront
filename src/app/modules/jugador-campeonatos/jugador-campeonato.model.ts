@@ -18,6 +18,50 @@ export interface JugadorCampeonato {
   fechaInscripcion: string;
   activo: boolean;
   creadoEn: string;
+  cambiosDorsalActivos?: CambioDorsalEtapa[];
+}
+
+export interface CambioDorsalEtapa {
+  id: number;
+  jugadorCampeonatoId: number;
+  etapaCompetenciaId: number;
+  etapa?: { id: number; nombre: string; estado: string };
+  numeroCancha: number;
+  jornadaDesde: number;
+  motivo: string;
+  activo: boolean;
+  creadoEn: string;
+}
+
+export interface OpcionEtapaCambioDorsal {
+  id: number;
+  nombre: string;
+  orden: number;
+  estado: 'pendiente' | 'actual' | 'finalizada';
+  ultimaJornadaJugada: number;
+  proximaJornadaSugerida: number;
+  puedeCambiar: boolean;
+  cambioActivo: CambioDorsalEtapa | null;
+}
+
+export interface OpcionesCambioDorsal {
+  jornadaLimite: number;
+  habilitacion: {
+    id: number;
+    numeroCancha: number;
+    jugador: any;
+    equipo: any;
+    campeonato: any;
+    categoria: any;
+  };
+  etapas: OpcionEtapaCambioDorsal[];
+}
+
+export interface RegistrarCambioDorsalDto {
+  etapaCompetenciaId: number;
+  numeroCancha: number;
+  jornadaDesde: number;
+  motivo: string;
 }
 
 export interface CreateJugadorCampeonatoDto {
