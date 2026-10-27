@@ -90,13 +90,54 @@ export interface GenerarFixtureResponse {
 
 export interface BolillaHorario {
   id?: number; numero?: number; fecha: string; hora: string; cancha: string;
-  estado?: 'disponible' | 'asignada' | 'no_utilizada'; partidoId?: number | null; ordenSorteo?: number | null; asignacionManual?: boolean; partido?: Partido | null;
+  estado?: 'disponible' | 'asignada' | 'no_utilizada'; partidoId?: number | null; ordenSorteo?: number | null; asignacionManual?: boolean; solicitudHorarioId?: number | null; partido?: Partido | null;
+}
+
+export interface SolicitudHorario {
+  id: number;
+  ligaId: number;
+  campeonatoId: number;
+  categoriaId: number;
+  etapa: string;
+  equipoId: number;
+  equipo?: any;
+  partidoId: number;
+  partido?: Partido;
+  fechaSolicitada: string;
+  horaSolicitada: string;
+  canchaSolicitada?: string | null;
+  motivo: string;
+  estado: 'pendiente' | 'aprobada' | 'aplicada' | 'rechazada' | 'cancelada';
+  programacionId?: number | null;
+  bolillaId?: number | null;
+  observacionResolucion?: string | null;
+  creadoEn?: string;
+  resueltoEn?: string | null;
+}
+
+export interface ProgramacionSeleccion {
+  categoriaId: number | null;
+  jornada: number;
+}
+
+export interface CrearSolicitudHorarioDto {
+  campeonatoId: number;
+  categoriaId: number;
+  etapa: string;
+  equipoId: number;
+  partidoId: number;
+  fechaSolicitada: string;
+  horaSolicitada: string;
+  canchaSolicitada?: string;
+  motivo: string;
 }
 
 export interface ProgramacionSemanal {
   id: number; ligaId: number; campeonatoId: number; categoriaId?: number | null; etapa: string; jornada: number;
   totalPartidos: number; estado: 'borrador' | 'en_sorteo' | 'confirmada' | 'cancelada'; bolillas: BolillaHorario[]; partidos: Partido[];
   creadoEn?: string; confirmadoEn?: string | null;
+  selecciones?: ProgramacionSeleccion[];
+  solicitudesHorario?: SolicitudHorario[];
 }
 
 export type ProgramacionSemanalResumen = Omit<ProgramacionSemanal, 'bolillas' | 'partidos'>;
@@ -126,5 +167,7 @@ export interface VocaliasProgramacion {
 }
 
 export interface CrearProgramacionSemanalDto {
-  campeonatoId: number; categoriaId?: number; etapa: string; jornada: number; bolillas: BolillaHorario[];
+  campeonatoId: number; categoriaId?: number; etapa: string; jornada: number;
+  selecciones?: Array<{ categoriaId: number; jornada: number }>;
+  bolillas: BolillaHorario[];
 }

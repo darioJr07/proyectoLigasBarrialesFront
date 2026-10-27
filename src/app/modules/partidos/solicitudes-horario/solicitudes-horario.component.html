@@ -1,0 +1,67 @@
+<header class="page-header">
+  <h1>Sistema de Ligas Barriales</h1>
+  <div class="user-info" *ngIf="user$ | async as user">
+    <span>{{ user.nombre }}</span><span class="user-role">({{ user.rol.nombre }})</span>
+    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+  </div>
+</header>
+<app-main-nav></app-main-nav>
+
+<main class="solicitudes-page">
+  <a routerLink="/partidos" class="btn-back">← Volver a partidos</a>
+  <div class="titulo">
+    <div><h1>🕒 Solicitudes reglamentarias de horario</h1><p>Una solicitud vigente por equipo y etapa. La aprobación no programa el partido: reserva el derecho para aplicarlo durante el bolillero.</p></div>
+    <a *ngIf="puedeResolver" routerLink="/partidos/programacion-semanal" class="btn-programacion">Ir a programación semanal</a>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="exito" *ngIf="exito">{{ exito }}</p>
+
+  <section class="panel filtros">
+    <h2>Campeonato y etapa</h2>
+    <div class="grid-form">
+      <label *ngIf="esMaster">Liga<select [(ngModel)]="ligaId" (change)="cambiarLiga()"><option [ngValue]="null">Seleccionar liga</option><option *ngFor="let liga of ligas" [ngValue]="liga.id">{{ liga.nombre }}</option></select></label>
+      <label>Campeonato<select [(ngModel)]="campeonatoId" (change)="cambiarCampeonato()"><option [ngValue]="null">Seleccionar campeonato</option><option *ngFor="let campeonato of campeonatos" [ngValue]="campeonato.id">{{ campeonato.nombre }}</option></select></label>
+      <label>Categoría<select [(ngModel)]="categoriaId" (change)="cambiarCategoria()"><option [ngValue]="null">Todas / seleccionar</option><option *ngFor="let categoria of categorias" [ngValue]="categoria.id">{{ categoria.nombre }}</option></select></label>
+      <label>Etapa<select [(ngModel)]="etapa" (change)="cambiarEtapa()" [disabled]="!etapas.length"><option value="">Todas / seleccionar</option><option *ngFor="let item of etapas" [value]="item">{{ nombreEtapa(item) }}</option></select></label>
+      <label>Estado<select [(ngModel)]="estadoFiltro" (change)="cargarSolicitudes()"><option value="">Todos</option><option value="pendiente">Pendientes</option><option value="aprobada">Aprobadas</option><option value="aplicada">Aplicadas</option><option value="rechazada">Rechazadas</option><option value="cancelada">Canceladas</option></select></label>
+    </div>
+  </section>
+
+  <section class="panel" *ngIf="campeonatoId && categoriaId && etapa">
+    <h2>Registrar solicitud</h2>
+    <p class="ayuda">Elige el partido y el horario solicitado. Si la solicitud se rechaza o cancela, el equipo podrá presentar una nueva para esta etapa.</p>
+    <div class="grid-form solicitud-form">
+      <label class="ancho">Partido<select [(ngModel)]="partidoId" (change)="seleccionarPartido()"><option [ngValue]="null">Seleccionar partido pendiente</option><option *ngFor="let partido of partidosDisponibles" [ngValue]="partido.id">{{ textoPartido(partido) }}</option></select></label>
+      <label>Equipo solicitante<select [(ngModel)]="equipoId" [disabled]="esDirigente || !partidoId"><option [ngValue]="null">Seleccionar equipo</option><option *ngFor="let equipo of equiposDelPartido" [ngValue]="equipo.id">{{ equipo.nombre }}</option></select></label>
+      <label>Fecha solicitada<input type="date" [(ngModel)]="fechaSolicitada"></label>
+      <label>Hora solicitada<input type="time" [(ngModel)]="horaSolicitada"></label>
+      <label>Cancha (opcional)<input [(ngModel)]="canchaSolicitada" maxlength="150" placeholder="Si el reglamento la exige"></label>
+      <label class="ancho">Motivo<textarea [(ngModel)]="motivo" maxlength="500" rows="3" placeholder="Fundamento de la solicitud reglamentaria"></textarea></label>
+    </div>
+    <button class="principal" [disabled]="guardando" (click)="guardar()">{{ guardando ? 'Registrando…' : 'Registrar solicitud' }}</button>
+  </section>
+
+  <section class="panel historial" *ngIf="campeonatoId">
+    <div class="historial-titulo"><div><h2>Solicitudes registradas</h2><p *ngIf="esDirigente">Solo se muestran las solicitudes de tu equipo.</p></div><button (click)="cargarSolicitudes()" [disabled]="cargando">Actualizar</button></div>
+    <p class="vacio" *ngIf="cargando">Cargando solicitudes…</p>
+    <p class="vacio" *ngIf="!cargando && !solicitudes.length">No existen solicitudes con los filtros seleccionados.</p>
+    <article class="solicitud-card" *ngFor="let solicitud of solicitudes">
+      <div class="datos-principales">
+        <span class="estado" [class]="'estado ' + solicitud.estado">{{ solicitud.estado }}</span>
+        <strong>{{ solicitud.equipo?.nombre }}</strong>
+        <span>{{ textoPartido(solicitud.partido) }}</span>
+      </div>
+      <div class="horario"><small>Horario solicitado</small><strong>{{ solicitud.fechaSolicitada | date:'dd/MM/yyyy':'UTC' }} · {{ solicitud.horaSolicitada }}</strong><span>{{ solicitud.canchaSolicitada || 'Sin cancha específica' }}</span></div>
+      <div class="motivo"><small>Motivo</small><span>{{ solicitud.motivo }}</span><em *ngIf="solicitud.observacionResolucion">Resolución: {{ solicitud.observacionResolucion }}</em></div>
+      <div class="acciones">
+        <button class="descargar" (click)="descargarSolicitud(solicitud)">📄 Descargar PDF</button>
+        <ng-container *ngIf="puedeResolver && (solicitud.estado === 'pendiente' || solicitud.estado === 'aprobada')">
+          <button *ngIf="solicitud.estado === 'pendiente'" class="aprobar" [disabled]="procesandoId === solicitud.id" (click)="resolver(solicitud, 'aprobar')">Aprobar</button>
+          <button *ngIf="solicitud.estado === 'pendiente'" class="rechazar" [disabled]="procesandoId === solicitud.id" (click)="resolver(solicitud, 'rechazar')">Rechazar</button>
+          <button *ngIf="solicitud.estado === 'aprobada'" class="rechazar" [disabled]="procesandoId === solicitud.id" (click)="resolver(solicitud, 'cancelar')">Cancelar</button>
+        </ng-container>
+      </div>
+    </article>
+  </section>
+</main>

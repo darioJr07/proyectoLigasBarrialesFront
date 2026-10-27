@@ -301,6 +301,10 @@ export class PermissionsService {
     return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo', 'tribuna_penas', 'tesoreria']);
   }
 
+  canAccessSolicitudesHorario(): boolean {
+    return this.hasRole(['master', 'directivo_liga', 'dirigente_equipo']);
+  }
+
   /**
    * Pueden acceder a tabla de posiciones: master, directivo_liga y dirigente_equipo
    */

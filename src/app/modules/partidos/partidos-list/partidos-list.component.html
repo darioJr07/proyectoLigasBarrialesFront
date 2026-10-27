@@ -22,6 +22,14 @@
       </button>
       <button
         type="button"
+        class="btn btn-outline"
+        routerLink="/partidos/solicitudes-horario"
+        *ngIf="permissions.canAccessSolicitudesHorario()"
+      >
+        🕒 Solicitud de horario
+      </button>
+      <button
+        type="button"
         class="btn btn-secondary"
         routerLink="/partidos/generar-fixture"
         *ngIf="permissions.canGenerarFixture()"

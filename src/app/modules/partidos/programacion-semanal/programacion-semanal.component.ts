@@ -9,7 +9,7 @@ import { LigasService } from '../../../core/services/ligas.service';
 import { CampeonatosService } from '../../campeonatos/campeonatos.service';
 import { CategoriasService } from '../../categorias/categorias.service';
 import { PartidosService } from '../partidos.service';
-import { BolillaHorario, ProgramacionSemanal, ProgramacionSemanalResumen, VocaliaPartido, VocaliasProgramacion } from '../partido.model';
+import { BolillaHorario, ProgramacionSemanal, ProgramacionSemanalResumen, SolicitudHorario, VocaliaPartido, VocaliasProgramacion } from '../partido.model';
 import { ProgramacionSemanalExport, ProgramacionSemanalExportService } from './programacion-semanal-export.service';
 
 @Component({ selector: 'app-programacion-semanal', standalone: true, imports: [CommonModule, FormsModule, RouterLink, MainNavComponent], templateUrl: './programacion-semanal.component.html', styleUrls: ['./programacion-semanal.component.scss'] })
@@ -21,6 +21,8 @@ export class ProgramacionSemanalComponent implements OnInit {
   bolillaManualId: number | null = null;
   cargando = false; sorteando = false; confirmando = false; error = ''; exito = ''; ultimaBolilla: any = null;
   partidosProgramables: any[] = []; etapasDisponibles: string[] = []; jornadasDisponibles: number[] = [];
+  seleccionesJornada: Record<number, number | null> = {};
+  jornadaTodas: number | null = null;
   programacionesConfirmadas: ProgramacionSemanalResumen[] = [];
   historialEtapa = ''; historialJornada: number | null = null;
   historialCargando = false; programacionAbriendoId: number | null = null;
@@ -46,9 +48,9 @@ export class ProgramacionSemanalComponent implements OnInit {
     this.error = 'Tu usuario no tiene una liga asignada para realizar la programación semanal.';
   }
   cambiarLiga(): void { this.campeonatos = []; this.categorias = []; this.campeonatoId = null; this.reiniciarHistorial(); if (this.ligaId) this.campeonatosService.getByLiga(this.ligaId).subscribe(c => this.campeonatos = c); }
-  cambiarCampeonato(): void { this.categorias = []; this.categoriaId = null; this.etapa = ''; this.jornada = null; this.partidosProgramables = []; this.reiniciarHistorial(); if (this.campeonatoId) { this.categoriasService.getByCampeonato(this.campeonatoId).subscribe(c => this.categorias = c); this.cargarOpcionesProgramables(); this.cargarProgramacionesConfirmadas(); } }
-  cambiarCategoria(): void { this.etapa = ''; this.jornada = null; this.historialEtapa = ''; this.historialJornada = null; this.cargarOpcionesProgramables(); this.cargarProgramacionesConfirmadas(); }
-  cambiarEtapa(): void { this.jornada = null; this.jornadasDisponibles = [...new Set(this.partidosProgramables.filter(p => p.etapa === this.etapa).map(p => p.jornada))].sort((a, b) => a - b); }
+  cambiarCampeonato(): void { this.categorias = []; this.categoriaId = null; this.etapa = ''; this.jornada = null; this.jornadaTodas = null; this.seleccionesJornada = {}; this.partidosProgramables = []; this.reiniciarHistorial(); if (this.campeonatoId) { this.categoriasService.getByCampeonato(this.campeonatoId).subscribe(c => this.categorias = c); this.cargarOpcionesProgramables(); this.cargarProgramacionesConfirmadas(); } }
+  cambiarCategoria(): void { this.historialJornada = null; this.cargarProgramacionesConfirmadas(); }
+  cambiarEtapa(): void { this.jornada = null; this.jornadaTodas = null; this.seleccionesJornada = {}; this.jornadasDisponibles = [...new Set(this.partidosProgramables.filter(p => p.etapa === this.etapa).map(p => p.jornada))].sort((a, b) => a - b); }
   generarBolillas(): void {
     this.error = ''; const inicio = this.minutos(this.horaInicio), fin = this.minutos(this.horaFin);
     const canchas = this.canchasDetectadas.length ? this.canchasDetectadas : this.cancha.trim() ? [this.cancha.trim()] : [];
@@ -64,9 +66,10 @@ export class ProgramacionSemanalComponent implements OnInit {
   quitarBolilla(indice: number): void { this.bolillas.splice(indice, 1); }
   iniciar(): void {
     this.error = ''; this.exito = '';
-    if (!this.campeonatoId || !this.etapa.trim() || !this.jornada) { this.error = 'Selecciona campeonato, etapa y jornada.'; return; }
+    const selecciones = this.seleccionesActuales;
+    if (!this.campeonatoId || !this.etapa.trim() || !selecciones.length) { this.error = 'Selecciona campeonato, etapa y al menos una jornada por categoría.'; return; }
     this.cargando = true;
-    this.partidosService.obtenerProgramacionSemanalPendiente(this.campeonatoId, this.categoriaId ?? undefined, this.etapa.trim(), this.jornada).subscribe({
+    this.partidosService.obtenerProgramacionSemanalPendiente(this.campeonatoId, undefined, this.etapa.trim(), undefined, selecciones).subscribe({
       next: pendiente => {
         if (pendiente) { this.sesion = pendiente; this.exito = 'Se recuperó el sorteo que estaba en curso.'; this.cargando = false; return; }
         if (!this.bolillas.length) { this.error = 'Genera al menos una bolilla para iniciar un sorteo nuevo.'; this.cargando = false; return; }
@@ -95,8 +98,9 @@ export class ProgramacionSemanalComponent implements OnInit {
   asignarManual(): void {
     if (!this.sesion || !this.partidoSeleccionadoId || !this.bolillaManualId) return;
     this.error = '';
-    this.partidosService.asignarBolillaManual(this.sesion.id, this.partidoSeleccionadoId, this.bolillaManualId).subscribe({
-      next: sesion => { this.sesion = sesion; this.partidoSeleccionadoId = null; this.bolillaManualId = null; this.exito = 'Horario asignado manualmente. Revisa y confirma cuando todo esté correcto.'; },
+    const solicitud = this.solicitudDelPartido(this.partidoSeleccionadoId);
+    this.partidosService.asignarBolillaManual(this.sesion.id, this.partidoSeleccionadoId, this.bolillaManualId, solicitud?.id).subscribe({
+      next: sesion => { this.sesion = sesion; this.partidoSeleccionadoId = null; this.bolillaManualId = null; this.exito = solicitud ? 'Solicitud reglamentaria aplicada al bolillero. Revisa y confirma la programación.' : 'Horario asignado manualmente. Revisa y confirma cuando todo esté correcto.'; },
       error: e => this.error = e?.error?.message ?? 'No se pudo asignar el horario manualmente.',
     });
   }
@@ -189,7 +193,12 @@ export class ProgramacionSemanalComponent implements OnInit {
     if (!this.sesion || !window.confirm('¿Liberar esta vocalía para corregir su asignación?')) return;
     this.vocaliaProcesandoId = vocalia.id; this.error = '';
     this.partidosService.liberarVocaliaProgramacion(this.sesion.id, vocalia.id).subscribe({
-      next: respuesta => { this.actualizarVocalias(respuesta); this.vocaliaProcesandoId = null; },
+      next: respuesta => {
+        this.extractoresVocalia[vocalia.id] = null;
+        this.actualizarVocalias(respuesta);
+        this.vocaliaProcesandoId = null;
+        this.exito = 'Resultado anterior eliminado. Selecciona nuevamente el equipo extractor y realiza un nuevo sorteo.';
+      },
       error: e => { this.error = e?.error?.message ?? 'No se pudo liberar la vocalía.'; this.vocaliaProcesandoId = null; },
     });
   }
@@ -230,15 +239,55 @@ export class ProgramacionSemanalComponent implements OnInit {
   }
   logout(): void { this.authService.logout(); }
   get canchasDetectadas(): string[] {
-    if (!this.etapa || !this.jornada) return [];
+    if (!this.etapa || !this.seleccionesActuales.length) return [];
+    const seleccionadas = new Set(this.seleccionesActuales.map(item => `${item.categoriaId}:${item.jornada}`));
     return [...new Set(this.partidosProgramables
-      .filter(partido => partido.etapa === this.etapa && partido.jornada === this.jornada && partido.cancha?.trim())
+      .filter(partido => partido.etapa === this.etapa && seleccionadas.has(`${partido.categoriaId}:${partido.jornada}`) && partido.cancha?.trim())
       .map(partido => partido.cancha.trim()))].sort();
+  }
+  get seleccionesActuales(): Array<{ categoriaId: number; jornada: number }> {
+    return this.categorias
+      .map(categoria => ({ categoriaId: Number(categoria.id), jornada: Number(this.seleccionesJornada[categoria.id]) }))
+      .filter(item => Number.isInteger(item.jornada) && item.jornada > 0);
+  }
+  jornadasPorCategoria(categoriaId: number): number[] {
+    return [...new Set(this.partidosProgramables
+      .filter(partido => partido.etapa === this.etapa && partido.categoriaId === categoriaId)
+      .map(partido => Number(partido.jornada)))].sort((a, b) => a - b);
+  }
+  aplicarJornadaTodas(): void {
+    if (!this.jornadaTodas) return;
+    const nuevas: Record<number, number | null> = {};
+    for (const categoria of this.categorias) {
+      nuevas[categoria.id] = this.jornadasPorCategoria(categoria.id).includes(this.jornadaTodas) ? this.jornadaTodas : null;
+    }
+    this.seleccionesJornada = nuevas;
+  }
+  partidosSeleccionadosCategoria(categoriaId: number): number {
+    const jornada = Number(this.seleccionesJornada[categoriaId]);
+    if (!jornada) return 0;
+    return this.partidosProgramables.filter(partido => partido.etapa === this.etapa && partido.categoriaId === categoriaId && partido.jornada === jornada).length;
+  }
+  get totalPartidosSeleccionados(): number {
+    return this.seleccionesActuales.reduce((total, seleccion) => total + this.partidosProgramables.filter(partido =>
+      partido.etapa === this.etapa && partido.categoriaId === seleccion.categoriaId && partido.jornada === seleccion.jornada,
+    ).length, 0);
   }
   get bolillasManualesDisponibles(): BolillaHorario[] {
     if (!this.sesion) return [];
     const partido = this.pendientes.find(item => item.id === this.partidoSeleccionadoId);
-    return this.sesion.bolillas.filter(bolilla => bolilla.estado === 'disponible' && (!partido?.cancha || bolilla.cancha.toLowerCase() === partido.cancha.toLowerCase()));
+    const solicitud = this.solicitudDelPartido(partido?.id);
+    return this.sesion.bolillas.filter(bolilla => {
+      if (bolilla.estado !== 'disponible') return false;
+      const canchaRequerida = solicitud?.canchaSolicitada || partido?.cancha;
+      if (canchaRequerida && bolilla.cancha.trim().toLowerCase() !== canchaRequerida.trim().toLowerCase()) return false;
+      if (!solicitud) return true;
+      return String(bolilla.fecha).slice(0, 10) === String(solicitud.fechaSolicitada).slice(0, 10)
+        && bolilla.hora === solicitud.horaSolicitada;
+    });
+  }
+  solicitudDelPartido(partidoId: number | null | undefined): SolicitudHorario | undefined {
+    return this.sesion?.solicitudesHorario?.find(solicitud => solicitud.partidoId === partidoId);
   }
   get etapasHistorial(): string[] {
     return [...new Set(this.programacionesConfirmadas.map(item => item.etapa))].sort();
@@ -246,12 +295,12 @@ export class ProgramacionSemanalComponent implements OnInit {
   get jornadasHistorial(): number[] {
     return [...new Set(this.programacionesConfirmadas
       .filter(item => !this.historialEtapa || item.etapa === this.historialEtapa)
-      .map(item => item.jornada))].sort((a, b) => a - b);
+      .flatMap(item => (item.selecciones?.length ? item.selecciones : [{ categoriaId: item.categoriaId ?? null, jornada: item.jornada }]).map(seleccion => seleccion.jornada)))].sort((a, b) => a - b);
   }
   get programacionesConfirmadasFiltradas(): ProgramacionSemanalResumen[] {
     return this.programacionesConfirmadas.filter(item =>
       (!this.historialEtapa || item.etapa === this.historialEtapa)
-      && (!this.historialJornada || item.jornada === this.historialJornada)
+      && (!this.historialJornada || (item.selecciones?.length ? item.selecciones : [{ categoriaId: item.categoriaId ?? null, jornada: item.jornada }]).some(seleccion => seleccion.jornada === this.historialJornada))
     );
   }
   cambiarEtapaHistorial(): void { this.historialJornada = null; }
@@ -260,31 +309,40 @@ export class ProgramacionSemanalComponent implements OnInit {
     return this.categorias.find(categoria => categoria.id === categoriaId)?.nombre ?? `Categoría #${categoriaId}`;
   }
   nombreEtapa(etapa: string): string { return etapa.replace(/_/g, ' '); }
+  resumenSelecciones(sesion: ProgramacionSemanal | ProgramacionSemanalResumen): string {
+    const selecciones = sesion.selecciones?.length
+      ? sesion.selecciones
+      : [{ categoriaId: sesion.categoriaId ?? null, jornada: sesion.jornada }];
+    return selecciones.map(seleccion => `${this.nombreCategoria(seleccion.categoriaId)} · J${seleccion.jornada}`).join(' | ');
+  }
   private datosExportacion(): ProgramacionSemanalExport | null {
     if (!this.sesion) return null;
     const filas = this.sesion.bolillas.filter(bolilla => !!bolilla.partido).map(bolilla => ({
       fecha: String(bolilla.fecha).slice(0, 10), hora: bolilla.hora, cancha: bolilla.cancha,
       categoria: bolilla.partido?.categoria?.nombre ?? this.categorias.find(categoria => categoria.id === bolilla.partido?.categoriaId)?.nombre ?? 'Categoría',
+      jornada: bolilla.partido?.jornada ?? this.sesion!.jornada,
       local: bolilla.partido?.equipoLocal?.nombre ?? '', visitante: bolilla.partido?.equipoVisitante?.nombre ?? '', manual: !!bolilla.asignacionManual,
+      solicitudReglamentaria: !!bolilla.solicitudHorarioId,
       vocal: this.textoVocal(this.vocaliaDelPartido(bolilla.partidoId)),
     }));
     if (!filas.length) { this.error = 'Aún no existen horarios asignados para exportar.'; return null; }
     const liga = this.ligas.find(item => item.id === this.sesion!.ligaId);
     const campeonato = this.campeonatos.find(item => item.id === this.sesion!.campeonatoId);
-    return { liga: liga?.nombre ?? 'Liga', ligaImagen: liga?.imagen, campeonato: campeonato?.nombre ?? 'Campeonato', categoria: this.nombreCategoria(this.sesion.categoriaId), etapa: this.sesion.etapa, jornada: this.sesion.jornada, estado: this.sesion.estado === 'confirmada' ? 'confirmada' : 'en_sorteo', filas };
+    return { liga: liga?.nombre ?? 'Liga', ligaImagen: liga?.imagen, campeonato: campeonato?.nombre ?? 'Campeonato', seleccion: this.resumenSelecciones(this.sesion), etapa: this.sesion.etapa, jornada: this.sesion.jornada, mixta: (this.sesion.selecciones?.length ?? 1) > 1, estado: this.sesion.estado === 'confirmada' ? 'confirmada' : 'en_sorteo', filas };
   }
   private crearNuevaSesion(): void {
-    this.partidosService.crearProgramacionSemanal({ campeonatoId: this.campeonatoId!, categoriaId: this.categoriaId ?? undefined, etapa: this.etapa.trim(), jornada: this.jornada!, bolillas: this.bolillas }).subscribe({ next: s => { this.sesion = s; this.cargando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo iniciar el sorteo.'; this.cargando = false; } });
+    const selecciones = this.seleccionesActuales;
+    this.partidosService.crearProgramacionSemanal({ campeonatoId: this.campeonatoId!, categoriaId: selecciones.length === 1 ? selecciones[0].categoriaId : undefined, etapa: this.etapa.trim(), jornada: selecciones[0].jornada, selecciones, bolillas: this.bolillas }).subscribe({ next: s => { this.sesion = s; this.cargando = false; }, error: e => { this.error = e?.error?.message ?? 'No se pudo iniciar el sorteo.'; this.cargando = false; } });
   }
   private actualizarVocalias(respuesta: VocaliasProgramacion): void {
     this.vocaliasEstado = respuesta.estado;
     this.vocalias = respuesta.vocalias;
     for (const vocalia of this.vocalias) {
-      if (!(vocalia.id in this.extractoresVocalia)) this.extractoresVocalia[vocalia.id] = vocalia.equipoExtractorId ?? null;
+      this.extractoresVocalia[vocalia.id] = vocalia.equipoExtractorId ?? null;
     }
   }
   private reiniciarHistorial(): void { this.programacionesConfirmadas = []; this.historialEtapa = ''; this.historialJornada = null; }
-  private cargarOpcionesProgramables(): void { if (!this.campeonatoId) return; this.partidosService.getByCampeonato(this.campeonatoId, this.categoriaId ?? undefined).subscribe({ next: partidos => { this.partidosProgramables = partidos.filter(p => p.estado === 'programado' && (!p.fechaPartido || !p.horaPartido)); this.etapasDisponibles = [...new Set(this.partidosProgramables.map(p => p.etapa))].sort(); }, error: () => this.error = 'No se pudieron cargar las jornadas programables.' }); }
+  private cargarOpcionesProgramables(): void { if (!this.campeonatoId) return; this.partidosService.getByCampeonato(this.campeonatoId).subscribe({ next: partidos => { this.partidosProgramables = partidos.filter(p => p.estado === 'programado' && (!p.fechaPartido || !p.horaPartido)); this.etapasDisponibles = [...new Set(this.partidosProgramables.map(p => p.etapa))].sort(); }, error: () => this.error = 'No se pudieron cargar las jornadas programables.' }); }
   private refrescar(): void { if (this.sesion) this.partidosService.obtenerProgramacionSemanal(this.sesion.id).subscribe(s => this.sesion = s); }
   private minutos(hora: string): number | null { const p = hora.split(':').map(Number); return p.length === 2 && p.every(Number.isFinite) ? p[0] * 60 + p[1] : null; }
   private hora(minutos: number): string { return `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`; }

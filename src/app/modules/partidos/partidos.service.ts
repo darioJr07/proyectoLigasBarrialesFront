@@ -14,6 +14,8 @@ import {
   ProgramacionSemanalResumen,
   VocaliaPartido,
   VocaliasProgramacion,
+  SolicitudHorario,
+  CrearSolicitudHorarioDto,
 } from './partido.model';
 
 @Injectable({
@@ -108,9 +110,17 @@ export class PartidosService {
   obtenerProgramacionSemanal(id: number): Observable<ProgramacionSemanal> {
     return this.http.get<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}`);
   }
-  obtenerProgramacionSemanalPendiente(campeonatoId: number, categoriaId: number | undefined, etapa: string, jornada: number): Observable<ProgramacionSemanal | null> {
-    let params = new HttpParams().set('campeonatoId', campeonatoId).set('etapa', etapa).set('jornada', jornada);
+  obtenerProgramacionSemanalPendiente(
+    campeonatoId: number,
+    categoriaId: number | undefined,
+    etapa: string,
+    jornada?: number,
+    selecciones?: Array<{ categoriaId: number; jornada: number }>,
+  ): Observable<ProgramacionSemanal | null> {
+    let params = new HttpParams().set('campeonatoId', campeonatoId).set('etapa', etapa);
+    if (jornada) params = params.set('jornada', jornada);
     if (categoriaId) params = params.set('categoriaId', categoriaId);
+    if (selecciones?.length) params = params.set('selecciones', selecciones.map(item => `${item.categoriaId}:${item.jornada}`).join(','));
     return this.http.get<ProgramacionSemanal | null>(`${this.apiUrl}/programacion-semanal/pendiente`, { params });
   }
   listarProgramacionesSemanalesConfirmadas(
@@ -137,8 +147,21 @@ export class PartidosService {
   liberarBolillaProgramacion(id: number, bolillaId: number): Observable<ProgramacionSemanal> {
     return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/bolillas/${bolillaId}/liberar`, {});
   }
-  asignarBolillaManual(id: number, partidoId: number, bolillaId: number): Observable<ProgramacionSemanal> {
-    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/asignar-manual`, { partidoId, bolillaId });
+  asignarBolillaManual(id: number, partidoId: number, bolillaId: number, solicitudHorarioId?: number): Observable<ProgramacionSemanal> {
+    return this.http.post<ProgramacionSemanal>(`${this.apiUrl}/programacion-semanal/${id}/asignar-manual`, { partidoId, bolillaId, solicitudHorarioId });
+  }
+  crearSolicitudHorario(data: CrearSolicitudHorarioDto): Observable<SolicitudHorario> {
+    return this.http.post<SolicitudHorario>(`${this.apiUrl}/solicitudes-horario`, data);
+  }
+  listarSolicitudesHorario(campeonatoId: number, categoriaId?: number, etapa?: string, estado?: SolicitudHorario['estado'] | ''): Observable<SolicitudHorario[]> {
+    let params = new HttpParams().set('campeonatoId', campeonatoId);
+    if (categoriaId) params = params.set('categoriaId', categoriaId);
+    if (etapa) params = params.set('etapa', etapa);
+    if (estado) params = params.set('estado', estado);
+    return this.http.get<SolicitudHorario[]>(`${this.apiUrl}/solicitudes-horario`, { params });
+  }
+  resolverSolicitudHorario(id: number, decision: 'aprobar' | 'rechazar' | 'cancelar', observacion?: string): Observable<SolicitudHorario> {
+    return this.http.patch<SolicitudHorario>(`${this.apiUrl}/solicitudes-horario/${id}/resolver`, { decision, observacion });
   }
   obtenerVocaliasProgramacion(id: number): Observable<VocaliasProgramacion> {
     return this.http.get<VocaliasProgramacion>(`${this.apiUrl}/programacion-semanal/${id}/vocalias`);

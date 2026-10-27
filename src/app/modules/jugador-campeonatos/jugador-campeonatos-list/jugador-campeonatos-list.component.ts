@@ -148,6 +148,11 @@ export class JugadorCampeonatosListComponent implements OnInit {
       && jugadorCampeonato.activo !== false;
   }
 
+  canVerMotivoCambioDorsal(): boolean {
+    const role = this.currentUser?.rol?.nombre;
+    return role === 'master' || role === 'directivo_liga';
+  }
+
   dorsalVisible(jugadorCampeonato: JugadorCampeonato): number {
     return this.conDorsalActual(jugadorCampeonato).numeroCancha;
   }

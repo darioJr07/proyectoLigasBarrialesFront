@@ -250,7 +250,10 @@
               <strong>{{ cambio.etapa?.nombre || 'Etapa' }}:</strong>
               #{{ cambio.numeroCancha }} desde la jornada {{ cambio.jornadaDesde }}
             </div>
-            <small>Dorsal original: #{{ jc.numeroCancha }} · {{ cambio.motivo }}</small>
+            <small>
+              Dorsal original: #{{ jc.numeroCancha }}
+              <ng-container *ngIf="canVerMotivoCambioDorsal()"> · {{ cambio.motivo }}</ng-container>
+            </small>
             <button
               *ngIf="canCambiarDorsal(jc)"
               type="button"

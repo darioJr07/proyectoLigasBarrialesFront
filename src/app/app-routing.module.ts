@@ -257,6 +257,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'solicitudes-horario',
+        canActivate: [RolesGuard],
+        data: { roles: ['master', 'directivo_liga', 'dirigente_equipo'] },
+        loadComponent: () =>
+          import('./modules/partidos/solicitudes-horario/solicitudes-horario.component').then(
+            (m) => m.SolicitudesHorarioComponent
+          ),
+      },
+      {
         path: 'nuevo',
         canActivate: [RolesGuard],
         data: { roles: ['master', 'directivo_liga'] },
