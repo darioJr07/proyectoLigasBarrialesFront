@@ -357,7 +357,14 @@
     background-color: #fff3cd;
     color: #856404;
   }
+
+  &.badge-reingreso {
+    background: #e9ddff;
+    color: #53389e;
+  }
 }
+
+.badges { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
 
 .btn,
 .btn-icon {
@@ -381,6 +388,16 @@
   &:hover:not(:disabled) {
     background-color: #7f8c8d;
   }
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-warning {
+  background: #f0ad4e;
+  color: #2d2416;
 }
 
 .btn-icon {
@@ -425,6 +442,76 @@
   .images-section {
     grid-template-columns: 1fr;
   }
+}
+
+.modal-content.review-modal {
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow-x: hidden;
+
+  .modal-close {
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+  }
+}
+
+.review-modal {
+  width: min(720px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem !important;
+
+  h2, h3 { color: #253858; }
+  h2 { margin-top: 0; }
+  label { display: block; margin: 0.75rem 0 0.25rem; font-weight: 600; }
+  input, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem;
+    border: 1px solid #ccd2dd;
+    border-radius: 5px;
+  }
+}
+
+.review-alert, .history-box, .sanctions-box, .regularize-box {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 7px;
+  background: #f7f8fa;
+  border-left: 4px solid #6c4ee3;
+}
+
+.regularize-box { border-left-color: #f0ad4e; background: #fff9ed; }
+.sanctions-box { border-left-color: #d64545; }
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+
+  div {
+    padding: 0.75rem;
+    border: 1px solid #e1e5eb;
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  span { font-size: 0.82rem; color: #667085; }
+  strong { font-size: 1.35rem; }
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .review-grid { grid-template-columns: 1fr; }
 }
 
 // Modal para ampliar imagen

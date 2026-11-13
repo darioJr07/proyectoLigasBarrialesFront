@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { JugadorCampeonatosService } from '../jugador-campeonatos.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { JugadorCampeonato } from '../jugador-campeonato.model';
+import { JugadorCampeonato, ResumenReingreso } from '../jugador-campeonato.model';
 import { MainNavComponent } from '../../../shared/components/main-nav/main-nav.component';
 
 @Component({
@@ -24,6 +24,15 @@ export class JugadorCampeonatosPendientesComponent implements OnInit {
   showImageModal = false;
   modalImageUrl = '';
   searchTerm = '';
+  showReviewModal = false;
+  reviewLoading = false;
+  reviewSaving = false;
+  resumenReingreso: ResumenReingreso | null = null;
+  motivoReingreso = '';
+  referenciaReingreso = '';
+  fechaBaja = '';
+  motivoBaja = '';
+  referenciaBaja = '';
 
   // Paginación
   Math = Math;
@@ -97,6 +106,88 @@ export class JugadorCampeonatosPendientesComponent implements OnInit {
         },
       });
     }
+  }
+
+  revisarParaAprobar(id: number): void {
+    this.showReviewModal = true;
+    this.cargarResumen(id);
+  }
+
+  private cargarResumen(id: number): void {
+    this.reviewLoading = true;
+    this.errorMessage = '';
+    this.jugadorCampeonatosService.getResumenReingreso(id).subscribe({
+      next: (resumen) => {
+        this.resumenReingreso = resumen;
+        this.motivoReingreso = resumen.solicitud.motivoReingreso || '';
+        this.referenciaReingreso = resumen.solicitud.referenciaReingreso || '';
+        this.motivoBaja = resumen.antecedente?.motivoBaja || resumen.antecedente?.observaciones || '';
+        this.referenciaBaja = resumen.antecedente?.referenciaBaja || '';
+        this.reviewLoading = false;
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'No se pudo cargar la revision de la solicitud';
+        this.reviewLoading = false;
+        this.showReviewModal = false;
+      },
+    });
+  }
+
+  regularizarReingreso(): void {
+    const resumen = this.resumenReingreso;
+    if (!resumen?.antecedente || !this.motivoReingreso.trim()) return;
+    this.reviewSaving = true;
+    this.jugadorCampeonatosService.regularizarReingreso(resumen.solicitud.id, {
+      habilitacionOrigenId: resumen.antecedente.id,
+      motivoReingreso: this.motivoReingreso.trim(),
+      referenciaReingreso: this.referenciaReingreso.trim() || undefined,
+      fechaBaja: this.fechaBaja || undefined,
+      motivoBaja: this.motivoBaja.trim() || undefined,
+      referenciaBaja: this.referenciaBaja.trim() || undefined,
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'La solicitud quedo vinculada con la baja anterior.';
+        this.reviewSaving = false;
+        this.cargarResumen(resumen.solicitud.id);
+        this.loadPendientes();
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'No se pudo regularizar el reingreso';
+        this.reviewSaving = false;
+      },
+    });
+  }
+
+  aprobarRevisada(): void {
+    const resumen = this.resumenReingreso;
+    if (!resumen || resumen.requiereRegularizacion) return;
+    if (!confirm('Esta seguro de aprobar esta habilitacion?')) return;
+    this.reviewSaving = true;
+    this.jugadorCampeonatosService.aprobar(resumen.solicitud.id).subscribe({
+      next: () => {
+        this.successMessage = resumen.esReingreso
+          ? 'Reingreso aprobado exitosamente'
+          : 'Habilitacion aprobada exitosamente';
+        this.closeReviewModal();
+        this.loadPendientes();
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Error al aprobar la habilitacion';
+        this.reviewSaving = false;
+      },
+    });
+  }
+
+  closeReviewModal(): void {
+    this.showReviewModal = false;
+    this.resumenReingreso = null;
+    this.reviewLoading = false;
+    this.reviewSaving = false;
+    this.motivoReingreso = '';
+    this.referenciaReingreso = '';
+    this.fechaBaja = '';
+    this.motivoBaja = '';
+    this.referenciaBaja = '';
   }
 
   rechazar(id: number): void {

@@ -15,6 +15,15 @@ export interface JugadorCampeonato {
   aprobadoPor?: number;
   fechaAprobacion?: string;
   observaciones?: string;
+  tipoSolicitud?: 'normal' | 'reingreso';
+  habilitacionOrigenId?: number | null;
+  habilitacionOrigen?: JugadorCampeonato | null;
+  motivoReingreso?: string | null;
+  referenciaReingreso?: string | null;
+  fechaBaja?: string | null;
+  dadoBajaPor?: number | null;
+  motivoBaja?: string | null;
+  referenciaBaja?: string | null;
   fechaInscripcion: string;
   activo: boolean;
   creadoEn: string;
@@ -71,6 +80,47 @@ export interface CreateJugadorCampeonatoDto {
   categoriaId: number;
   numeroCancha: number;
   posicion: string;
+  motivoReingreso?: string;
+  referenciaReingreso?: string;
+}
+
+export interface AntecedenteReingreso {
+  esReingreso: boolean;
+  antecedente: {
+    id: number;
+    numeroCancha: number;
+    fechaAprobacion?: string | null;
+    fechaBaja?: string | null;
+    motivoBaja?: string | null;
+    referenciaBaja?: string | null;
+  } | null;
+}
+
+export interface ResumenReingreso {
+  solicitud: JugadorCampeonato;
+  esReingreso: boolean;
+  requiereRegularizacion: boolean;
+  antecedente: JugadorCampeonato | null;
+  golesAcumulados: number;
+  sancionesActivas: Array<{
+    id: number;
+    tipo: string;
+    descripcion?: string;
+    partidosSuspension: number;
+    partidosCumplidos: number;
+    partidosPendientes: number;
+    fechaFinSuspension?: string | null;
+  }>;
+  transferenciasEnProceso: any[];
+}
+
+export interface RegularizarReingresoDto {
+  habilitacionOrigenId: number;
+  motivoReingreso: string;
+  referenciaReingreso?: string;
+  fechaBaja?: string;
+  motivoBaja?: string;
+  referenciaBaja?: string;
 }
 
 export interface UpdateJugadorCampeonatoDto {

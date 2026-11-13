@@ -70,7 +70,10 @@
           <h3>{{ habilitacion.jugador?.nombreCompleto }}</h3>
           <p class="player-detail">#{{ habilitacion.numeroCancha }} - {{ habilitacion.jugador?.nombre || habilitacion.jugador?.nombreCompleto }}</p>
         </div>
-        <span class="badge badge-pendiente">Pendiente</span>
+        <div class="badges">
+          <span class="badge badge-reingreso" *ngIf="habilitacion.tipoSolicitud === 'reingreso'">Reingreso</span>
+          <span class="badge badge-pendiente">Pendiente</span>
+        </div>
       </div>
 
       <!-- Sección de imágenes -->
@@ -133,8 +136,8 @@
         <button
           type="button"
           class="btn-icon btn-success"
-          (click)="aprobar(habilitacion.id)"
-          title="Aprobar"
+          (click)="revisarParaAprobar(habilitacion.id)"
+          title="Revisar y aprobar"
           *ngIf="permissions.canAprobarHabilitaciones()"
         >
           ✅
@@ -183,6 +186,74 @@
 
     <div class="paginator-right">
       Página {{ currentPage }} de {{ totalPages }}
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="showReviewModal" (click)="closeReviewModal()">
+    <div class="modal-content review-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeReviewModal()">&times;</button>
+      <p *ngIf="reviewLoading">Cargando revisión...</p>
+
+      <ng-container *ngIf="!reviewLoading && resumenReingreso as resumen">
+        <h2>Revisar solicitud</h2>
+        <p><strong>Jugador:</strong> {{ resumen.solicitud.jugador?.nombre }}</p>
+        <p><strong>Equipo:</strong> {{ resumen.solicitud.equipo?.nombre }}</p>
+
+        <div class="review-alert" *ngIf="resumen.esReingreso">
+          <strong>Esta solicitud corresponde a un reingreso.</strong>
+          Los goles y las sanciones pertenecen al jugador y no se reinician.
+        </div>
+
+        <div class="review-grid">
+          <div><span>Goles acumulados</span><strong>{{ resumen.golesAcumulados }}</strong></div>
+          <div><span>Sanciones activas</span><strong>{{ resumen.sancionesActivas.length }}</strong></div>
+          <div><span>Transferencias en proceso</span><strong>{{ resumen.transferenciasEnProceso.length }}</strong></div>
+        </div>
+
+        <div class="history-box" *ngIf="resumen.antecedente as anterior">
+          <h3>Ficha anterior dada de baja</h3>
+          <p>Dorsal #{{ anterior.numeroCancha }} · {{ anterior.fechaBaja ? (anterior.fechaBaja | date:'short') : 'fecha no registrada' }}</p>
+          <p>{{ anterior.motivoBaja || anterior.observaciones || 'Sin motivo registrado' }}</p>
+        </div>
+
+        <div class="sanctions-box" *ngIf="resumen.sancionesActivas.length">
+          <h3>Sanciones que continúan vigentes</h3>
+          <p *ngFor="let sancion of resumen.sancionesActivas">
+            {{ sancion.tipo }}: {{ sancion.partidosPendientes }} partido(s) pendiente(s)
+          </p>
+        </div>
+
+        <div class="regularize-box" *ngIf="resumen.requiereRegularizacion">
+          <h3>Regularizar solicitud existente</h3>
+          <p>Vincula esta solicitud con la baja anterior antes de aprobarla.</p>
+          <label>Motivo del reingreso *</label>
+          <textarea [(ngModel)]="motivoReingreso" rows="3" maxlength="500"></textarea>
+          <label>Referencia o acta (opcional)</label>
+          <input [(ngModel)]="referenciaReingreso" maxlength="200" />
+          <label>Fecha real de la baja (opcional)</label>
+          <input type="date" [(ngModel)]="fechaBaja" />
+          <label>Motivo de la baja anterior (si falta)</label>
+          <textarea [(ngModel)]="motivoBaja" rows="2" maxlength="500"></textarea>
+          <label>Referencia de la baja (opcional)</label>
+          <input [(ngModel)]="referenciaBaja" maxlength="200" />
+          <button
+            type="button"
+            class="btn btn-warning"
+            [disabled]="reviewSaving || !motivoReingreso.trim()"
+            (click)="regularizarReingreso()"
+          >Vincular como reingreso</button>
+        </div>
+
+        <div class="review-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeReviewModal()">Cancelar</button>
+          <button
+            type="button"
+            class="btn btn-success"
+            [disabled]="reviewSaving || resumen.requiereRegularizacion"
+            (click)="aprobarRevisada()"
+          >{{ reviewSaving ? 'Procesando...' : 'Aprobar solicitud' }}</button>
+        </div>
+      </ng-container>
     </div>
   </div>
 

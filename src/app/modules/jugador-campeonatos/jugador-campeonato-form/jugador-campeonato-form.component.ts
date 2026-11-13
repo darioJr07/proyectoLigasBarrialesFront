@@ -19,6 +19,7 @@ import {
   JugadorCampeonato,
   CreateJugadorCampeonatoDto,
   UpdateJugadorCampeonatoDto,
+  AntecedenteReingreso,
 } from '../jugador-campeonato.model';
 import { Campeonato } from '../../campeonatos/campeonato.model';
 import { Equipo } from '../../../core/models/equipo.model';
@@ -51,6 +52,8 @@ export class JugadorCampeonatoFormComponent implements OnInit {
   habilitadosCount: number = 0;
   maxHabilitados: number = 20;
   showLimitInfo: boolean = false;
+  antecedenteReingreso: AntecedenteReingreso | null = null;
+  checkingAntecedente = false;
 
   // Autocomplete de jugadores
   jugadorSearchText: string = '';
@@ -114,6 +117,8 @@ export class JugadorCampeonatoFormComponent implements OnInit {
       numeroCancha: ['', [Validators.required, Validators.min(1), Validators.max(99)]],
       posicion: ['', [Validators.required, Validators.maxLength(50)]],
       observaciones: ['', Validators.maxLength(500)],
+      motivoReingreso: ['', Validators.maxLength(500)],
+      referenciaReingreso: ['', Validators.maxLength(200)],
     });
   }
 
@@ -145,6 +150,7 @@ export class JugadorCampeonatoFormComponent implements OnInit {
     this.form.get('campeonatoId')?.valueChanges.subscribe(() => {
       this.loadCategoriaDelEquipo();
       this.loadContadorHabilitados();
+      this.verificarAntecedenteReingreso();
     });
 
     this.form.get('equipoId')?.valueChanges.subscribe((equipoId) => {
@@ -153,6 +159,7 @@ export class JugadorCampeonatoFormComponent implements OnInit {
       }
       this.loadCategoriaDelEquipo();
       this.loadContadorHabilitados();
+      this.verificarAntecedenteReingreso();
     });
 
     // Auto-completar datos del jugador cuando se seleccione
@@ -166,7 +173,55 @@ export class JugadorCampeonatoFormComponent implements OnInit {
           });
         }
       }
+      this.verificarAntecedenteReingreso();
     });
+  }
+
+  private verificarAntecedenteReingreso(): void {
+    if (this.isEditMode) return;
+    const values = this.form.getRawValue();
+    const jugadorId = Number(values.jugadorId);
+    const campeonatoId = Number(values.campeonatoId);
+    const equipoId = Number(values.equipoId || this.currentEquipoId);
+    if (!jugadorId || !campeonatoId || !equipoId) {
+      this.aplicarAntecedenteReingreso(null);
+      return;
+    }
+
+    this.checkingAntecedente = true;
+    this.jugadorCampeonatosService
+      .getAntecedenteReingreso(jugadorId, campeonatoId, equipoId)
+      .subscribe({
+        next: (resultado) => {
+          const actual = this.form.getRawValue();
+          if (
+            Number(actual.jugadorId) === jugadorId
+            && Number(actual.campeonatoId) === campeonatoId
+            && Number(actual.equipoId || this.currentEquipoId) === equipoId
+          ) {
+            this.aplicarAntecedenteReingreso(resultado);
+          }
+          this.checkingAntecedente = false;
+        },
+        error: () => {
+          this.aplicarAntecedenteReingreso(null);
+          this.checkingAntecedente = false;
+        },
+      });
+  }
+
+  private aplicarAntecedenteReingreso(resultado: AntecedenteReingreso | null): void {
+    this.antecedenteReingreso = resultado?.esReingreso ? resultado : null;
+    const motivo = this.form.get('motivoReingreso');
+    motivo?.setValidators(
+      this.antecedenteReingreso
+        ? [Validators.required, Validators.maxLength(500)]
+        : [Validators.maxLength(500)],
+    );
+    if (!this.antecedenteReingreso) {
+      this.form.patchValue({ motivoReingreso: '', referenciaReingreso: '' }, { emitEvent: false });
+    }
+    motivo?.updateValueAndValidity({ emitEvent: false });
   }
 
   loadCampeonatos(): void {
@@ -438,6 +493,12 @@ export class JugadorCampeonatoFormComponent implements OnInit {
           categoriaId: Number(formValue.categoriaId),
           numeroCancha: Number(formValue.numeroCancha) || 0,
           posicion: formValue.posicion || '',
+          motivoReingreso: this.antecedenteReingreso
+            ? formValue.motivoReingreso?.trim()
+            : undefined,
+          referenciaReingreso: this.antecedenteReingreso
+            ? formValue.referenciaReingreso?.trim() || undefined
+            : undefined,
         };
         this.jugadorCampeonatosService.create(createDto).subscribe({
           next: () => {

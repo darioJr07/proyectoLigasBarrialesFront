@@ -202,6 +202,45 @@
         </div>
       </div>
 
+      <div class="reingreso-box" *ngIf="antecedenteReingreso?.antecedente as antecedente">
+        <h3>Reingreso de jugador</h3>
+        <p>
+          Este jugador ya fue dado de baja en el mismo campeonato y equipo.
+          La nueva solicitud conservará la ficha anterior como historial.
+        </p>
+        <div class="antecedente-grid">
+          <span><strong>Ficha anterior:</strong> #{{ antecedente.id }}</span>
+          <span><strong>Dorsal anterior:</strong> #{{ antecedente.numeroCancha }}</span>
+          <span><strong>Fecha de baja:</strong> {{ antecedente.fechaBaja ? (antecedente.fechaBaja | date: 'short') : 'Sin registrar' }}</span>
+          <span><strong>Motivo de baja:</strong> {{ antecedente.motivoBaja || 'Sin detalle' }}</span>
+        </div>
+        <div class="form-group">
+          <label for="motivoReingreso">Motivo del reingreso *</label>
+          <textarea
+            id="motivoReingreso"
+            formControlName="motivoReingreso"
+            class="form-control"
+            rows="3"
+            placeholder="Ej.: Decisión aprobada en sesión..."
+          ></textarea>
+          <small class="error-message" *ngIf="form.get('motivoReingreso')?.invalid && form.get('motivoReingreso')?.touched">
+            El motivo del reingreso es obligatorio.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="referenciaReingreso">Referencia o acta (opcional)</label>
+          <input
+            id="referenciaReingreso"
+            type="text"
+            formControlName="referenciaReingreso"
+            class="form-control"
+            placeholder="Ej.: Acta de sesión N.º 12"
+          />
+        </div>
+      </div>
+
+      <p class="checking-note" *ngIf="checkingAntecedente">Verificando el historial del jugador...</p>
+
       <div class="form-group">
         <label for="observaciones">Observaciones</label>
         <textarea
@@ -223,7 +262,7 @@
           Cancelar
         </button>
         <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
-          {{ loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear' }}
+          {{ loading ? 'Guardando...' : isEditMode ? 'Actualizar' : antecedenteReingreso ? 'Solicitar reingreso' : 'Crear' }}
         </button>
       </div>
     </form>

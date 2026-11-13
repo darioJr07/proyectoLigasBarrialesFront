@@ -5,6 +5,8 @@ Aplicacion web construida con Angular, TypeScript, RxJS y SCSS.
 **Estado de documentacion:** actualizado el 15/10/2026.
 Para el estado funcional completo del sistema, revisar [../ESTADO_ACTUAL_PROYECTO.md](../ESTADO_ACTUAL_PROYECTO.md).
 
+Actualizacion 12/11/2026: el formulario de habilitacion detecta bajas anteriores y solicita la justificacion del reingreso. La bandeja de pendientes incluye revision de ficha anterior, goles, sanciones y transferencias, ademas de la regularizacion de solicitudes historicas antes de aprobar.
+
 ## Tecnologias
 
 - Angular

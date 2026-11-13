@@ -382,6 +382,22 @@
   color: #7d4e00;
 }
 
+.status-reingreso {
+  background: #e9ddff;
+}
+
+.reingreso-info,
+.baja-audit-info {
+  padding: 0.75rem;
+  background: #f6f3ff;
+  border-left: 4px solid #6c4ee3;
+}
+
+.baja-audit-info {
+  background: #fff8e8;
+  border-left-color: #d89400;
+}
+
 .status-inactive {
   background: #e2e3e5;
   color: #383d41;

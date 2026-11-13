@@ -4,10 +4,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CambioDorsalEtapa,
+  AntecedenteReingreso,
   CreateJugadorCampeonatoDto,
   JugadorCampeonato,
   OpcionesCambioDorsal,
+  RegularizarReingresoDto,
   RegistrarCambioDorsalDto,
+  ResumenReingreso,
 } from './jugador-campeonato.model';
 
 @Injectable({
@@ -46,6 +49,25 @@ export class JugadorCampeonatosService {
     return this.http.get<JugadorCampeonato[]>(`${this.apiUrl}/pendientes`);
   }
 
+  getAntecedenteReingreso(
+    jugadorId: number,
+    campeonatoId: number,
+    equipoId: number,
+  ): Observable<AntecedenteReingreso> {
+    return this.http.get<AntecedenteReingreso>(
+      `${this.apiUrl}/jugador/${jugadorId}/antecedente-reingreso`,
+      { params: { campeonatoId, equipoId } },
+    );
+  }
+
+  getResumenReingreso(id: number): Observable<ResumenReingreso> {
+    return this.http.get<ResumenReingreso>(`${this.apiUrl}/${id}/resumen-reingreso`);
+  }
+
+  regularizarReingreso(id: number, data: RegularizarReingresoDto): Observable<JugadorCampeonato> {
+    return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/regularizar-reingreso`, data);
+  }
+
   create(data: CreateJugadorCampeonatoDto): Observable<JugadorCampeonato> {
     return this.http.post<JugadorCampeonato>(this.apiUrl, data);
   }
@@ -62,8 +84,8 @@ export class JugadorCampeonatosService {
     return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/rechazar`, { observaciones });
   }
 
-  darDeBaja(id: number, motivo: string): Observable<JugadorCampeonato> {
-    return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/dar-de-baja`, { motivo });
+  darDeBaja(id: number, motivo: string, referencia?: string): Observable<JugadorCampeonato> {
+    return this.http.patch<JugadorCampeonato>(`${this.apiUrl}/${id}/dar-de-baja`, { motivo, referencia });
   }
 
   getOpcionesCambioDorsal(id: number): Observable<OpcionesCambioDorsal> {

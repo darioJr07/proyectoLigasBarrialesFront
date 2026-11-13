@@ -9,6 +9,7 @@ import {
   JugadorCampeonato,
   OpcionesCambioDorsal,
   OpcionEtapaCambioDorsal,
+  ResumenReingreso,
 } from '../jugador-campeonato.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionsService } from '../../../core/services/permissions.service';
@@ -36,6 +37,15 @@ export class JugadorCampeonatosListComponent implements OnInit {
   user$: Observable<any>;
   showImageModal = false;
   modalImageUrl = '';
+  showReviewModal = false;
+  reviewLoading = false;
+  reviewSaving = false;
+  resumenReingreso: ResumenReingreso | null = null;
+  motivoReingreso = '';
+  referenciaReingreso = '';
+  fechaBaja = '';
+  motivoBaja = '';
+  referenciaBaja = '';
   showDorsalModal = false;
   cambioDorsalLoading = false;
   cambioDorsalError = '';
@@ -287,22 +297,82 @@ export class JugadorCampeonatosListComponent implements OnInit {
   }
 
   aprobar(id: number): void {
-    if (!confirm('¿Está seguro de aprobar esta habilitación?')) {
-      return;
-    }
+    this.showReviewModal = true;
+    this.cargarResumenReingreso(id);
+  }
 
-    const observaciones = prompt('Observaciones (opcional):');
-    
-    this.jugadorCampeonatosService.aprobar(id, observaciones || undefined).subscribe({
+  private cargarResumenReingreso(id: number): void {
+    this.reviewLoading = true;
+    this.errorMessage = '';
+    this.jugadorCampeonatosService.getResumenReingreso(id).subscribe({
+      next: resumen => {
+        this.resumenReingreso = resumen;
+        this.motivoReingreso = resumen.solicitud.motivoReingreso || '';
+        this.referenciaReingreso = resumen.solicitud.referenciaReingreso || '';
+        this.motivoBaja = resumen.antecedente?.motivoBaja || resumen.antecedente?.observaciones || '';
+        this.referenciaBaja = resumen.antecedente?.referenciaBaja || '';
+        this.reviewLoading = false;
+      },
+      error: error => {
+        this.showReviewModal = false;
+        this.reviewLoading = false;
+        alert(error.error?.message || 'No se pudo cargar la revision de la solicitud');
+      },
+    });
+  }
+
+  regularizarReingreso(): void {
+    const resumen = this.resumenReingreso;
+    if (!resumen?.antecedente || !this.motivoReingreso.trim()) return;
+    this.reviewSaving = true;
+    this.jugadorCampeonatosService.regularizarReingreso(resumen.solicitud.id, {
+      habilitacionOrigenId: resumen.antecedente.id,
+      motivoReingreso: this.motivoReingreso.trim(),
+      referenciaReingreso: this.referenciaReingreso.trim() || undefined,
+      fechaBaja: this.fechaBaja || undefined,
+      motivoBaja: this.motivoBaja.trim() || undefined,
+      referenciaBaja: this.referenciaBaja.trim() || undefined,
+    }).subscribe({
       next: () => {
-        alert('Habilitación aprobada exitosamente');
+        this.reviewSaving = false;
+        this.cargarResumenReingreso(resumen.solicitud.id);
         this.loadJugadorCampeonatos();
       },
-      error: (error) => {
-        console.error('Error al aprobar:', error);
-        alert('Error al aprobar la habilitación: ' + (error.error?.message || 'Error desconocido'));
-      }
+      error: error => {
+        this.reviewSaving = false;
+        alert(error.error?.message || 'No se pudo regularizar el reingreso');
+      },
     });
+  }
+
+  aprobarRevisada(): void {
+    const resumen = this.resumenReingreso;
+    if (!resumen || resumen.requiereRegularizacion) return;
+    if (!confirm('¿Esta seguro de aprobar esta habilitacion?')) return;
+    this.reviewSaving = true;
+    this.jugadorCampeonatosService.aprobar(resumen.solicitud.id).subscribe({
+      next: () => {
+        alert(resumen.esReingreso ? 'Reingreso aprobado exitosamente' : 'Habilitacion aprobada exitosamente');
+        this.cerrarRevisionReingreso();
+        this.loadJugadorCampeonatos();
+      },
+      error: error => {
+        this.reviewSaving = false;
+        alert(error.error?.message || 'No se pudo aprobar la habilitacion');
+      },
+    });
+  }
+
+  cerrarRevisionReingreso(): void {
+    this.showReviewModal = false;
+    this.reviewLoading = false;
+    this.reviewSaving = false;
+    this.resumenReingreso = null;
+    this.motivoReingreso = '';
+    this.referenciaReingreso = '';
+    this.fechaBaja = '';
+    this.motivoBaja = '';
+    this.referenciaBaja = '';
   }
 
   rechazar(id: number): void {
@@ -332,10 +402,11 @@ export class JugadorCampeonatosListComponent implements OnInit {
       alert('Debe ingresar un motivo para dar de baja al jugador');
       return;
     }
+    const referencia = prompt('Referencia o acta de la baja (opcional):') || undefined;
     if (!confirm('¿Está seguro de dar de baja a este jugador? El cupo quedará libre para registrar un nuevo jugador.')) {
       return;
     }
-    this.jugadorCampeonatosService.darDeBaja(id, motivo).subscribe({
+    this.jugadorCampeonatosService.darDeBaja(id, motivo, referencia).subscribe({
       next: () => {
         alert('Jugador dado de baja exitosamente. El cupo está disponible para un nuevo jugador.');
         this.loadJugadorCampeonatos();

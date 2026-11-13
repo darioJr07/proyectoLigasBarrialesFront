@@ -197,6 +197,9 @@
             </div>
           </div>
           <div class="badges">
+            <span *ngIf="jc.tipoSolicitud === 'reingreso'" class="status-badge status-reingreso">
+              Reingreso
+            </span>
             <span class="status-badge" 
                   [class.status-habilitado]="jc.estado === 'habilitado'"
                   [class.status-pending]="jc.estado === 'pendiente'"
@@ -245,6 +248,16 @@
           <p><strong>Cédula:</strong> {{ jc.jugador?.cedula || 'N/A' }}</p>
           <p><strong>Fecha Solicitud:</strong> {{ jc.fechaInscripcion | date:'dd/MM/yyyy HH:mm' }}</p>
           <p *ngIf="jc.fechaAprobacion"><strong>Fecha Aprobación:</strong> {{ jc.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</p>
+          <div *ngIf="jc.tipoSolicitud === 'reingreso'" class="reingreso-info">
+            <strong>Reingreso vinculado a la ficha #{{ jc.habilitacionOrigenId }}</strong>
+            <p><strong>Motivo:</strong> {{ jc.motivoReingreso }}</p>
+            <p *ngIf="jc.referenciaReingreso"><strong>Referencia:</strong> {{ jc.referenciaReingreso }}</p>
+          </div>
+          <div *ngIf="jc.estado === 'baja'" class="baja-audit-info">
+            <p *ngIf="jc.fechaBaja"><strong>Fecha de baja:</strong> {{ jc.fechaBaja | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p *ngIf="jc.motivoBaja"><strong>Motivo de baja:</strong> {{ jc.motivoBaja }}</p>
+            <p *ngIf="jc.referenciaBaja"><strong>Referencia:</strong> {{ jc.referenciaBaja }}</p>
+          </div>
           <div class="dorsal-change-summary" *ngFor="let cambio of jc.cambiosDorsalActivos">
             <div>
               <strong>{{ cambio.etapa?.nombre || 'Etapa' }}:</strong>
@@ -358,6 +371,74 @@
 
       <div class="paginator-right">
         Página {{ currentPage }} de {{ totalPages }}
+      </div>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showReviewModal" (click)="cerrarRevisionReingreso()">
+      <div class="modal-content dorsal-modal review-modal" (click)="$event.stopPropagation()">
+        <button class="modal-close" type="button" (click)="cerrarRevisionReingreso()">&times;</button>
+        <p *ngIf="reviewLoading">Cargando revisión...</p>
+
+        <ng-container *ngIf="!reviewLoading && resumenReingreso as resumen">
+          <h2>Revisar solicitud</h2>
+          <p><strong>Jugador:</strong> {{ resumen.solicitud.jugador?.nombre }}</p>
+          <p><strong>Equipo:</strong> {{ resumen.solicitud.equipo?.nombre }}</p>
+
+          <div class="review-alert" *ngIf="resumen.esReingreso">
+            <strong>Esta solicitud corresponde a un reingreso.</strong>
+            Los goles y las sanciones pertenecen al jugador y no se reinician.
+          </div>
+
+          <div class="review-grid">
+            <div><span>Goles acumulados</span><strong>{{ resumen.golesAcumulados }}</strong></div>
+            <div><span>Sanciones activas</span><strong>{{ resumen.sancionesActivas.length }}</strong></div>
+            <div><span>Transferencias en proceso</span><strong>{{ resumen.transferenciasEnProceso.length }}</strong></div>
+          </div>
+
+          <div class="history-box" *ngIf="resumen.antecedente as anterior">
+            <h3>Ficha anterior dada de baja</h3>
+            <p>Dorsal #{{ anterior.numeroCancha }} · {{ anterior.fechaBaja ? (anterior.fechaBaja | date:'short') : 'fecha no registrada' }}</p>
+            <p>{{ anterior.motivoBaja || anterior.observaciones || 'Sin motivo registrado' }}</p>
+          </div>
+
+          <div class="sanctions-box" *ngIf="resumen.sancionesActivas.length">
+            <h3>Sanciones que continúan vigentes</h3>
+            <p *ngFor="let sancion of resumen.sancionesActivas">
+              {{ sancion.tipo }}: {{ sancion.partidosPendientes }} partido(s) pendiente(s)
+            </p>
+          </div>
+
+          <div class="regularize-box" *ngIf="resumen.requiereRegularizacion">
+            <h3>Regularizar solicitud existente</h3>
+            <p>Vincula esta solicitud con la baja anterior antes de aprobarla.</p>
+            <label>Motivo del reingreso *</label>
+            <textarea [(ngModel)]="motivoReingreso" rows="3" maxlength="500"></textarea>
+            <label>Referencia o acta (opcional)</label>
+            <input [(ngModel)]="referenciaReingreso" maxlength="200" />
+            <label>Fecha real de la baja (opcional)</label>
+            <input type="date" [(ngModel)]="fechaBaja" />
+            <label>Motivo de la baja anterior (si falta)</label>
+            <textarea [(ngModel)]="motivoBaja" rows="2" maxlength="500"></textarea>
+            <label>Referencia de la baja (opcional)</label>
+            <input [(ngModel)]="referenciaBaja" maxlength="200" />
+            <button
+              type="button"
+              class="btn btn-warning"
+              [disabled]="reviewSaving || !motivoReingreso.trim()"
+              (click)="regularizarReingreso()"
+            >Vincular como reingreso</button>
+          </div>
+
+          <div class="review-actions">
+            <button type="button" class="btn btn-secondary" (click)="cerrarRevisionReingreso()">Cancelar</button>
+            <button
+              type="button"
+              class="btn btn-success"
+              [disabled]="reviewSaving || resumen.requiereRegularizacion"
+              (click)="aprobarRevisada()"
+            >{{ reviewSaving ? 'Procesando...' : 'Aprobar solicitud' }}</button>
+          </div>
+        </ng-container>
       </div>
     </div>
 
